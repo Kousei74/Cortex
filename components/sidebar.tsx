@@ -96,7 +96,7 @@ export default function Sidebar() {
             <span className="text-[var(--accent-blue-bright)] font-mono font-bold text-sm">AD</span>
           </div>
           <div className="flex-1">
-            <div className="text-sm font-mono font-bold text-primary-custom">Ankit Deepansh</div>
+            <div className="text-sm font-mono font-bold text-primary-custom">Suvam Poddar</div>
             <div className="text-xs text-secondary-custom font-mono">Data Analyst</div>
           </div>
           <svg
