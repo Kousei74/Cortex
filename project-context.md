@@ -17,8 +17,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 _Derived from CORTEX Blueprint (overview.txt)_
 
 ### Frontend (The "Illusionist" Layer)
-*   **Core Framework**: React + Vite
-*   **State Management**: `Zustand` (Strictly enforced for performance; Context is BANNED for high-frequency state)
+*   **Core Framework**: React (Implied by Component/Hook architecture)
+*   **State Management**: `Zustand` (with `persist` middleware for LocalStorage)
 *   **Animation & Motion**:
     *   `Framer Motion` (LayoutGroup, shared layout animations)
     *   **Native**: `View Transitions API` (for page/route transitions)
@@ -31,13 +31,12 @@ _Derived from CORTEX Blueprint (overview.txt)_
     *   `ResizeObserver` (Polyfilled if needed)
 
 ### Backend (The "Shadow" Engine)
-*   **Runtime**: Python (Containerized)
-*   **Framework**: FastAPI
+*   **API Pattern**: Asynchronous/Event-driven (Implied "Accept First, Process Later")
 *   **Queue/Async**: `PGMQ` (Postgres Message Queue) with `visibility_timeout`
 *   **Database**: `Supabase` (Postgres), `Redis` (Caching)
 *   **Storage**: Supabase Storage
-*   **Hosting**: Vercel (Frontend), Fly.io/Railway (Backend Container)
-*   **Processing**: `Tesseract` (OCR), `Pandas` (Data Normalization)
+*   **Hosting/Edge**: `Vercel` (Edge Caching directives)
+*   **Processing**: `Tesseract` (OCR Fallback)
 
 ---
 
@@ -97,16 +96,12 @@ The following are IMMUTABLE and must never be violated:
 - Hole-Less UX patterns
 - Locally Optimistic philosophy
 - Performance guarantees (300ms rule, 60 FPS)
-- Critical Implementation Rules
-- Hole-Less UX patterns
-- Locally Optimistic philosophy
-- Performance guarantees (300ms rule, 60 FPS)
 - Edge-case handling doctrines
-- **architecture.md** (The defined System Architecture)
 
 The following are MUTABLE and may change with explicit user approval:
+- Technology stack choices
+- Libraries, frameworks, vendors
 - Hosting providers
-- Queue or storage implementations (if strictly necessary)
+- Queue or storage implementations
 
 If a proposed change conflicts with immutable rules, the change MUST be rejected.
-
