@@ -1,0 +1,105 @@
+
+import { create } from 'zustand'
+import { get as idbGet, set as idbSet } from 'idb-keyval'
+
+// We don't persist File objects directly to IDB easily in this simple MVP without caching logic.
+// For now, we persist metadata. User might need to re-drag files if deep reload happens, 
+// OR we store Blobs. Storing Blobs in IDB is supported.
+// Let's try to store everything.
+
+const STAGING_KEY = 'cortex_staging_v1'
+
+export const useStagingStore = create((set, get) => ({
+    files: [],
+    initialized: false,
+
+    // Actions
+    addFiles: async (newFiles) => {
+        // Wrap files in a structure
+        const fileObjects = newFiles.map(file => ({
+            id: crypto.randomUUID(),
+            file: file, // File object (Blob)
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            status: 'staged', // staged, uploading, complete, error
+            progress: 0
+        }))
+
+        const currentFiles = get().files
+        const updatedFiles = [...currentFiles, ...fileObjects]
+
+        set({ files: updatedFiles })
+        await idbSet(STAGING_KEY, updatedFiles)
+    },
+
+    removeFile: async (id) => {
+        const currentFiles = get().files
+        const updatedFiles = currentFiles.filter(f => f.id !== id)
+
+        set({ files: updatedFiles })
+        await idbSet(STAGING_KEY, updatedFiles)
+    },
+
+    clearBatch: async () => {
+        set({ files: [] })
+        await idbSet(STAGING_KEY, [])
+    },
+
+    uploadBatch: async (api) => {
+        const { files } = get()
+        const filesToUpload = files.filter(f => f.status === 'staged' || f.status === 'error')
+
+        if (filesToUpload.length === 0) return
+
+        // Helper to update specific file status/progress
+        const updateFileStatus = (id, status, progress = 0) => {
+            const currentFiles = get().files
+            const updated = currentFiles.map(f =>
+                f.id === id ? { ...f, status, progress } : f
+            )
+            set({ files: updated })
+        }
+
+        // Process sequentially for now (or Promise.all for parallel)
+        // Let's do parallel with Promise.all for the "Batch" feel
+        const uploadPromises = filesToUpload.map(async (fileWrapper) => {
+            updateFileStatus(fileWrapper.id, 'uploading', 0)
+
+            try {
+                await api.uploadFile(fileWrapper.file, (progress) => {
+                    updateFileStatus(fileWrapper.id, 'uploading', progress)
+                })
+                updateFileStatus(fileWrapper.id, 'complete', 100)
+            } catch (error) {
+                console.error(`Failed to upload ${fileWrapper.name}:`, error)
+                updateFileStatus(fileWrapper.id, 'error', 0)
+            }
+        })
+
+        await Promise.all(uploadPromises)
+
+        // Update persistent store after batch completes
+        await idbSet(STAGING_KEY, get().files)
+    },
+
+    // Hydration
+    hydrate: async () => {
+        try {
+            const files = await idbGet(STAGING_KEY)
+            if (files) {
+                // Reset 'uploading' to 'staged' if implementation was interrupted
+                const sanitized = files.map(f =>
+                    f.status === 'uploading' ? { ...f, status: 'staged', progress: 0 } : f
+                )
+                set({ files: sanitized, initialized: true })
+            } else {
+                set({ initialized: true })
+            }
+        } catch (error) {
+            console.error("Failed to hydrate staging store", error)
+            set({ initialized: true })
+        }
+    }
+}))
+
