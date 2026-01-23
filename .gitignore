@@ -12,10 +12,8 @@ build/
 *.log
 .DS_Store
 coverage/
-
-# User requested exclusions
 temp/
 _legacy_next/
-_bmad_output/
-.agents/
-claude/commands/bmad/core/tasks/
+_bmad-output/
+.agent/
+.claude/commands/bmad/core/tasks/

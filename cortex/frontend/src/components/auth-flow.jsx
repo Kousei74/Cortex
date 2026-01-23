@@ -24,6 +24,18 @@ export default function AuthFlow() {
     const handleLogin = async () => {
         setIsLoading(true);
         setError(null);
+
+        if (!email) {
+            setError("Email can't be empty");
+            setIsLoading(false);
+            return;
+        }
+        if (!password) {
+            setError("Password can't be empty");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             await login(email, password);
         } catch (err) {
@@ -33,12 +45,30 @@ export default function AuthFlow() {
     }
 
     const handleSignup = async () => {
-        if (password !== confirmPassword) {
-            setError("Passwords do not match");
-            return;
-        }
         setIsLoading(true);
         setError(null);
+
+        if (!fullName) {
+            setError("Full Name can't be empty");
+            setIsLoading(false);
+            return;
+        }
+        if (!email) {
+            setError("Email can't be empty");
+            setIsLoading(false);
+            return;
+        }
+        if (!password) {
+            setError("Password can't be empty");
+            setIsLoading(false);
+            return;
+        }
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            setIsLoading(false); // Ensure loading is reset here too
+            return;
+        }
+
         try {
             await signup(email, password, fullName);
         } catch (err) {

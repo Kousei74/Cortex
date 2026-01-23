@@ -101,8 +101,8 @@ export default function Sidebar() {
                                 className={cn(
                                     "relative z-10 flex items-center w-full p-4 font-mono text-sm transition-colors duration-200",
                                     active
-                                        ? "text-[var(--accent-blue-bright)]"
-                                        : "text-secondary-custom hover:text-primary-custom"
+                                        ? "text-[var(--accent-blue-bright)] text-shadow-[0_0_8px_rgba(0,191,255,0.5)]"
+                                        : "text-secondary-custom hover:text-primary-custom hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
                                 )}
                             >
                                 <span className="mr-4">{item.icon}</span>
@@ -130,7 +130,7 @@ export default function Sidebar() {
                     </div>
                     <button
                         onClick={logout}
-                        className="text-secondary-custom hover:text-[var(--semantic-error)] cursor-pointer transition-colors p-1"
+                        className="text-secondary-custom hover:text-[var(--semantic-error)] hover:text-shadow-[0_0_8px_rgba(255,59,48,0.5)] cursor-pointer transition-colors p-1"
                         title="Logout"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

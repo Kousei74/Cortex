@@ -7,9 +7,13 @@ import { GhostCard } from './ghost-card'
 import { ZenoBar } from '@/components/ui/zeno-bar'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { useState } from 'react'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 
 export function DropZone() {
     const { addFiles, files, removeFile, uploadBatch } = useStagingStore()
+    const [showResetDialog, setShowResetDialog] = useState(false)
 
     const onDrop = useCallback(acceptedFiles => {
         addFiles(acceptedFiles)
@@ -37,7 +41,8 @@ export function DropZone() {
             await uploadBatch(api);
         } catch (error) {
             console.error("Upload Batch Failed:", error);
-            alert(`Upload Failed: ${error.message}`);
+            // Show user-friendly toast
+            toast.error("Upload failed. Please reload the page.");
         }
     }
 
@@ -55,11 +60,29 @@ export function DropZone() {
         totalProgress = sumProgress / totalFiles;
     }
 
+    const handlePaste = useCallback((e) => {
+        if (e.clipboardData && e.clipboardData.files.length > 0) {
+            e.preventDefault();
+            const pastedFiles = Array.from(e.clipboardData.files).map(file => {
+                // If it's a generic "image.png" from clipboard, give it a timestamp
+                if (file.name === "image.png") {
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+                    return new File([file], `screenshot_${timestamp}.png`, { type: file.type });
+                }
+                return file;
+            });
+            addFiles(pastedFiles);
+        }
+    }, [addFiles]);
+
     return (
         <motion.div
             {...getRootProps()}
+            onPaste={handlePaste}
+            // Make div focusable so it can capture paste events without needing to click an input
+            tabIndex={0}
             className={`
-                relative h-full w-full fluid-rounded-lg border-2 border-dashed transition-all duration-300 flex flex-col overflow-hidden
+                relative h-full w-full fluid-rounded-lg border-2 border-dashed transition-all duration-300 flex flex-col overflow-hidden outline-none focus:ring-2 focus:ring-[var(--accent-blue-bright)]/50
                 ${isDragActive ? 'border-[var(--accent-blue-bright)] bg-[var(--accent-blue-bright)]/5' : 'border-subtle-custom bg-surface-custom/30'}
                 ${isDragReject ? 'border-[var(--semantic-error)] bg-[var(--semantic-error)]/5' : ''}
             `}
@@ -119,21 +142,47 @@ export function DropZone() {
                             </div>
                         ) : (
                             hasStagedFiles && (
-                                <Button
-                                    onClick={handleUpload}
-                                    className="gradient-button text-white font-mono shadow-[0_0_20px_var(--accent-blue-bright)] hover:shadow-[0_0_30px_var(--accent-blue-bright)] transition-all duration-300"
-                                >
-                                    ACTUALIZE UPLOAD
-                                </Button>
+                                <div className="flex items-center">
+                                    <Button
+                                        onClick={handleUpload}
+                                        className="gradient-button text-white font-mono shadow-[0_0_20px_var(--accent-blue-bright)] hover:shadow-[0_0_30px_var(--accent-blue-bright)] transition-all duration-300"
+                                    >
+                                        ACTUALIZE UPLOAD
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowResetDialog(true);
+                                        }}
+                                        className="border-semantic-error text-semantic-error hover:bg-semantic-error/10 font-mono tracking-wider transition-all duration-300 ml-4"
+                                    >
+                                        RESET
+                                    </Button>
+                                </div>
                             )
                         )}
                     </div>
                 </div>
             )}
 
+            <ConfirmationDialog
+                isOpen={showResetDialog}
+                onClose={() => setShowResetDialog(false)}
+                onConfirm={() => {
+                    useStagingStore.getState().clearBatch();
+                    toast.success("Batch reset successfully.");
+                }}
+                title="Reset Ingestion Batch?"
+                description="This action will clear all currently staged files. This action cannot be undone."
+                confirmText="YES, RESET BATCH"
+                isDestructive={true}
+            />
+
+
             {/* Decorative Corners */}
             <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[var(--accent-blue-bright)]/30 rounded-tl-lg m-4 pointer-events-none" />
             <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[var(--accent-blue-bright)]/30 rounded-br-lg m-4 pointer-events-none" />
-        </motion.div>
+        </motion.div >
     )
 }

@@ -7,6 +7,7 @@ import { PAGE_TRANSITION } from "@/lib/animations"
 import StagingArea from "@/components/staging-area"
 import MainLayout from "@/components/layout/main-layout"
 import MainContent from "@/components/main-content"
+import SingleInstanceLock from "@/components/single-instance-lock"
 
 // Placeholder components for other routes (moved from Dashboard.jsx)
 const PlaceholderPage = ({ title }) => (
@@ -101,6 +102,7 @@ function App() {
         <AuthProvider>
             <Router>
                 <div className="min-h-screen bg-primary-custom text-foreground font-sans">
+                    <SingleInstanceLock />
                     <AnimatedRoutes />
                 </div>
             </Router>
