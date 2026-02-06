@@ -97,13 +97,18 @@ function AnimatedRoutes() {
     )
 }
 
+import { Toaster } from "@/components/ui/sonner"
+import { BackgroundPoller } from "@/components/background-poller"
+
 function App() {
     return (
         <AuthProvider>
             <Router>
                 <div className="min-h-screen bg-primary-custom text-foreground font-sans">
                     <SingleInstanceLock />
+                    <BackgroundPoller />
                     <AnimatedRoutes />
+                    <Toaster />
                 </div>
             </Router>
         </AuthProvider>

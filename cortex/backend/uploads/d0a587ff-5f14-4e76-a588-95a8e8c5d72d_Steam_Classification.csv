@@ -1,0 +1,1036 @@
+id,average_polarity,sentiment_class
+PS0001,-0.07958275862068966,mixed negative
+PS0004,-0.18076666666666666,mixed negative
+PS0006,0.0,neutral
+PS0007,-0.343675,mixed negative
+PS0009,0.0,neutral
+PS0010,0.02266666666666667,mixed positive
+PS0011,0.0,neutral
+PS0012,-0.3182,mixed negative
+PS0013,-0.135575,mixed negative
+PS0014,0.0,neutral
+PS0017,0.0,neutral
+PS0018,0.06037333333333333,mixed positive
+PS0019,0.0,neutral
+PS0020,0.0,neutral
+PS0021,0.4404,strongly positive
+PS0022,0.068,mixed positive
+PS0023,0.4404,strongly positive
+PS0024,0.0,neutral
+PS0025,0.5859,strongly positive
+PS0026,0.00894545454545455,mixed positive
+PS0027,-0.027840909090909093,mixed negative
+PS0028,0.0,neutral
+PS0029,0.16076,mixed positive
+PS0030,-0.0233,mixed negative
+PS0031,0.0,neutral
+PS0032,0.0,neutral
+PS0034,0.0,neutral
+PS0035,0.0,neutral
+PS0037,0.0,neutral
+PS0038,0.0,neutral
+PS0039,-0.07524285714285714,mixed negative
+PS0040,0.0,neutral
+PS0041,-0.3637,mixed negative
+PS0042,0.0,neutral
+PS0043,0.0,neutral
+PS0044,0.0030396226415094325,mixed positive
+PS0045,-0.1806,mixed negative
+PS0046,0.0,neutral
+PS0047,0.0,neutral
+PS0048,-0.5423,strongly negative
+PS0049,0.17,mixed positive
+PS0050,-0.3058666666666667,mixed negative
+PS0051,0.0,neutral
+PS0053,0.0,neutral
+PS0054,0.0,neutral
+PS0055,0.2553,mixed positive
+PS0057,-0.5423,strongly negative
+PS0058,-0.1027,mixed negative
+PS0060,0.06683243243243243,mixed positive
+PS0061,-0.100475,mixed negative
+PS0062,0.04295714285714285,mixed positive
+PS0063,0.0,neutral
+PS0068,0.13212000000000002,mixed positive
+PS0069,0.09786666666666667,mixed positive
+PS0070,0.13341904761904763,mixed positive
+PS0072,0.1468,mixed positive
+PS0075,0.0,neutral
+PS0076,0.0,neutral
+PS0077,0.0772,mixed positive
+PS0079,0.0,neutral
+PS0080,0.255,mixed positive
+PS0082,0.0,neutral
+PS0083,0.0,neutral
+PS0085,0.0,neutral
+PS0087,0.0,neutral
+PS0088,0.6369,strongly positive
+PS0089,0.048933333333333336,mixed positive
+PS0094,0.05146666666666667,mixed positive
+PS0095,0.3612,mixed positive
+PS0096,0.0,neutral
+PS0097,0.0,neutral
+PS0098,0.08808,mixed positive
+PS0099,0.0,neutral
+PS0101,0.0,neutral
+PS0102,0.10530930232558139,mixed positive
+PS0103,0.0,neutral
+PS0105,0.0,neutral
+PS0107,0.2023,mixed positive
+PS0109,0.0,neutral
+PS0112,0.0,neutral
+PS0113,0.0,neutral
+PS0114,0.0,neutral
+PS0115,0.49412500000000004,strongly positive
+PS0116,0.01935,mixed positive
+PS0117,0.20713157894736844,mixed positive
+PS0118,0.12091250000000002,mixed positive
+PS0119,0.0,neutral
+PS0120,0.2553,mixed positive
+PS0121,0.0,neutral
+PS0123,0.0,neutral
+PS0124,0.0,neutral
+PS0125,0.1622142857142857,mixed positive
+PS0127,0.09878,mixed positive
+PS0128,-0.2144625,mixed negative
+PS0130,-0.5423,strongly negative
+PS0131,0.0,neutral
+PS0132,-0.3542444444444445,mixed negative
+PS0133,0.28896,mixed positive
+PS0135,0.0,neutral
+PS0136,0.0,neutral
+PS0137,0.0,neutral
+PS0139,0.018481818181818186,mixed positive
+PS0140,0.0,neutral
+PS0142,0.0,neutral
+PS0143,-0.2732,mixed negative
+PS0144,0.4404,strongly positive
+PS0145,0.0,neutral
+PS0147,0.0,neutral
+PS0149,-0.049333333333333326,mixed negative
+PS0151,0.0,neutral
+PS0152,0.4404,strongly positive
+PS0153,0.0,neutral
+PS0154,0.0,neutral
+PS0155,0.11198181818181818,mixed positive
+PS0156,0.0,neutral
+PS0158,-0.1600222222222222,mixed negative
+PS0159,0.0,neutral
+PS0160,0.0,neutral
+PS0162,-0.27115,mixed negative
+PS0163,0.0425,mixed positive
+PS0166,0.0,neutral
+PS0169,0.5106,strongly positive
+PS0170,0.0,neutral
+PS0171,0.0,neutral
+PS0172,-0.14301,mixed negative
+PS0173,0.0,neutral
+PS0174,0.0,neutral
+PS0175,0.5714,strongly positive
+PS0176,0.0,neutral
+PS0177,0.34,mixed positive
+PS0178,0.2553,mixed positive
+PS0179,-0.22939999999999997,mixed negative
+PS0180,0.34,mixed positive
+PS0181,0.0,neutral
+PS0182,0.2553,mixed positive
+PS0184,0.6369,strongly positive
+PS0185,0.05210232558139535,mixed positive
+PS0186,0.0,neutral
+PS0188,0.0,neutral
+PS0190,0.0,neutral
+PS0191,0.0,neutral
+PS0192,0.0,neutral
+PS0193,0.6369,strongly positive
+PS0194,0.0,neutral
+PS0195,0.4404,strongly positive
+PS0196,0.0,neutral
+PS0197,0.0,neutral
+PS0199,0.0,neutral
+PS0200,0.0,neutral
+PS0201,0.0,neutral
+PS0204,0.0,neutral
+PS0205,0.04937142857142857,mixed positive
+PS0207,-0.5719,strongly negative
+PS0208,0.0,neutral
+PS0213,-0.04021578947368421,mixed negative
+PS0215,0.0,neutral
+PS0216,-0.09878,mixed negative
+PS0217,0.0,neutral
+PS0218,0.0,neutral
+PS0220,0.0,neutral
+PS0221,0.0,neutral
+PS0222,0.0,neutral
+PS0223,0.0425,mixed positive
+PS0225,0.06524666666666666,mixed positive
+PS0226,0.0379125,mixed positive
+PS0227,0.0,neutral
+PS0228,0.4404,strongly positive
+PS0232,0.0,neutral
+PS0234,0.0,neutral
+PS0235,0.1457142857142857,mixed positive
+PS0236,0.0,neutral
+PS0237,0.0,neutral
+PS0238,0.0,neutral
+PS0239,0.0,neutral
+PS0243,0.0,neutral
+PS0244,0.0,neutral
+PS0246,-0.07230666666666667,mixed negative
+PS0247,0.0,neutral
+PS0248,0.0,neutral
+PS0250,0.0,neutral
+PS0251,0.0,neutral
+PS0252,0.0,neutral
+PS0253,0.6369,strongly positive
+PS0254,0.0,neutral
+PS0255,0.0,neutral
+PS0256,0.017060000000000002,mixed positive
+PS0257,0.0,neutral
+PS0258,-0.34,mixed negative
+PS0259,0.10212000000000002,mixed positive
+PS0260,0.2936,mixed positive
+PS0261,0.0,neutral
+PS0264,0.0,neutral
+PS0265,0.21025999999999997,mixed positive
+PS0266,0.008016000000000002,mixed positive
+PS0267,0.0,neutral
+PS0268,0.0,neutral
+PS0269,0.0,neutral
+PS0270,0.1806,mixed positive
+PS0271,0.0,neutral
+PS0272,0.2202,mixed positive
+PS0273,0.0,neutral
+PS0274,0.0,neutral
+PS0275,-0.17,mixed negative
+PS0276,0.04019,mixed positive
+PS0277,0.0,neutral
+PS0278,0.0,neutral
+PS0279,0.0,neutral
+PS0281,0.0,neutral
+PS0282,0.1101,mixed positive
+PS0283,0.6369,strongly positive
+PS0285,-0.050954545454545454,mixed negative
+PS0286,-0.010507692307692308,mixed negative
+PS0287,0.030285714285714287,mixed positive
+PS0288,0.0,neutral
+PS0289,0.0,neutral
+PS0290,0.0,neutral
+PS0294,0.0,neutral
+PS0296,0.025871428571428576,mixed positive
+PS0297,0.0,neutral
+PS0298,0.0,neutral
+PS0299,0.0,neutral
+PS0300,0.0386,mixed positive
+PS0301,0.0,neutral
+PS0303,0.10302857142857144,mixed positive
+PS0304,0.20621333333333336,mixed positive
+PS0305,0.0,neutral
+PS0306,-0.5423,strongly negative
+PS0307,0.4404,strongly positive
+PS0309,0.0,neutral
+PS0311,0.0,neutral
+PS0314,0.0,neutral
+PS0315,0.0,neutral
+PS0317,0.0,neutral
+PS0318,0.0,neutral
+PS0321,0.0,neutral
+PS0322,0.0,neutral
+PS0323,0.0,neutral
+PS0324,0.0,neutral
+PS0326,0.0,neutral
+PS0327,0.0,neutral
+PS0328,0.21882857142857143,mixed positive
+PS0329,0.0,neutral
+PS0333,0.0,neutral
+PS0335,0.0,neutral
+PS0336,-0.406425,strongly negative
+PS0338,-0.09714285714285716,mixed negative
+PS0339,0.17020000000000002,mixed positive
+PS0340,-0.11087499999999999,mixed negative
+PS0341,0.20703636363636366,mixed positive
+PS0342,-0.5423,strongly negative
+PS0343,0.0,neutral
+PS0345,0.0,neutral
+PS0346,-0.5423,strongly negative
+PS0347,0.0,neutral
+PS0348,0.12765,mixed positive
+PS0349,0.17020000000000002,mixed positive
+PS0351,0.2870071428571429,mixed positive
+PS0352,0.0,neutral
+PS0354,0.0,neutral
+PS0355,0.0,neutral
+PS0356,0.0,neutral
+PS0357,0.5859,strongly positive
+PS0360,-0.20429999999999998,mixed negative
+PS0361,-0.03589655172413793,mixed negative
+PS0364,0.0,neutral
+PS0367,0.0,neutral
+PS0368,0.4404,strongly positive
+PS0369,0.0,neutral
+PS0370,-0.4404,strongly negative
+PS0371,-0.10059,mixed negative
+PS0372,0.107405,mixed positive
+PS0373,0.0,neutral
+PS0374,0.04765833333333333,mixed positive
+PS0375,0.0,neutral
+PS0376,0.0,neutral
+PS0377,0.6249,strongly positive
+PS0378,0.2553,mixed positive
+PS0380,0.0,neutral
+PS0381,0.0,neutral
+PS0383,0.0,neutral
+PS0384,0.021871428571428573,mixed positive
+PS0386,0.0,neutral
+PS0388,0.5106,strongly positive
+PS0390,-0.11892307692307691,mixed negative
+PS0391,-0.009127777777777778,mixed negative
+PS0392,0.0,neutral
+PS0393,0.0,neutral
+PS0394,0.0,neutral
+PS0395,0.34040000000000004,mixed positive
+PS0396,0.12333333333333335,mixed positive
+PS0397,0.20400000000000001,mixed positive
+PS0400,-0.03632777777777777,mixed negative
+PS0401,-0.013439285714285714,mixed negative
+PS0402,0.0,neutral
+PS0405,-0.2294,mixed negative
+PS0406,0.02409230769230769,mixed positive
+PS0407,-0.03394545454545453,mixed negative
+PS0408,0.0,neutral
+PS0409,0.0,neutral
+PS0410,0.0015500000000000002,mixed positive
+PS0411,0.0,neutral
+PS0412,-0.5719,strongly negative
+PS0413,0.159225,mixed positive
+PS0414,0.0,neutral
+PS0415,0.0,neutral
+PS0416,0.11611698113207548,mixed positive
+PS0417,0.0,neutral
+PS0418,0.0,neutral
+PS0419,-0.23835,mixed negative
+PS0421,-0.10059999999999998,mixed negative
+PS0422,-0.4767,strongly negative
+PS0424,0.0,neutral
+PS0426,-0.4588,strongly negative
+PS0429,0.0,neutral
+PS0430,0.0,neutral
+PS0432,0.0,neutral
+PS0433,0.0,neutral
+PS0434,0.0,neutral
+PS0436,0.0,neutral
+PS0437,0.21280000000000002,mixed positive
+PS0438,-0.0843,mixed negative
+PS0439,-0.2069909090909091,mixed negative
+PS0440,-0.0013384615384615362,mixed negative
+PS0441,0.0,neutral
+PS0442,0.0,neutral
+PS0443,0.0,neutral
+PS0446,0.0,neutral
+PS0447,-0.31245,mixed negative
+PS0448,0.34040000000000004,mixed positive
+PS0449,0.0,neutral
+PS0450,-0.019759999999999996,mixed negative
+PS0451,-0.0242,mixed negative
+PS0452,0.04813333333333334,mixed positive
+PS0453,0.0,neutral
+PS0454,-0.4767,strongly negative
+PS0455,-0.2520857142857143,mixed negative
+PS0456,0.0,neutral
+PS0457,0.0,neutral
+PS0458,0.0,neutral
+PS0459,0.0,neutral
+PS0460,0.0,neutral
+PS0461,0.0,neutral
+PS0464,0.6369,strongly positive
+PS0465,0.0,neutral
+PS0466,0.0,neutral
+PS0467,0.050575,mixed positive
+PS0468,-0.18342,mixed negative
+PS0470,0.6369,strongly positive
+PS0471,0.0,neutral
+PS0472,0.0,neutral
+PS0473,-0.2382571428571429,mixed negative
+PS0477,-0.007778571428571428,mixed negative
+PS0478,-0.044961111111111104,mixed negative
+PS0479,0.0,neutral
+PS0480,0.0,neutral
+PS0482,0.0,neutral
+PS0483,0.0,neutral
+PS0484,0.0,neutral
+PS0485,0.5719,strongly positive
+PS0486,0.0,neutral
+PS0487,0.0,neutral
+PS0489,0.0,neutral
+PS0490,0.17,mixed positive
+PS0491,0.0,neutral
+PS0492,0.0,neutral
+PS0493,-0.24285714285714288,mixed negative
+PS0494,0.0,neutral
+PS0495,0.4404,strongly positive
+PS0496,0.0,neutral
+PS0497,0.08406250000000001,mixed positive
+PS0499,0.0,neutral
+PS0500,0.0,neutral
+PS0502,0.0,neutral
+PS0503,0.0,neutral
+PS0504,0.0,neutral
+PS0505,0.0,neutral
+PS0506,0.0,neutral
+PS0507,-0.14049999999999999,mixed negative
+PS0509,0.17,mixed positive
+PS0510,0.0,neutral
+PS0511,0.0,neutral
+PS0512,0.0,neutral
+PS0513,0.4404,strongly positive
+PS0517,0.0,neutral
+PS0518,-0.04448571428571429,mixed negative
+PS0519,-0.6249,strongly negative
+PS0520,0.0,neutral
+PS0521,-0.27115,mixed negative
+PS0522,0.12525714285714287,mixed positive
+PS0524,-0.3612,mixed negative
+PS0525,0.16972500000000001,mixed positive
+PS0526,0.0,neutral
+PS0527,0.19824615384615385,mixed positive
+PS0528,0.0,neutral
+PS0530,0.0,neutral
+PS0531,0.00847500000000001,mixed positive
+PS0532,0.2553,mixed positive
+PS0533,-0.005938461538461539,mixed negative
+PS0534,-0.1027,mixed negative
+PS0535,0.0,neutral
+PS0536,0.0,neutral
+PS0537,0.0,neutral
+PS0539,0.0,neutral
+PS0540,0.03503333333333333,mixed positive
+PS0541,-0.05135,mixed negative
+PS0542,0.21230000000000002,mixed positive
+PS0543,0.06850833333333334,mixed positive
+PS0544,0.4404,strongly positive
+PS0545,0.4019,strongly positive
+PS0547,0.0,neutral
+PS0548,0.0,neutral
+PS0550,0.0,neutral
+PS0551,0.0,neutral
+PS0552,0.0,neutral
+PS0553,-0.100475,mixed negative
+PS0554,0.0,neutral
+PS0555,-0.09038333333333333,mixed negative
+PS0556,0.032,mixed positive
+PS0557,0.0,neutral
+PS0558,0.06291428571428571,mixed positive
+PS0559,0.0,neutral
+PS0560,0.0,neutral
+PS0561,0.34,mixed positive
+PS0563,-0.03296999999999999,mixed negative
+PS0564,-0.10606666666666666,mixed negative
+PS0565,-0.022245454545454547,mixed negative
+PS0566,-0.0322290909090909,mixed negative
+PS0567,0.0,neutral
+PS0568,0.0,neutral
+PS0569,0.0,neutral
+PS0570,0.0,neutral
+PS0571,0.2553,mixed positive
+PS0572,0.0,neutral
+PS0576,-0.20803076923076924,mixed negative
+PS0577,-0.24996000000000002,mixed negative
+PS0578,0.0,neutral
+PS0579,0.0,neutral
+PS0580,0.0,neutral
+PS0581,0.0,neutral
+PS0583,0.0,neutral
+PS0585,-0.022287499999999995,mixed negative
+PS0586,0.15554117647058824,mixed positive
+PS0589,0.11346666666666667,mixed positive
+PS0590,0.0,neutral
+PS0591,0.0,neutral
+PS0592,0.0,neutral
+PS0593,0.0,neutral
+PS0594,-0.25,mixed negative
+PS0595,-0.18614999999999998,mixed negative
+PS0596,0.0,neutral
+PS0597,0.0,neutral
+PS0598,0.34,mixed positive
+PS0599,0.0,neutral
+PS0600,0.0,neutral
+PS0601,-0.30679999999999996,mixed negative
+PS0602,0.0,neutral
+PS0604,0.0,neutral
+PS0606,0.4404,strongly positive
+PS0609,0.4215,strongly positive
+PS0611,0.0,neutral
+PS0612,0.0,neutral
+PS0613,-0.09038333333333333,mixed negative
+PS0614,-0.08438749999999999,mixed negative
+PS0618,0.0,neutral
+PS0619,0.0,neutral
+PS0620,-0.5423,strongly negative
+PS0621,0.0,neutral
+PS0622,0.0,neutral
+PS0625,0.0,neutral
+PS0627,0.0,neutral
+PS0628,-0.5106,strongly negative
+PS0629,0.0,neutral
+PS0631,0.0,neutral
+PS0632,0.02023,mixed positive
+PS0634,0.0,neutral
+PS0635,0.0,neutral
+PS0637,0.0,neutral
+PS0638,0.0,neutral
+PS0639,0.6369,strongly positive
+PS0641,0.0,neutral
+PS0642,-0.18076666666666666,mixed negative
+PS0643,0.0,neutral
+PS0644,-0.14229999999999998,mixed negative
+PS0647,0.0,neutral
+PS0649,-0.5423,strongly negative
+PS0650,-0.07026320346320346,mixed negative
+PS0651,0.04835714285714286,mixed positive
+PS0653,0.03286363636363636,mixed positive
+PS0654,0.0,neutral
+PS0655,-0.01543787878787879,mixed negative
+PS0656,0.17020000000000002,mixed positive
+PS0657,-0.17556666666666665,mixed negative
+PS0658,0.0,neutral
+PS0659,0.0,neutral
+PS0660,0.0,neutral
+PS0662,0.0,neutral
+PS0663,0.01241612903225807,mixed positive
+PS0664,0.012728,mixed positive
+PS0669,0.0,neutral
+PS0671,0.0,neutral
+PS0672,0.0,neutral
+PS0674,0.10200000000000001,mixed positive
+PS0675,0.1027,mixed positive
+PS0676,0.0,neutral
+PS0679,0.0,neutral
+PS0681,0.0,neutral
+PS0682,-0.03875833333333333,mixed negative
+PS0683,0.003675000000000001,mixed positive
+PS0685,0.6249,strongly positive
+PS0687,0.0,neutral
+PS0688,0.0,neutral
+PS0690,0.0,neutral
+PS0691,0.0,neutral
+PS0692,0.0,neutral
+PS0693,-0.03062,mixed negative
+PS0694,-0.03423333333333333,mixed negative
+PS0695,0.0,neutral
+PS0696,0.0,neutral
+PS0697,0.0,neutral
+PS0698,0.04961538461538462,mixed positive
+PS0699,0.0,neutral
+PS0700,0.2202,mixed positive
+PS0701,0.0,neutral
+PS0703,0.0,neutral
+PS0704,-0.09156,mixed negative
+PS0705,0.0,neutral
+PS0708,-0.052569999999999985,mixed negative
+PS0709,0.0,neutral
+PS0710,0.0,neutral
+PS0712,0.0,neutral
+PS0713,0.42460000000000003,strongly positive
+PS0714,-0.009305714285714285,mixed negative
+PS0715,0.0,neutral
+PS0716,0.0,neutral
+PS0722,0.0,neutral
+PS0723,0.4404,strongly positive
+PS0725,0.0,neutral
+PS0726,0.0,neutral
+PS0730,0.0,neutral
+PS0734,0.0,neutral
+PS0737,0.0,neutral
+PS0739,0.0,neutral
+PS0743,-0.1027,mixed negative
+PS0744,0.0,neutral
+PS0745,0.0,neutral
+PS0746,0.0,neutral
+PS0747,-0.05384482758620689,mixed negative
+PS0748,0.0,neutral
+PS0752,-0.07958275862068966,mixed negative
+PS0756,0.0,neutral
+PS0757,0.0,neutral
+PS0758,-0.3182,mixed negative
+PS0759,-0.135575,mixed negative
+PS0760,0.0,neutral
+PS0761,0.02266666666666667,mixed positive
+PS0764,0.06037333333333333,mixed positive
+PS0765,0.00894545454545455,mixed positive
+PS0766,0.0,neutral
+PS0767,0.0,neutral
+PS0768,0.4404,strongly positive
+PS0769,0.068,mixed positive
+PS0770,0.4404,strongly positive
+PS0771,0.0,neutral
+PS0772,0.0,neutral
+PS0773,0.5859,strongly positive
+PS0774,0.0,neutral
+PS0775,0.16076,mixed positive
+PS0776,0.0,neutral
+PS0777,0.0,neutral
+PS0779,0.0,neutral
+PS0780,-0.0233,mixed negative
+PS0781,-0.027840909090909093,mixed negative
+PS0782,0.0,neutral
+PS0784,0.0,neutral
+PS0785,0.0,neutral
+PS0786,-0.07524285714285714,mixed negative
+PS0787,-0.3637,mixed negative
+PS0788,0.0,neutral
+PS0789,0.0,neutral
+PS0790,0.0,neutral
+PS0791,0.0030396226415094325,mixed positive
+PS0792,-0.1806,mixed negative
+PS0793,0.0,neutral
+PS0794,0.0,neutral
+PS0795,-0.5423,strongly negative
+PS0796,0.17,mixed positive
+PS0797,-0.3058666666666667,mixed negative
+PS0798,0.0,neutral
+PS0800,0.0,neutral
+PS0801,0.0,neutral
+PS0802,0.2553,mixed positive
+PS0804,-0.5423,strongly negative
+PS0805,-0.1027,mixed negative
+PS0807,0.06683243243243243,mixed positive
+PS0808,-0.100475,mixed negative
+PS0809,0.04295714285714285,mixed positive
+PS0810,0.0,neutral
+PS0814,0.255,mixed positive
+PS0816,0.13212000000000002,mixed positive
+PS0817,0.09786666666666667,mixed positive
+PS0819,0.1468,mixed positive
+PS0822,0.0,neutral
+PS0823,0.0,neutral
+PS0824,0.0772,mixed positive
+PS0826,0.0,neutral
+PS0828,0.0,neutral
+PS0829,0.0,neutral
+PS0831,0.048933333333333336,mixed positive
+PS0832,0.0,neutral
+PS0834,0.0,neutral
+PS0835,0.6369,strongly positive
+PS0840,0.05146666666666667,mixed positive
+PS0841,0.3612,mixed positive
+PS0842,0.0,neutral
+PS0843,0.0,neutral
+PS0844,0.08808,mixed positive
+PS0845,0.0,neutral
+PS0847,0.0,neutral
+PS0848,0.0,neutral
+PS0849,0.10530930232558139,mixed positive
+PS0850,0.0,neutral
+PS0851,0.0,neutral
+PS0853,0.0,neutral
+PS0855,0.2023,mixed positive
+PS0859,0.0,neutral
+PS0860,0.0,neutral
+PS0861,0.20713157894736844,mixed positive
+PS0862,0.0,neutral
+PS0863,0.49412500000000004,strongly positive
+PS0864,0.01935,mixed positive
+PS0865,0.2553,mixed positive
+PS0867,0.0,neutral
+PS0868,0.12091250000000002,mixed positive
+PS0869,-0.1600222222222222,mixed negative
+PS0870,0.0,neutral
+PS0871,0.13341904761904763,mixed positive
+PS0872,0.4404,strongly positive
+PS0873,0.0,neutral
+PS0874,0.0,neutral
+PS0875,0.11198181818181818,mixed positive
+PS0876,0.0,neutral
+PS0878,0.0,neutral
+PS0880,-0.27115,mixed negative
+PS0881,0.0425,mixed positive
+PS0884,0.0,neutral
+PS0887,0.5106,strongly positive
+PS0888,0.0,neutral
+PS0889,0.0,neutral
+PS0890,-0.14301,mixed negative
+PS0891,0.0,neutral
+PS0892,0.0,neutral
+PS0893,0.5714,strongly positive
+PS0894,0.0,neutral
+PS0895,0.34,mixed positive
+PS0896,0.2553,mixed positive
+PS0897,-0.22939999999999997,mixed negative
+PS0898,0.34,mixed positive
+PS0899,0.0,neutral
+PS0900,0.2553,mixed positive
+PS0902,0.05210232558139535,mixed positive
+PS0903,0.6369,strongly positive
+PS0904,0.0,neutral
+PS0906,0.0,neutral
+PS0908,0.0,neutral
+PS0909,0.0,neutral
+PS0910,0.0,neutral
+PS0911,0.6369,strongly positive
+PS0912,0.0,neutral
+PS0913,0.4404,strongly positive
+PS0914,0.0,neutral
+PS0915,0.0,neutral
+PS0917,0.0,neutral
+PS0918,0.0,neutral
+PS0919,0.0,neutral
+PS0922,0.0,neutral
+PS0923,0.04937142857142857,mixed positive
+PS0925,-0.5719,strongly negative
+PS0926,0.0,neutral
+PS0932,-0.04021578947368421,mixed negative
+PS0933,0.0,neutral
+PS0934,-0.09878,mixed negative
+PS0935,0.0,neutral
+PS0936,0.0,neutral
+PS0938,0.0,neutral
+PS0939,0.06524666666666666,mixed positive
+PS0940,0.0,neutral
+PS0941,0.0,neutral
+PS0942,0.0425,mixed positive
+PS0944,0.0,neutral
+PS0945,0.4404,strongly positive
+PS0948,0.0379125,mixed positive
+PS0950,0.0,neutral
+PS0952,0.0,neutral
+PS0953,0.1457142857142857,mixed positive
+PS0954,0.0,neutral
+PS0955,0.0,neutral
+PS0956,0.0,neutral
+PS0957,0.0,neutral
+PS0958,-0.07230666666666667,mixed negative
+PS0962,0.0,neutral
+PS0963,0.0,neutral
+PS0965,0.0,neutral
+PS0966,0.0,neutral
+PS0968,0.0,neutral
+PS0969,0.0,neutral
+PS0970,0.0,neutral
+PS0971,0.6369,strongly positive
+PS0972,0.0,neutral
+PS0973,0.0,neutral
+PS0974,0.0,neutral
+PS0975,-0.34,mixed negative
+PS0976,0.10212000000000002,mixed positive
+PS0977,0.017060000000000002,mixed positive
+PS0978,0.21025999999999997,mixed positive
+PS0979,0.2936,mixed positive
+PS0980,0.0,neutral
+PS0983,0.0,neutral
+PS0984,0.008016000000000002,mixed positive
+PS0985,0.0,neutral
+PS0986,0.0,neutral
+PS0987,0.0,neutral
+PS0988,0.1806,mixed positive
+PS0989,0.0,neutral
+PS0990,0.2202,mixed positive
+PS0991,0.0,neutral
+PS0992,0.0,neutral
+PS0993,-0.17,mixed negative
+PS0994,0.0,neutral
+PS0995,0.0,neutral
+PS0996,0.0,neutral
+PS0997,0.04019,mixed positive
+PS0998,-0.050954545454545454,mixed negative
+PS1000,0.0,neutral
+PS1001,0.1101,mixed positive
+PS1002,0.6369,strongly positive
+PS1004,0.030285714285714287,mixed positive
+PS1005,0.0,neutral
+PS1006,0.0,neutral
+PS1007,0.0,neutral
+PS1008,-0.010507692307692308,mixed negative
+PS1012,0.0,neutral
+PS1014,0.0,neutral
+PS1015,0.025871428571428576,mixed positive
+PS1016,0.10302857142857144,mixed positive
+PS1017,0.20621333333333336,mixed positive
+PS1018,0.0,neutral
+PS1019,0.0,neutral
+PS1020,0.0386,mixed positive
+PS1021,0.0,neutral
+PS1023,0.0,neutral
+PS1024,-0.5423,strongly negative
+PS1025,0.4404,strongly positive
+PS1027,0.0,neutral
+PS1029,0.0,neutral
+PS1032,0.0,neutral
+PS1033,0.0,neutral
+PS1035,0.0,neutral
+PS1036,0.0,neutral
+PS1039,0.0,neutral
+PS1040,0.0,neutral
+PS1041,0.0,neutral
+PS1042,0.0,neutral
+PS1044,0.0,neutral
+PS1045,0.0,neutral
+PS1046,0.21882857142857143,mixed positive
+PS1047,0.0,neutral
+PS1051,0.0,neutral
+PS1053,0.0,neutral
+PS1054,-0.11087499999999999,mixed negative
+PS1055,-0.406425,strongly negative
+PS1057,-0.09714285714285716,mixed negative
+PS1058,0.17020000000000002,mixed positive
+PS1059,-0.5423,strongly negative
+PS1060,0.0,neutral
+PS1062,0.0,neutral
+PS1063,0.20703636363636366,mixed positive
+PS1064,-0.5423,strongly negative
+PS1065,0.0,neutral
+PS1066,0.12765,mixed positive
+PS1067,0.17020000000000002,mixed positive
+PS1068,0.0,neutral
+PS1070,0.0,neutral
+PS1071,0.0,neutral
+PS1073,0.2870071428571429,mixed positive
+PS1074,0.0,neutral
+PS1075,0.5859,strongly positive
+PS1078,-0.20429999999999998,mixed negative
+PS1081,0.0,neutral
+PS1083,-0.03589655172413793,mixed negative
+PS1085,0.0,neutral
+PS1086,0.4404,strongly positive
+PS1087,0.0,neutral
+PS1088,-0.4404,strongly negative
+PS1089,0.0,neutral
+PS1090,0.04765833333333333,mixed positive
+PS1091,0.0,neutral
+PS1092,-0.10059,mixed negative
+PS1093,0.107405,mixed positive
+PS1094,0.0,neutral
+PS1095,0.6249,strongly positive
+PS1096,0.2553,mixed positive
+PS1098,0.0,neutral
+PS1099,0.0,neutral
+PS1101,0.0,neutral
+PS1102,0.021871428571428573,mixed positive
+PS1103,-0.11892307692307691,mixed negative
+PS1105,0.0,neutral
+PS1107,0.5106,strongly positive
+PS1109,0.0,neutral
+PS1110,0.0,neutral
+PS1111,0.0,neutral
+PS1112,-0.009127777777777778,mixed negative
+PS1113,-0.03632777777777777,mixed negative
+PS1114,0.34040000000000004,mixed positive
+PS1115,0.12333333333333335,mixed positive
+PS1116,0.20400000000000001,mixed positive
+PS1119,-0.013439285714285714,mixed negative
+PS1120,0.0,neutral
+PS1123,-0.2294,mixed negative
+PS1124,-0.03394545454545453,mixed negative
+PS1125,0.02409230769230769,mixed positive
+PS1126,0.0,neutral
+PS1127,0.0,neutral
+PS1128,0.0,neutral
+PS1129,-0.5719,strongly negative
+PS1130,0.159225,mixed positive
+PS1131,0.0,neutral
+PS1132,0.0015500000000000002,mixed positive
+PS1133,0.11611698113207548,mixed positive
+PS1134,0.0,neutral
+PS1135,0.0,neutral
+PS1136,0.0,neutral
+PS1137,-0.23835,mixed negative
+PS1139,-0.10059999999999998,mixed negative
+PS1140,-0.4767,strongly negative
+PS1142,0.0,neutral
+PS1144,-0.4588,strongly negative
+PS1147,0.0,neutral
+PS1148,0.0,neutral
+PS1150,0.0,neutral
+PS1151,0.0,neutral
+PS1152,-0.2069909090909091,mixed negative
+PS1153,-0.0013384615384615362,mixed negative
+PS1154,0.0,neutral
+PS1156,0.0,neutral
+PS1157,0.21280000000000002,mixed positive
+PS1158,-0.0843,mixed negative
+PS1159,0.0,neutral
+PS1160,0.0,neutral
+PS1161,0.0,neutral
+PS1162,0.0,neutral
+PS1165,0.0,neutral
+PS1166,-0.31245,mixed negative
+PS1167,0.34040000000000004,mixed positive
+PS1168,-0.0242,mixed negative
+PS1169,0.04813333333333334,mixed positive
+PS1170,-0.019759999999999996,mixed negative
+PS1171,0.0,neutral
+PS1172,-0.4767,strongly negative
+PS1173,-0.2520857142857143,mixed negative
+PS1174,0.0,neutral
+PS1175,0.0,neutral
+PS1176,0.0,neutral
+PS1177,0.0,neutral
+PS1178,0.0,neutral
+PS1179,0.0,neutral
+PS1180,0.050575,mixed positive
+PS1183,0.6369,strongly positive
+PS1184,0.0,neutral
+PS1185,0.0,neutral
+PS1187,0.6369,strongly positive
+PS1188,0.0,neutral
+PS1189,0.0,neutral
+PS1190,-0.18342,mixed negative
+PS1191,-0.2382571428571429,mixed negative
+PS1195,0.0,neutral
+PS1196,0.0,neutral
+PS1198,-0.007778571428571428,mixed negative
+PS1199,-0.044961111111111104,mixed negative
+PS1200,0.0,neutral
+PS1201,0.0,neutral
+PS1202,0.0,neutral
+PS1203,0.5719,strongly positive
+PS1204,0.0,neutral
+PS1205,0.0,neutral
+PS1207,0.0,neutral
+PS1208,0.17,mixed positive
+PS1209,0.08406250000000001,mixed positive
+PS1210,0.0,neutral
+PS1211,0.0,neutral
+PS1212,-0.24285714285714288,mixed negative
+PS1213,0.0,neutral
+PS1214,0.4404,strongly positive
+PS1215,0.0,neutral
+PS1217,0.0,neutral
+PS1218,0.0,neutral
+PS1220,0.0,neutral
+PS1221,0.0,neutral
+PS1222,0.0,neutral
+PS1223,0.0,neutral
+PS1225,0.17,mixed positive
+PS1226,0.0,neutral
+PS1227,0.0,neutral
+PS1228,0.0,neutral
+PS1229,-0.14049999999999999,mixed negative
+PS1230,0.0,neutral
+PS1231,0.4404,strongly positive
+PS1235,0.0,neutral
+PS1236,-0.04448571428571429,mixed negative
+PS1237,-0.6249,strongly negative
+PS1238,0.0,neutral
+PS1239,0.19824615384615385,mixed positive
+PS1240,-0.27115,mixed negative
+PS1241,0.12525714285714287,mixed positive
+PS1243,-0.3612,mixed negative
+PS1244,0.16972500000000001,mixed positive
+PS1245,0.0,neutral
+PS1246,0.0,neutral
+PS1248,0.0,neutral
+PS1249,0.0,neutral
+PS1250,0.00847500000000001,mixed positive
+PS1251,0.2553,mixed positive
+PS1252,-0.005938461538461539,mixed negative
+PS1253,-0.1027,mixed negative
+PS1254,0.0,neutral
+PS1255,0.0,neutral
+PS1257,0.0,neutral
+PS1258,0.03503333333333333,mixed positive
+PS1259,-0.05135,mixed negative
+PS1260,0.06850833333333334,mixed positive
+PS1261,0.21230000000000002,mixed positive
+PS1262,0.4404,strongly positive
+PS1263,0.4019,strongly positive
+PS1265,0.0,neutral
+PS1266,0.0,neutral
+PS1268,0.032,mixed positive
+PS1269,0.0,neutral
+PS1270,0.0,neutral
+PS1271,0.0,neutral
+PS1272,-0.100475,mixed negative
+PS1273,0.0,neutral
+PS1274,-0.09038333333333333,mixed negative
+PS1275,0.0,neutral
+PS1276,0.06291428571428571,mixed positive
+PS1277,0.0,neutral
+PS1278,-0.022245454545454547,mixed negative
+PS1279,0.0,neutral
+PS1280,0.34,mixed positive
+PS1282,-0.03296999999999999,mixed negative
+PS1283,-0.10606666666666666,mixed negative
+PS1284,-0.0322290909090909,mixed negative
+PS1285,0.0,neutral
+PS1286,0.0,neutral
+PS1287,0.0,neutral
+PS1288,0.0,neutral
+PS1289,0.2553,mixed positive
+PS1290,0.0,neutral
+PS1294,-0.24996000000000002,mixed negative
+PS1295,0.0,neutral
+PS1296,-0.20803076923076924,mixed negative
+PS1297,-0.022287499999999995,mixed negative
+PS1298,0.15554117647058824,mixed positive
+PS1299,0.0,neutral
+PS1300,0.0,neutral
+PS1301,0.0,neutral
+PS1303,0.0,neutral
+PS1307,0.11346666666666667,mixed positive
+PS1308,0.0,neutral
+PS1309,0.0,neutral
+PS1310,0.0,neutral
+PS1311,0.0,neutral
+PS1312,-0.25,mixed negative
+PS1313,-0.18614999999999998,mixed negative
+PS1314,0.0,neutral
+PS1315,0.0,neutral
+PS1316,0.34,mixed positive
+PS1317,0.0,neutral
+PS1318,0.0,neutral
+PS1319,-0.30679999999999996,mixed negative
+PS1320,0.0,neutral
+PS1322,0.0,neutral
+PS1324,0.4404,strongly positive
+PS1327,0.4215,strongly positive
+PS1328,-0.08438749999999999,mixed negative
+PS1330,0.0,neutral
+PS1331,0.0,neutral
+PS1332,-0.09038333333333333,mixed negative
+PS1336,0.0,neutral
+PS1337,0.0,neutral
+PS1338,-0.5423,strongly negative
+PS1339,0.0,neutral
+PS1340,0.0,neutral
+PS1343,0.0,neutral
+PS1345,0.0,neutral
+PS1346,-0.5106,strongly negative
+PS1347,0.0,neutral
+PS1349,0.0,neutral
+PS1350,0.02023,mixed positive
+PS1352,0.0,neutral
+PS1353,0.0,neutral
+PS1355,0.0,neutral
+PS1356,0.0,neutral
+PS1357,0.6369,strongly positive
+PS1359,0.0,neutral
+PS1360,-0.18076666666666666,mixed negative
+PS1361,0.0,neutral
+PS1364,0.0,neutral
+PS1366,-0.14229999999999998,mixed negative
+PS1367,-0.07026320346320346,mixed negative
+PS1368,-0.5423,strongly negative
+PS1369,0.04835714285714286,mixed positive
+PS1371,0.17020000000000002,mixed positive
+PS1372,-0.17556666666666665,mixed negative
+PS1373,0.0,neutral
+PS1374,0.03286363636363636,mixed positive
+PS1375,0.0,neutral
+PS1376,-0.01543787878787879,mixed negative
+PS1377,0.0,neutral
+PS1378,0.0,neutral
+PS1380,0.0,neutral
+PS1384,0.01241612903225807,mixed positive
+PS1385,0.012728,mixed positive
+PS1386,0.10200000000000001,mixed positive
+PS1388,0.0,neutral
+PS1390,0.0,neutral
+PS1391,0.0,neutral
+PS1393,0.1027,mixed positive
+PS1394,0.0,neutral
+PS1395,-0.03875833333333333,mixed negative
+PS1396,0.003675000000000001,mixed positive
+PS1399,0.0,neutral
+PS1401,0.0,neutral
+PS1403,0.6249,strongly positive
+PS1405,0.0,neutral
+PS1406,0.0,neutral

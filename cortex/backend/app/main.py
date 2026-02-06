@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import health, auth, ingestion
+from app.api.endpoints import health, auth, ingestion, reports, resolution
 
 app = FastAPI(
     title="Cortex Engine",
@@ -28,7 +28,18 @@ app.add_middleware(
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(ingestion.router, prefix="/ingest", tags=["ingestion"])
+app.include_router(reports.router, prefix="/reports", tags=["reports"])
+app.include_router(resolution.router, prefix="/resolution", tags=["resolution"])
 
 @app.get("/")
 def root():
     return {"message": "Cortex Engine Online"}
+
+# Startup Event: Run Worker
+import asyncio
+from app.worker import worker_loop
+
+@app.on_event("startup")
+async def startup_event():
+    print("Initializing Background Worker...")
+    asyncio.create_task(worker_loop())

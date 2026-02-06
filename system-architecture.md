@@ -106,6 +106,8 @@ CORTEX/
 *   **API Layer (FastAPI)**:
     *   `POST /ingest/meta`: Accepts file metadata. Returns a `job_id` in <10ms.
     *   `PUT /ingest/blob/{id}`: Streams binary data to Storage.
+    *   `POST /reports/request`: **[NEW]** Triggers async report generation (Zeno Barrier).
+    *   `GET /reports/poll/{job_id}`: **[NEW]** Checks status and retrieves Sharded Artifact.
 *   **Asynchronous Worker (PGMQ)**:
     *   Decouples ingestion from processing.
     *   **Zombie Killer**: Middleware checks for jobs stuck in `processing` > 30s (e.g., worker crash) and resets visibility.
@@ -165,3 +167,46 @@ CORTEX/
 *   **Frontend**: Vercel (Static / Edge).
 *   **Backend**: Railway / Fly.io (Docker container for Python/Tesseract requirements).
 *   **Database**: Supabase (Managed Postgres).
+
+---
+
+## 7. Smart Reporting Engine (Epic 3 Additions)
+
+### 7.1 Core Concept: "The Dependency Pivot"
+The system dynamically generates dashboard layouts based on available data columns ("Satellites").
+*   **Logic Location**: `app/core/analysis.py` & `app/core/aggregators.py`.
+*   **Execution**: On-Demand via **Async Job** (`POST /reports/request`).
+
+### 7.2 Architecture: Async & Sharded
+*   **Pattern**: "Request & Poll" with **Zeno Barrier**.
+    *   UI blocks with a "Zeno" progress bar (never stalls).
+    *   Backend pushes job to PGMQ.
+    *   Frontend polls `GET /reports/poll/{id}`.
+*   **Data Strategy**: **Component Sharding**.
+    *   **Scenario A (Temporal)**: Generates *only* the Temporal Aggregate.
+    *   **Scenario B (Snapshot)**: Generates *Pre-Aggregated Shards* for every valid candidate (Title, Cluster, etc.).
+    *   **Benefit**: Client pivots instantly between widgets without re-fetching raw data or hitting the server.
+
+### 7.3 UX & Constraints (The "Stress Test" Rules)
+1.  **The 5-Second Rule (Ephemerality)**:
+    *   Report artifacts are strictly session-bound.
+    *   If user leaves the "Barrier" for > 5s, the process **resets**.
+2.  **Parent-Child Dependency**:
+    *   Dashboard (Child) depends on Data (Parent).
+    *   If a source file is deleted, the Dashboard **blurs** and demands "Regenerate".
+3.  **Zero Retention**:
+    *   Aggressive cleanup on Logout/Timeout. No permanent storage of visualization JSONs.
+4.  **No Visual Latency**:
+    *   The Zeno Bar must never freeze. If > 30s, it transitions to a "Retry" state (Dead Letter handling).
+
+### 7.4 Data Flow: Async Visualization
+1.  **Request**: Frontend triggers `POST /reports/request`. UI Activates Zeno Barrier.
+2.  **Worker**:
+    *   Loads Data (Parquet/Arrow preferred).
+    *   Detects Satellites & Strategy.
+    *   **Shards** the data into Widget payloads.
+    *   Saves `ReportArtifact` to DB (with `expires_at`).
+3.  **Poll & Render**:
+    *   Frontend receives Artifact.
+    *   Renders Anchor Widget.
+    *   (Scenario B) User switches Anchor instantly using cached shards.

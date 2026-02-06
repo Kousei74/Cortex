@@ -317,3 +317,121 @@ So that **I can fix a glitch or retry a stuck generation.**
 **And** the Report Generation process (Story 3.1) should restart
 **But** if the Parent Batch is expired/deleted (404), show a Toast "Session Expired. Please re-upload."
 **And** otherwise, the Parent Batch (uploaded files) should **remain intact**.
+
+### Epic 1: The Smart Dashboard (View & Logic)
+**Goal**: Users can automatically view the most coherent and high-density visualization for their dataset without manual configuration. The system intelligently pivots based on available data satellites (time, title, cluster).
+**FRs covered:** FR1, FR2, FR3
+
+### Epic 2: Reactive Generation Logic (Async & UX)
+**Goal**: Users can trigger complex analytical reports without freezing the browser. The system provides immediate "Zeno" feedback, handles long-running jobs asynchronously, and adheres to strict session-bound security boundaries (5s Rule).
+**FRs covered:** FR5, FR6, FR7, FR8, NFR3, NFR4
+
+### Epic 3: Dynamic Exploration Component (Pivoting)
+**Goal**: Users can effectively "Pivot" their view of the data (e.g., swapping from "Title" to "Cluster" view) instantly. The dashboard respects data integrity, requiring regeneration if source files are modified.
+**FRs covered:** FR4, FR9, FR10, NFR1, NFR2
+
+## Epic 1: The Smart Dashboard (View & Logic)
+
+The Smart Dashboard is the "Brain" of the visualization system. It acts as the decision-maker that inspects the raw data and automatically determines the most effective way to present it, removing the need for the user to configure charts manually.
+
+### Story 1.1: Backend Satellite Detection Logic
+
+As a System,
+I want to analyze uploaded datasets to detect "Satellite" columns,
+So that I can determine the optimal layout strategy without user input.
+
+**Acceptance Criteria:**
+
+**Given** a pandas DataFrame loaded from an uploaded file (CSV/JSON/Parquet)
+**When** the `detect_satellites` function is run
+**Then** it should return a list of present dimensions (Timestamp, Title, Cluster, Confidence)
+**And** it should return a `LayoutStrategy` Enum: `TEMPORAL_SUPREME` (if Timestamp exists) or `SNAPSHOT_PIVOT`.
+
+### Story 1.2: Scenario A - Temporal Layout Rendering
+
+As a User,
+I want to see a Multi-Line Area Chart if my data contains time-series information,
+So that I can understand trends (Positive/Negative/Neutral) over time immediately.
+
+**Acceptance Criteria:**
+
+**Given** the backend returns `LayoutStrategy.TEMPORAL_SUPREME`
+**When** the dashboard renders
+**Then** the Anchor Widget (Top) must be a Multi-Line Area Chart
+**And** the X-Axis must be Time, and Y-Axis must be Article Count by Sentiment
+**And** the Anchor dropdown must be disabled (this view is mandatory).
+
+### Story 1.3: Scenario B - Snapshot Pivot Rendering
+
+As a User,
+I want to see a Consolidated or Diverging view if my data is time-agnostic,
+So that I can analyze performance by Entity or Cluster.
+
+**Acceptance Criteria:**
+
+**Given** the backend returns `LayoutStrategy.SNAPSHOT_PIVOT`
+**When** the dashboard renders
+**Then** the Anchor Widget must default to "Consolidated View" (Combo Chart) or "Diverging View" (Bar Chart) based on available satellites
+**And** the Anchor dropdown must be enabled to allow pivoting.
+
+## Epic 2: Reactive Generation Logic (Async & UX)
+
+This epic covers the "Invisible" infrastructure that makes the "Heavy" analysis feel "Light". It enforces the 300ms rule by moving work to the background and managing the user's perception of time via the "Zeno Barrier".
+
+### Story 2.1: Async Job Dispatch (Backend)
+
+As a Developer,
+I want to offload report generation to a PGMQ worker,
+So that the API thread is never blocked for more than 300ms.
+
+**Acceptance Criteria:**
+
+**Given** a `POST /reports/request` call
+**When** received
+**Then** the backend must push a `generate_report` job to the PGMQ `report_queue`
+**And** immediately return a `job_id` to the client
+**And** the worker process should pick up the job and run the analysis logic.
+
+### Story 2.2: Zeno Barrier UI Implementation
+
+As a User,
+I want to see a smooth, non-stalling progress animation while the report generates,
+So that I know the system is working and I am not blocked from waiting.
+
+**Acceptance Criteria:**
+
+**Given** a report generation request is initiated
+**When** the request is in flight
+**Then** the main dashboard area should Blur
+**And** a "Zeno Progress Bar" should appear (moving asymptotically to 99% but never stalling)
+**And** interaction with the blurred area should be disabled.
+
+### Story 2.3: Polling and Verification
+
+As a User,
+I want the UI to check for completion and display the result automatically,
+So that I don't have to refresh the page manually.
+
+**Acceptance Criteria:**
+
+**Given** a `job_id` from the request
+**When** the frontend polls `GET /reports/poll/{job_id}`
+**Then** it should receive a status (`pending`, `completed`, `failed`)
+**And** if `completed`, it should fetch the Report Artifact and lift the Zeno Barrier
+**And** if `failed` or timeout (>30s), it should show a "Retry" button.
+
+### Story 2.4: The 5-Second Ephemerality Rule
+
+As a User,
+I want the system to reset if I abandon the generation process,
+So that I don't see stale or confusing states from previous sessions.
+
+**Acceptance Criteria:**
+
+**Given** the Zeno Barrier is active
+**When** I navigate away or reload the page and return after > 5 seconds
+**Then** the barrier should be gone and the state reset to "Input Required"
+**And** any pending polling for the old session should be cancelled.
+
+
+

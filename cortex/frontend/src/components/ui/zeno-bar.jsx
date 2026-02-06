@@ -1,17 +1,20 @@
 
 import { motion } from "framer-motion"
 
-export function ZenoBar({ progress, status }) {
-    // Sanitize progress to ensure it's always a valid number between 0 and 100
-    const safeProgress = (typeof progress === 'number' && isFinite(progress))
-        ? Math.min(Math.max(progress, 0), 100)
-        : 0;
+import { useZenoProgress } from "@/hooks/use-zeno-progress"
+
+export function ZenoBar({ progress, status, label }) {
+    // Determine the visual progress using Zeno's Paradox (Asymptote)
+    const visualProgress = useZenoProgress(progress, status);
+
+    // Sanitize progress
+    const safeProgress = Math.min(Math.max(visualProgress, 0), 100);
 
     return (
         <div className="w-full space-y-2">
             <div className="flex justify-between items-center text-xs font-mono">
                 <span className="text-secondary-custom uppercase tracking-wider">
-                    {status === 'uploading' ? 'NEURAL UPLINK ACTIVE' : status === 'complete' ? 'TRANSMISSION COMPLETE' : 'WAITING'}
+                    {label || (status === 'uploading' ? 'NEURAL UPLINK ACTIVE' : status === 'complete' ? 'TRANSMISSION COMPLETE' : 'WAITING')}
                 </span>
                 <span className="text-[var(--accent-blue-bright)]">
                     {Math.round(safeProgress)}%

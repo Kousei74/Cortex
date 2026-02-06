@@ -23,7 +23,8 @@ export const useStagingStore = create((set, get) => ({
             size: file.size,
             type: file.type,
             status: 'staged', // staged, uploading, complete, error
-            progress: 0
+            progress: 0,
+            message: ''
         }))
 
         const currentFiles = get().files
@@ -53,10 +54,10 @@ export const useStagingStore = create((set, get) => ({
         if (filesToUpload.length === 0) return
 
         // Helper to update specific file status/progress
-        const updateFileStatus = (id, status, progress = 0) => {
+        const updateFileStatus = (id, status, progress = 0, message = '') => {
             const currentFiles = get().files
             const updated = currentFiles.map(f =>
-                f.id === id ? { ...f, status, progress } : f
+                f.id === id ? { ...f, status, progress, message } : f
             )
             set({ files: updated })
         }
@@ -64,16 +65,30 @@ export const useStagingStore = create((set, get) => ({
         // Process sequentially for now (or Promise.all for parallel)
         // Let's do parallel with Promise.all for the "Batch" feel
         const uploadPromises = filesToUpload.map(async (fileWrapper) => {
-            updateFileStatus(fileWrapper.id, 'uploading', 0)
+            updateFileStatus(fileWrapper.id, 'uploading', 0, 'INITIALIZING UPLINK...')
 
             try {
-                await api.uploadFile(fileWrapper.file, (progress) => {
-                    updateFileStatus(fileWrapper.id, 'uploading', progress)
-                })
-                updateFileStatus(fileWrapper.id, 'complete', 100)
+                const result = await api.uploadFile(
+                    fileWrapper.file,
+                    (progress) => {
+                        updateFileStatus(fileWrapper.id, 'uploading', progress, 'TRANSMITTING...')
+                    },
+                    (statusMessage) => {
+                        updateFileStatus(fileWrapper.id, 'uploading', fileWrapper.progress, statusMessage)
+                    }
+                )
+                // Capture Backend ID
+                // Note: result.id is the backend file_id
+                const currentFiles = get().files
+                const updated = currentFiles.map(f =>
+                    f.id === fileWrapper.id ? { ...f, status: 'complete', progress: 100, message: 'SYNC COMPLETE', backendId: result.id } : f
+                )
+                set({ files: updated })
+                // updateFileStatus would overwrite the backendId if called after?
+                // We did manual update above.
             } catch (error) {
                 console.error(`Failed to upload ${fileWrapper.name}:`, error)
-                updateFileStatus(fileWrapper.id, 'error', 0)
+                updateFileStatus(fileWrapper.id, 'error', 0, 'TRANSMISSION FAILED')
             }
         })
 
@@ -90,7 +105,7 @@ export const useStagingStore = create((set, get) => ({
             if (files) {
                 // Reset 'uploading' to 'staged' if implementation was interrupted
                 const sanitized = files.map(f =>
-                    f.status === 'uploading' ? { ...f, status: 'staged', progress: 0 } : f
+                    f.status === 'uploading' ? { ...f, status: 'staged', progress: 0, message: '' } : f
                 )
                 set({ files: sanitized, initialized: true })
             } else {

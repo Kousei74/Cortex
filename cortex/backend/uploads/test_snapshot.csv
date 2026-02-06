@@ -1,0 +1,4 @@
+ID,Title,Cluster,Confidence,Sentiment
+1,Issue A,C1,0.9,0.1
+2,Issue B,C2,0.8,0.5
+3,Issue A,C1,0.95,0.2

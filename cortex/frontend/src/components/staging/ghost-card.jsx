@@ -9,7 +9,7 @@ export function GhostCard({ file, onRemove }) {
         'error': 'border-[var(--semantic-error)]'
     }[file.status] || 'border-subtle-custom'
 
-    const statusText = {
+    const statusText = file.message || {
         'staged': 'READY TO SYNC',
         'uploading': 'TRANSMITTING...',
         'complete': 'SYNC COMPLETE',

@@ -65,41 +65,59 @@ export const api = {
         return response.json();
     },
 
-    uploadFile: (file, onProgress) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                // Step 1: Send Metadata
-                const metaResponse = await fetch(`${API_BASE_URL}/ingest/meta`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...getAuthHeaders()
-                    },
-                    body: JSON.stringify({
-                        filename: file.name,
-                        file_type: file.type,
-                        file_size: file.size
-                    })
-                });
+    uploadFile: async (file, onProgress, onStatus) => {
+        try {
+            // Step 1: Send Metadata
+            const metaResponse = await fetch(`${API_BASE_URL}/ingest/meta`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify({
+                    filename: file.name,
+                    file_type: file.type,
+                    file_size: file.size
+                })
+            });
 
-                if (!metaResponse.ok) {
-                    throw new Error("Metadata registration failed");
-                }
-
-                const metaData = await metaResponse.json();
-                const uploadUrl = `${API_BASE_URL}${metaData.upload_url}`;
-
-                // Step 2: Upload Binary Blob (with Retry)
-                const token = localStorage.getItem("cortex_token");
-                const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-
-                // Use the utility function
-                return requestUploadWithRetry(uploadUrl, headers, file, onProgress);
-
-            } catch (error) {
-                reject(error);
+            if (!metaResponse.ok) {
+                throw new Error("Metadata registration failed");
             }
+
+            const metaData = await metaResponse.json();
+            const uploadUrl = `${API_BASE_URL}${metaData.upload_url}`;
+
+            // Step 2: Upload Binary Blob (with Retry)
+            const token = localStorage.getItem("cortex_token");
+            const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
+            // Use the utility function
+            return await requestUploadWithRetry(uploadUrl, headers, file, onProgress, onStatus);
+
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    createReportJob: async (fileIds, projectId = "default") => {
+        const response = await fetch(`${API_BASE_URL}/reports/jobs`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({
+                file_ids: fileIds,
+                project_id: projectId
+            })
         });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ detail: "Job Creation Failed" }));
+            throw new Error(error.detail || "Job Creation Failed");
+        }
+        return response.json();
     }
 };
 

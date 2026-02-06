@@ -10,23 +10,26 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import { validateMagicBytes } from '@/lib/magic-bytes'
 
-export function DropZone() {
+export function DropZone({ onUploadComplete }) {
     const { addFiles, files, removeFile, uploadBatch } = useStagingStore()
     const [showResetDialog, setShowResetDialog] = useState(false)
 
     const onDrop = useCallback(acceptedFiles => {
-        addFiles(acceptedFiles)
-    }, [addFiles])
+        addFiles(acceptedFiles);
+    }, [addFiles]);
 
     const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
         onDrop,
         accept: {
             'text/csv': ['.csv'],
             'application/json': ['.json'],
-            'text/plain': ['.txt', '.log']
+            'text/plain': ['.txt', '.log'],
+            // 'application/pdf': ['.pdf'], // PDF support pending backend Ocr
+            'image/*': ['.png', '.jpg', '.jpeg', '.webp']
         }
-    })
+    });
 
     const handleUpload = async (e) => {
         e.stopPropagation();
@@ -39,6 +42,9 @@ export function DropZone() {
 
         try {
             await uploadBatch(api);
+            if (onUploadComplete) {
+                onUploadComplete();
+            }
         } catch (error) {
             console.error("Upload Batch Failed:", error);
             // Show user-friendly toast
@@ -138,7 +144,11 @@ export function DropZone() {
                     <div className="flex-1 ml-6 max-w-md flex justify-end">
                         {isUploading ? (
                             <div className="w-full">
-                                <ZenoBar progress={totalProgress} status="uploading" />
+                                <ZenoBar
+                                    progress={totalProgress}
+                                    status="uploading"
+                                    label={files.find(f => f.status === 'uploading' && f.message && !f.message.includes('TRANSMITTING'))?.message}
+                                />
                             </div>
                         ) : (
                             hasStagedFiles && (

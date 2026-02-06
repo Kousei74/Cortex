@@ -1,0 +1,1036 @@
+id,category_cluster
+PS0001,"['Controls/UX', 'Gameplay', 'Graphics', 'spaCy_noun', 'Audio']"
+PS0004,"['Business', 'spaCy_noun']"
+PS0006,['Gameplay']
+PS0007,"['spaCy_noun', 'Management', 'Community', 'Gameplay']"
+PS0009,"['Management', 'Gameplay']"
+PS0010,"['Gameplay', 'Innovation', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0011,['spaCy_noun']
+PS0012,"['spaCy_noun', 'Controls/UX']"
+PS0013,"['spaCy_noun', 'Gameplay']"
+PS0014,"['spaCy_noun', 'Gameplay']"
+PS0017,"['Business', 'spaCy_noun', 'Monetization', 'Gameplay']"
+PS0018,"['Gameplay', 'Graphics', 'Multiplayer', 'Progression', 'spaCy_noun']"
+PS0019,['spaCy_noun']
+PS0020,"['Customer Support', 'Cinematics', 'spaCy_noun', 'Gameplay']"
+PS0021,['spaCy_noun']
+PS0022,"['Story', 'spaCy_noun', 'Gameplay']"
+PS0023,['spaCy_noun']
+PS0024,['spaCy_noun']
+PS0025,['spaCy_noun']
+PS0026,"['spaCy_noun', 'Monetization', 'Controls/UX', 'Gameplay']"
+PS0027,"['Modding', 'Controls/UX', 'Gameplay', 'Graphics', 'Balance', 'Multiplayer', 'Monetization', 'Progression', 'spaCy_noun', 'Audio']"
+PS0028,['Gameplay']
+PS0029,"['spaCy_noun', 'Monetization']"
+PS0030,"['Modding', 'Performance', 'Gameplay', 'Multiplayer', 'Monetization', 'spaCy_noun', 'Management']"
+PS0031,"['spaCy_noun', 'Gameplay']"
+PS0032,['spaCy_noun']
+PS0034,['spaCy_noun']
+PS0035,['spaCy_noun']
+PS0037,['spaCy_noun']
+PS0038,['spaCy_noun']
+PS0039,"['spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0040,['spaCy_noun']
+PS0041,"['Customer Support', 'spaCy_noun', 'Gameplay']"
+PS0042,['spaCy_noun']
+PS0043,['spaCy_noun']
+PS0044,"['Controls/UX', 'Gameplay', 'Story', 'Monetization', 'Progression', 'Community', 'Customer Support', 'spaCy_noun', 'Management']"
+PS0045,"['Customer Support', 'spaCy_noun']"
+PS0046,['spaCy_noun']
+PS0047,['spaCy_noun']
+PS0048,['spaCy_noun']
+PS0049,"['spaCy_noun', 'Management', 'Gameplay']"
+PS0050,"['Customer Support', 'spaCy_noun']"
+PS0051,"['spaCy_noun', 'Controls/UX']"
+PS0053,['spaCy_noun']
+PS0054,['spaCy_noun']
+PS0055,['spaCy_noun']
+PS0057,['spaCy_noun']
+PS0058,['Customer Support']
+PS0060,"['Performance', 'Gameplay', 'Balance', 'Multiplayer', 'Platform', 'Monetization', 'Customer Support', 'spaCy_noun']"
+PS0061,"['spaCy_noun', 'Progression', 'Management']"
+PS0062,"['Business', 'Story', 'spaCy_noun']"
+PS0063,"['Customer Support', 'Cinematics', 'spaCy_noun', 'Management']"
+PS0068,"['spaCy_noun', 'Gameplay']"
+PS0069,"['Graphics', 'spaCy_noun', 'Audio', 'Gameplay']"
+PS0070,"['Gameplay', 'Graphics', 'Innovation', 'Balance', 'Multiplayer', 'spaCy_noun']"
+PS0072,"['spaCy_noun', 'Controls/UX']"
+PS0075,['spaCy_noun']
+PS0076,['spaCy_noun']
+PS0077,"['spaCy_noun', 'Gameplay']"
+PS0079,['spaCy_noun']
+PS0080,"['spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0082,['Audio']
+PS0083,['spaCy_noun']
+PS0085,['spaCy_noun']
+PS0087,"['Customer Support', 'Multiplayer', 'Gameplay']"
+PS0088,"['spaCy_noun', 'Audio']"
+PS0089,"['Controls/UX', 'Gameplay', 'Story', 'Graphics', 'spaCy_noun']"
+PS0094,"['Customer Support', 'spaCy_noun', 'Performance', 'Gameplay']"
+PS0095,['spaCy_noun']
+PS0096,['spaCy_noun']
+PS0097,['spaCy_noun']
+PS0098,"['Graphics', 'spaCy_noun']"
+PS0099,['spaCy_noun']
+PS0101,['spaCy_noun']
+PS0102,"['Customer Support', 'Controls/UX', 'Gameplay', 'Performance', 'Graphics', 'Balance', 'Multiplayer', 'Platform', 'spaCy_noun']"
+PS0103,"['Performance', 'Gameplay', 'Story', 'Controls/UX', 'Customer Support', 'spaCy_noun']"
+PS0105,['spaCy_noun']
+PS0107,['spaCy_noun']
+PS0109,"['spaCy_noun', 'Gameplay']"
+PS0112,['spaCy_noun']
+PS0113,['spaCy_noun']
+PS0114,['Graphics']
+PS0115,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS0116,"['Graphics', 'spaCy_noun', 'Gameplay']"
+PS0117,"['Performance', 'Gameplay', 'Graphics', 'Balance', 'Customer Support', 'spaCy_noun']"
+PS0118,"['Customer Support', 'spaCy_noun', 'Monetization', 'Community']"
+PS0119,['spaCy_noun']
+PS0120,"['spaCy_noun', 'Audio']"
+PS0121,['spaCy_noun']
+PS0123,['spaCy_noun']
+PS0124,['spaCy_noun']
+PS0125,"['spaCy_noun', 'Gameplay']"
+PS0127,['spaCy_noun']
+PS0128,"['spaCy_noun', 'Modding', 'Controls/UX', 'Gameplay']"
+PS0130,['Customer Support']
+PS0131,['spaCy_noun']
+PS0132,"['Audio', 'spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0133,['spaCy_noun']
+PS0135,['spaCy_noun']
+PS0136,['spaCy_noun']
+PS0137,['spaCy_noun']
+PS0139,"['spaCy_noun', 'DRM', 'Progression', 'Gameplay']"
+PS0140,"['Story', 'spaCy_noun', 'Audio']"
+PS0142,['spaCy_noun']
+PS0143,"['Gameplay', 'Story', 'Multiplayer', 'Community', 'spaCy_noun']"
+PS0144,['spaCy_noun']
+PS0145,['spaCy_noun']
+PS0147,['spaCy_noun']
+PS0149,"['Story', 'Customer Support', 'spaCy_noun', 'Gameplay']"
+PS0151,['spaCy_noun']
+PS0152,['spaCy_noun']
+PS0153,['spaCy_noun']
+PS0154,['spaCy_noun']
+PS0155,"['Customer Support', 'Controls/UX', 'Gameplay', 'Platform', 'spaCy_noun', 'DRM', 'Management']"
+PS0156,['spaCy_noun']
+PS0158,"['Performance', 'spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0159,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS0160,['spaCy_noun']
+PS0162,['Community']
+PS0163,"['spaCy_noun', 'Progression']"
+PS0166,['spaCy_noun']
+PS0169,['spaCy_noun']
+PS0170,['spaCy_noun']
+PS0171,['spaCy_noun']
+PS0172,"['Performance', 'Gameplay', 'Story', 'spaCy_noun', 'Management']"
+PS0173,['spaCy_noun']
+PS0174,['spaCy_noun']
+PS0175,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS0176,['Audio']
+PS0177,['spaCy_noun']
+PS0178,"['spaCy_noun', 'Audio']"
+PS0179,"['Multiplayer', 'spaCy_noun', 'Balance']"
+PS0180,['spaCy_noun']
+PS0181,['spaCy_noun']
+PS0182,"['spaCy_noun', 'Graphics']"
+PS0184,['Audio']
+PS0185,"['Controls/UX', 'Gameplay', 'Story', 'Graphics', 'Progression', 'Customer Support', 'spaCy_noun', 'Management', 'Audio']"
+PS0186,['spaCy_noun']
+PS0188,['spaCy_noun']
+PS0190,['spaCy_noun']
+PS0191,['spaCy_noun']
+PS0192,['Graphics']
+PS0193,['Audio']
+PS0194,['spaCy_noun']
+PS0195,['spaCy_noun']
+PS0196,['spaCy_noun']
+PS0197,['Gameplay']
+PS0199,"['Business', 'spaCy_noun']"
+PS0200,['spaCy_noun']
+PS0201,['spaCy_noun']
+PS0204,['spaCy_noun']
+PS0205,['spaCy_noun']
+PS0207,['spaCy_noun']
+PS0208,"['spaCy_noun', 'Gameplay']"
+PS0213,"['Performance', 'Gameplay', 'Story', 'Controls/UX', 'Cinematics', 'Graphics', 'Balance', 'Monetization', 'spaCy_noun', 'Audio']"
+PS0215,"['spaCy_noun', 'Management']"
+PS0216,"['spaCy_noun', 'Controls/UX', 'Graphics']"
+PS0217,['spaCy_noun']
+PS0218,['spaCy_noun']
+PS0220,"['Multiplayer', 'spaCy_noun', 'Controls/UX', 'Performance']"
+PS0221,['spaCy_noun']
+PS0222,"['Customer Support', 'spaCy_noun']"
+PS0223,"['Story', 'Customer Support', 'spaCy_noun', 'Gameplay']"
+PS0225,"['Controls/UX', 'Gameplay', 'Performance', 'Business', 'Multiplayer', 'Monetization', 'spaCy_noun']"
+PS0226,"['Gameplay', 'Balance', 'Progression', 'spaCy_noun', 'Audio']"
+PS0227,['Gameplay']
+PS0228,['spaCy_noun']
+PS0232,"['Customer Support', 'spaCy_noun']"
+PS0234,['spaCy_noun']
+PS0235,"['spaCy_noun', 'Progression']"
+PS0236,['spaCy_noun']
+PS0237,['spaCy_noun']
+PS0238,['spaCy_noun']
+PS0239,['spaCy_noun']
+PS0243,['Gameplay']
+PS0244,"['spaCy_noun', 'Gameplay']"
+PS0246,"['Controls/UX', 'Gameplay', 'Story', 'Performance', 'Business', 'spaCy_noun']"
+PS0247,['spaCy_noun']
+PS0248,"['spaCy_noun', 'Gameplay']"
+PS0250,['spaCy_noun']
+PS0251,['spaCy_noun']
+PS0252,['spaCy_noun']
+PS0253,"['spaCy_noun', 'Audio']"
+PS0254,['spaCy_noun']
+PS0255,['spaCy_noun']
+PS0256,"['Customer Support', 'spaCy_noun', 'Progression', 'Gameplay']"
+PS0257,"['Business', 'spaCy_noun']"
+PS0258,"['Platform', 'spaCy_noun']"
+PS0259,"['spaCy_noun', 'Performance']"
+PS0260,"['spaCy_noun', 'Audio', 'Balance']"
+PS0261,['spaCy_noun']
+PS0264,['spaCy_noun']
+PS0265,['spaCy_noun']
+PS0266,"['Gameplay', 'Graphics', 'Multiplayer', 'Monetization', 'Customer Support', 'spaCy_noun']"
+PS0267,['spaCy_noun']
+PS0268,['spaCy_noun']
+PS0269,"['Business', 'spaCy_noun']"
+PS0270,['spaCy_noun']
+PS0271,['spaCy_noun']
+PS0272,['spaCy_noun']
+PS0273,['spaCy_noun']
+PS0274,"['Story', 'spaCy_noun']"
+PS0275,['spaCy_noun']
+PS0276,"['Customer Support', 'Community', 'Platform', 'spaCy_noun', 'DRM']"
+PS0277,['spaCy_noun']
+PS0278,['spaCy_noun']
+PS0279,['spaCy_noun']
+PS0281,['Gameplay']
+PS0282,"['spaCy_noun', 'Audio']"
+PS0283,['Audio']
+PS0285,"['Controls/UX', 'Gameplay', 'Graphics', 'spaCy_noun', 'Audio']"
+PS0286,"['Controls/UX', 'Gameplay', 'Platform', 'Progression', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0287,"['Business', 'spaCy_noun', 'Progression']"
+PS0288,['spaCy_noun']
+PS0289,"['spaCy_noun', 'Gameplay']"
+PS0290,"['spaCy_noun', 'Gameplay']"
+PS0294,['Audio']
+PS0296,"['Gameplay', 'Story', 'Progression', 'spaCy_noun', 'Management']"
+PS0297,['spaCy_noun']
+PS0298,['spaCy_noun']
+PS0299,"['Business', 'Customer Support', 'spaCy_noun']"
+PS0300,"['spaCy_noun', 'Gameplay']"
+PS0301,"['spaCy_noun', 'Modding']"
+PS0303,"['Platform', 'spaCy_noun', 'Gameplay']"
+PS0304,"['Business', 'spaCy_noun', 'Progression', 'Audio']"
+PS0305,['spaCy_noun']
+PS0306,['spaCy_noun']
+PS0307,['spaCy_noun']
+PS0309,['spaCy_noun']
+PS0311,['Audio']
+PS0314,['spaCy_noun']
+PS0315,['spaCy_noun']
+PS0317,"['Business', 'spaCy_noun', 'Graphics']"
+PS0318,['spaCy_noun']
+PS0321,['spaCy_noun']
+PS0322,['spaCy_noun']
+PS0323,"['spaCy_noun', 'Gameplay']"
+PS0324,"['Customer Support', 'spaCy_noun', 'Progression']"
+PS0326,['spaCy_noun']
+PS0327,['spaCy_noun']
+PS0328,['spaCy_noun']
+PS0329,['Business']
+PS0333,['spaCy_noun']
+PS0335,['spaCy_noun']
+PS0336,"['spaCy_noun', 'Graphics']"
+PS0338,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS0339,"['spaCy_noun', 'Audio']"
+PS0340,"['Gameplay', 'Business', 'Multiplayer', 'Progression', 'Customer Support', 'spaCy_noun']"
+PS0341,"['Graphics', 'spaCy_noun', 'Progression', 'Gameplay']"
+PS0342,"['Customer Support', 'Gameplay']"
+PS0343,['Business']
+PS0345,['spaCy_noun']
+PS0346,['Customer Support']
+PS0347,['spaCy_noun']
+PS0348,['spaCy_noun']
+PS0349,['spaCy_noun']
+PS0351,"['Controls/UX', 'Gameplay', 'Graphics', 'Community', 'Customer Support', 'spaCy_noun']"
+PS0352,"['spaCy_noun', 'Performance']"
+PS0354,['spaCy_noun']
+PS0355,['Audio']
+PS0356,['spaCy_noun']
+PS0357,['spaCy_noun']
+PS0360,"['spaCy_noun', 'Performance', 'Gameplay']"
+PS0361,"['spaCy_noun', 'Monetization', 'Audio', 'Gameplay']"
+PS0364,['spaCy_noun']
+PS0367,['spaCy_noun']
+PS0368,['spaCy_noun']
+PS0369,"['spaCy_noun', 'Gameplay']"
+PS0370,['Business']
+PS0371,"['Performance', 'Graphics', 'Platform', 'Customer Support', 'spaCy_noun']"
+PS0372,"['Controls/UX', 'Gameplay', 'Story', 'Cinematics', 'Progression', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0373,['spaCy_noun']
+PS0374,"['Replayability', 'Gameplay', 'Monetization', 'Progression', 'Community', 'spaCy_noun', 'Management']"
+PS0375,['spaCy_noun']
+PS0376,['spaCy_noun']
+PS0377,['spaCy_noun']
+PS0378,['spaCy_noun']
+PS0380,['spaCy_noun']
+PS0381,"['spaCy_noun', 'Gameplay']"
+PS0383,['spaCy_noun']
+PS0384,"['spaCy_noun', 'Gameplay']"
+PS0386,['spaCy_noun']
+PS0388,['spaCy_noun']
+PS0390,"['Performance', 'Gameplay', 'Graphics', 'Customer Support', 'spaCy_noun', 'Management', 'Audio']"
+PS0391,"['spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0392,['spaCy_noun']
+PS0393,['Audio']
+PS0394,['spaCy_noun']
+PS0395,['spaCy_noun']
+PS0396,"['spaCy_noun', 'Innovation', 'Controls/UX', 'Gameplay']"
+PS0397,"['spaCy_noun', 'Balance']"
+PS0400,"['Controls/UX', 'Gameplay', 'Story', 'Progression', 'spaCy_noun']"
+PS0401,"['Gameplay', 'Multiplayer', 'Monetization', 'Customer Support', 'spaCy_noun', 'Management']"
+PS0402,"['Customer Support', 'spaCy_noun']"
+PS0405,['spaCy_noun']
+PS0406,"['Controls/UX', 'Gameplay', 'Story', 'Innovation', 'Balance', 'Customer Support', 'spaCy_noun']"
+PS0407,"['spaCy_noun', 'Performance', 'Gameplay']"
+PS0408,"['spaCy_noun', 'Gameplay']"
+PS0409,['spaCy_noun']
+PS0410,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS0411,"['spaCy_noun', 'DRM']"
+PS0412,['Business']
+PS0413,['spaCy_noun']
+PS0414,['spaCy_noun']
+PS0415,['Cinematics']
+PS0416,"['Controls/UX', 'Gameplay', 'Cinematics', 'Graphics', 'Innovation', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0417,['spaCy_noun']
+PS0418,"['spaCy_noun', 'Gameplay']"
+PS0419,"['spaCy_noun', 'Gameplay']"
+PS0421,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS0422,['spaCy_noun']
+PS0424,['spaCy_noun']
+PS0426,['Business']
+PS0429,['spaCy_noun']
+PS0430,['Management']
+PS0432,"['spaCy_noun', 'Gameplay']"
+PS0433,['spaCy_noun']
+PS0434,['spaCy_noun']
+PS0436,['spaCy_noun']
+PS0437,"['spaCy_noun', 'Gameplay']"
+PS0438,['spaCy_noun']
+PS0439,"['Controls/UX', 'Gameplay', 'Graphics', 'Multiplayer', 'Customer Support', 'spaCy_noun']"
+PS0440,"['Graphics', 'spaCy_noun', 'Monetization', 'Gameplay']"
+PS0441,['spaCy_noun']
+PS0442,['spaCy_noun']
+PS0443,['spaCy_noun']
+PS0446,['spaCy_noun']
+PS0447,"['spaCy_noun', 'Gameplay']"
+PS0448,"['Customer Support', 'spaCy_noun']"
+PS0449,['spaCy_noun']
+PS0450,"['Gameplay', 'Graphics', 'Community', 'Customer Support', 'spaCy_noun']"
+PS0451,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS0452,"['Audio', 'Graphics', 'spaCy_noun']"
+PS0453,['spaCy_noun']
+PS0454,['spaCy_noun']
+PS0455,"['Story', 'spaCy_noun', 'Gameplay']"
+PS0456,['spaCy_noun']
+PS0457,['spaCy_noun']
+PS0458,['spaCy_noun']
+PS0459,['spaCy_noun']
+PS0460,"['Story', 'spaCy_noun', 'Gameplay']"
+PS0461,['spaCy_noun']
+PS0464,"['spaCy_noun', 'Modding', 'Audio']"
+PS0465,['spaCy_noun']
+PS0466,['spaCy_noun']
+PS0467,"['spaCy_noun', 'Management', 'Gameplay']"
+PS0468,"['spaCy_noun', 'Gameplay']"
+PS0470,['Audio']
+PS0471,['spaCy_noun']
+PS0472,['Audio']
+PS0473,"['spaCy_noun', 'Gameplay', 'Graphics']"
+PS0477,"['Customer Support', 'Multiplayer', 'spaCy_noun']"
+PS0478,"['Gameplay', 'Progression', 'Community', 'Platform', 'spaCy_noun']"
+PS0479,['spaCy_noun']
+PS0480,['spaCy_noun']
+PS0482,['spaCy_noun']
+PS0483,"['spaCy_noun', 'Management', 'Controls/UX']"
+PS0484,['spaCy_noun']
+PS0485,['spaCy_noun']
+PS0486,['spaCy_noun']
+PS0487,['spaCy_noun']
+PS0489,['spaCy_noun']
+PS0490,"['Multiplayer', 'spaCy_noun', 'Graphics']"
+PS0491,['spaCy_noun']
+PS0492,"['spaCy_noun', 'Gameplay']"
+PS0493,"['Performance', 'Gameplay', 'Progression', 'spaCy_noun', 'Management']"
+PS0494,['spaCy_noun']
+PS0495,['spaCy_noun']
+PS0496,"['Business', 'spaCy_noun', 'Management', 'Performance']"
+PS0497,"['Controls/UX', 'Gameplay', 'Progression', 'Customer Support', 'spaCy_noun']"
+PS0499,['spaCy_noun']
+PS0500,"['Platform', 'Gameplay']"
+PS0502,['spaCy_noun']
+PS0503,['spaCy_noun']
+PS0504,['spaCy_noun']
+PS0505,['spaCy_noun']
+PS0506,"['Performance', 'Gameplay', 'Multiplayer', 'Customer Support', 'spaCy_noun', 'Management']"
+PS0507,"['Graphics', 'spaCy_noun', 'Gameplay']"
+PS0509,"['Graphics', 'spaCy_noun']"
+PS0510,['spaCy_noun']
+PS0511,"['Story', 'spaCy_noun', 'Gameplay']"
+PS0512,['spaCy_noun']
+PS0513,"['spaCy_noun', 'Gameplay']"
+PS0517,['spaCy_noun']
+PS0518,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS0519,['spaCy_noun']
+PS0520,"['spaCy_noun', 'Gameplay']"
+PS0521,"['Customer Support', 'spaCy_noun']"
+PS0522,['spaCy_noun']
+PS0524,"['spaCy_noun', 'Gameplay']"
+PS0525,"['spaCy_noun', 'DRM', 'Controls/UX']"
+PS0526,['spaCy_noun']
+PS0527,"['Gameplay', 'Multiplayer', 'Monetization', 'Customer Support', 'spaCy_noun', 'DRM', 'Audio']"
+PS0528,"['spaCy_noun', 'Innovation', 'Gameplay']"
+PS0530,['spaCy_noun']
+PS0531,"['Graphics', 'spaCy_noun', 'Gameplay']"
+PS0532,"['Story', 'spaCy_noun']"
+PS0533,"['Customer Support', 'Multiplayer', 'spaCy_noun', 'Gameplay']"
+PS0534,['spaCy_noun']
+PS0535,['spaCy_noun']
+PS0536,"['Multiplayer', 'spaCy_noun']"
+PS0537,"['Controls/UX', 'Performance', 'Gameplay', 'Customer Support', 'spaCy_noun']"
+PS0539,"['spaCy_noun', 'Gameplay', 'Graphics']"
+PS0540,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS0541,"['spaCy_noun', 'Monetization', 'Controls/UX', 'Gameplay']"
+PS0542,"['Cinematics', 'spaCy_noun', 'Gameplay']"
+PS0543,"['Gameplay', 'Story', 'Graphics', 'Multiplayer', 'Monetization', 'Progression', 'Customer Support', 'spaCy_noun', 'Management']"
+PS0544,['spaCy_noun']
+PS0545,['Audio']
+PS0547,['spaCy_noun']
+PS0548,"['Customer Support', 'spaCy_noun', 'Performance']"
+PS0550,['spaCy_noun']
+PS0551,['Gameplay']
+PS0552,['Audio']
+PS0553,['spaCy_noun']
+PS0554,['spaCy_noun']
+PS0555,"['Multiplayer', 'spaCy_noun', 'Controls/UX']"
+PS0556,"['Controls/UX', 'Gameplay', 'Performance', 'Graphics', 'Multiplayer', 'Progression', 'Customer Support', 'spaCy_noun', 'Management']"
+PS0557,['spaCy_noun']
+PS0558,"['Customer Support', 'spaCy_noun', 'Gameplay', 'Graphics']"
+PS0559,['spaCy_noun']
+PS0560,['spaCy_noun']
+PS0561,['spaCy_noun']
+PS0563,"['Gameplay', 'Multiplayer', 'Progression', 'spaCy_noun', 'Management']"
+PS0564,"['Customer Support', 'spaCy_noun', 'Controls/UX']"
+PS0565,"['Performance', 'Gameplay', 'Controls/UX', 'Business', 'Multiplayer', 'Progression', 'Platform', 'spaCy_noun']"
+PS0566,"['Controls/UX', 'Gameplay', 'Story', 'Graphics', 'Innovation', 'Multiplayer', 'Monetization', 'Progression', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0567,['spaCy_noun']
+PS0568,['spaCy_noun']
+PS0569,"['Story', 'Customer Support', 'spaCy_noun']"
+PS0570,['spaCy_noun']
+PS0571,['spaCy_noun']
+PS0572,['Business']
+PS0576,"['Performance', 'Gameplay', 'spaCy_noun', 'DRM', 'Management']"
+PS0577,"['spaCy_noun', 'Gameplay']"
+PS0578,['spaCy_noun']
+PS0579,['spaCy_noun']
+PS0580,['spaCy_noun']
+PS0581,"['spaCy_noun', 'Management']"
+PS0583,"['Business', 'Multiplayer', 'spaCy_noun']"
+PS0585,['spaCy_noun']
+PS0586,"['Gameplay', 'Story', 'Graphics', 'Business', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0589,"['Multiplayer', 'spaCy_noun', 'Management', 'Gameplay']"
+PS0590,"['Customer Support', 'spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0591,['spaCy_noun']
+PS0592,['Audio']
+PS0593,"['spaCy_noun', 'Gameplay']"
+PS0594,"['Platform', 'spaCy_noun', 'Performance']"
+PS0595,"['spaCy_noun', 'Controls/UX']"
+PS0596,['spaCy_noun']
+PS0597,['Audio']
+PS0598,"['Graphics', 'spaCy_noun']"
+PS0599,['spaCy_noun']
+PS0600,['Audio']
+PS0601,"['spaCy_noun', 'Gameplay']"
+PS0602,['spaCy_noun']
+PS0604,"['spaCy_noun', 'Audio']"
+PS0606,['spaCy_noun']
+PS0609,['spaCy_noun']
+PS0611,"['spaCy_noun', 'Audio']"
+PS0612,['spaCy_noun']
+PS0613,"['spaCy_noun', 'Progression', 'Performance', 'Graphics']"
+PS0614,"['spaCy_noun', 'Management', 'Gameplay']"
+PS0618,['spaCy_noun']
+PS0619,['spaCy_noun']
+PS0620,"['spaCy_noun', 'Gameplay']"
+PS0621,['spaCy_noun']
+PS0622,"['spaCy_noun', 'DRM']"
+PS0625,"['spaCy_noun', 'Gameplay']"
+PS0627,"['spaCy_noun', 'Gameplay']"
+PS0628,['spaCy_noun']
+PS0629,['spaCy_noun']
+PS0631,['spaCy_noun']
+PS0632,"['Business', 'spaCy_noun', 'Gameplay']"
+PS0634,['spaCy_noun']
+PS0635,['spaCy_noun']
+PS0637,['spaCy_noun']
+PS0638,['spaCy_noun']
+PS0639,"['spaCy_noun', 'Audio']"
+PS0641,['spaCy_noun']
+PS0642,['spaCy_noun']
+PS0643,['Audio']
+PS0644,"['Story', 'spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0647,['Customer Support']
+PS0649,"['spaCy_noun', 'Progression']"
+PS0650,"['Gameplay', 'Story', 'Monetization', 'Customer Support', 'spaCy_noun']"
+PS0651,"['Business', 'spaCy_noun', 'Monetization', 'Gameplay']"
+PS0653,"['Gameplay', 'Story', 'Graphics', 'Monetization', 'spaCy_noun']"
+PS0654,['spaCy_noun']
+PS0655,"['Controls/UX', 'Gameplay', 'Story', 'Performance', 'Graphics', 'Balance', 'Monetization', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0656,['spaCy_noun']
+PS0657,"['Multiplayer', 'spaCy_noun', 'Audio', 'Gameplay']"
+PS0658,['spaCy_noun']
+PS0659,['spaCy_noun']
+PS0660,['spaCy_noun']
+PS0662,['Gameplay']
+PS0663,"['Customer Support', 'spaCy_noun', 'Audio', 'Gameplay']"
+PS0664,"['Gameplay', 'Graphics', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0669,['spaCy_noun']
+PS0671,['spaCy_noun']
+PS0672,['spaCy_noun']
+PS0674,"['spaCy_noun', 'Gameplay']"
+PS0675,['spaCy_noun']
+PS0676,['spaCy_noun']
+PS0679,"['Story', 'spaCy_noun', 'Gameplay']"
+PS0681,['spaCy_noun']
+PS0682,"['spaCy_noun', 'Gameplay']"
+PS0683,"['Controls/UX', 'Multiplayer', 'Progression', 'spaCy_noun', 'Audio']"
+PS0685,['Platform']
+PS0687,['Audio']
+PS0688,['Gameplay']
+PS0690,['spaCy_noun']
+PS0691,"['spaCy_noun', 'Management']"
+PS0692,['spaCy_noun']
+PS0693,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS0694,"['Performance', 'Gameplay', 'Business', 'Multiplayer', 'spaCy_noun']"
+PS0695,['spaCy_noun']
+PS0696,['spaCy_noun']
+PS0697,['spaCy_noun']
+PS0698,"['Performance', 'Gameplay', 'Story', 'Progression', 'Community', 'spaCy_noun', 'Management']"
+PS0699,['spaCy_noun']
+PS0700,"['spaCy_noun', 'Audio']"
+PS0701,['spaCy_noun']
+PS0703,['spaCy_noun']
+PS0704,"['spaCy_noun', 'Performance']"
+PS0705,['spaCy_noun']
+PS0708,"['spaCy_noun', 'Performance', 'Gameplay']"
+PS0709,"['spaCy_noun', 'Gameplay']"
+PS0710,"['spaCy_noun', 'Performance', 'Gameplay']"
+PS0712,['spaCy_noun']
+PS0713,"['spaCy_noun', 'Audio']"
+PS0714,"['Customer Support', 'spaCy_noun', 'Audio', 'Gameplay']"
+PS0715,"['spaCy_noun', 'Audio']"
+PS0716,['spaCy_noun']
+PS0722,['spaCy_noun']
+PS0723,['spaCy_noun']
+PS0725,['spaCy_noun']
+PS0726,['spaCy_noun']
+PS0730,['spaCy_noun']
+PS0734,['spaCy_noun']
+PS0737,"['Multiplayer', 'Gameplay']"
+PS0739,"['spaCy_noun', 'Gameplay']"
+PS0743,"['spaCy_noun', 'DRM']"
+PS0744,['spaCy_noun']
+PS0745,['spaCy_noun']
+PS0746,['spaCy_noun']
+PS0747,"['spaCy_noun', 'Gameplay']"
+PS0748,['spaCy_noun']
+PS0752,"['Controls/UX', 'Gameplay', 'Graphics', 'spaCy_noun', 'Audio']"
+PS0756,['Gameplay']
+PS0757,['spaCy_noun']
+PS0758,"['spaCy_noun', 'Controls/UX']"
+PS0759,"['spaCy_noun', 'Gameplay']"
+PS0760,"['spaCy_noun', 'Gameplay']"
+PS0761,"['Gameplay', 'Innovation', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS0764,"['Gameplay', 'Graphics', 'Multiplayer', 'Progression', 'spaCy_noun']"
+PS0765,"['spaCy_noun', 'Monetization', 'Controls/UX', 'Gameplay']"
+PS0766,"['Business', 'spaCy_noun', 'Monetization', 'Gameplay']"
+PS0767,['spaCy_noun']
+PS0768,['spaCy_noun']
+PS0769,"['Story', 'spaCy_noun', 'Gameplay']"
+PS0770,['spaCy_noun']
+PS0771,"['Customer Support', 'Cinematics', 'spaCy_noun', 'Gameplay']"
+PS0772,['spaCy_noun']
+PS0773,['spaCy_noun']
+PS0774,['Gameplay']
+PS0775,"['spaCy_noun', 'Monetization']"
+PS0776,"['spaCy_noun', 'Gameplay']"
+PS0777,['spaCy_noun']
+PS0779,['spaCy_noun']
+PS0780,"['Modding', 'Performance', 'Gameplay', 'Multiplayer', 'Monetization', 'spaCy_noun', 'Management']"
+PS0781,"['Modding', 'Controls/UX', 'Gameplay', 'Graphics', 'Balance', 'Multiplayer', 'Monetization', 'Progression', 'spaCy_noun', 'Audio']"
+PS0782,['spaCy_noun']
+PS0784,['spaCy_noun']
+PS0785,['spaCy_noun']
+PS0786,"['spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0787,"['Customer Support', 'spaCy_noun', 'Gameplay']"
+PS0788,['spaCy_noun']
+PS0789,['spaCy_noun']
+PS0790,['spaCy_noun']
+PS0791,"['Controls/UX', 'Gameplay', 'Story', 'Monetization', 'Progression', 'Community', 'Customer Support', 'spaCy_noun', 'Management']"
+PS0792,"['Customer Support', 'spaCy_noun']"
+PS0793,['spaCy_noun']
+PS0794,['spaCy_noun']
+PS0795,['spaCy_noun']
+PS0796,"['spaCy_noun', 'Management', 'Gameplay']"
+PS0797,"['Customer Support', 'spaCy_noun']"
+PS0798,"['spaCy_noun', 'Controls/UX']"
+PS0800,['spaCy_noun']
+PS0801,['spaCy_noun']
+PS0802,['spaCy_noun']
+PS0804,['spaCy_noun']
+PS0805,['Customer Support']
+PS0807,"['Performance', 'Gameplay', 'Balance', 'Multiplayer', 'Platform', 'Monetization', 'Customer Support', 'spaCy_noun']"
+PS0808,"['spaCy_noun', 'Progression', 'Management']"
+PS0809,"['Business', 'Story', 'spaCy_noun']"
+PS0810,"['Customer Support', 'Cinematics', 'spaCy_noun', 'Management']"
+PS0814,"['spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0816,"['spaCy_noun', 'Gameplay']"
+PS0817,"['Graphics', 'spaCy_noun', 'Audio', 'Gameplay']"
+PS0819,"['spaCy_noun', 'Controls/UX']"
+PS0822,['spaCy_noun']
+PS0823,['spaCy_noun']
+PS0824,"['spaCy_noun', 'Gameplay']"
+PS0826,['spaCy_noun']
+PS0828,['Audio']
+PS0829,['spaCy_noun']
+PS0831,"['Controls/UX', 'Gameplay', 'Story', 'Graphics', 'spaCy_noun']"
+PS0832,['spaCy_noun']
+PS0834,"['Customer Support', 'Multiplayer', 'Gameplay']"
+PS0835,"['spaCy_noun', 'Audio']"
+PS0840,"['Customer Support', 'spaCy_noun', 'Performance', 'Gameplay']"
+PS0841,['spaCy_noun']
+PS0842,['spaCy_noun']
+PS0843,['spaCy_noun']
+PS0844,"['Graphics', 'spaCy_noun']"
+PS0845,['spaCy_noun']
+PS0847,['spaCy_noun']
+PS0848,['spaCy_noun']
+PS0849,"['Customer Support', 'Controls/UX', 'Gameplay', 'Performance', 'Graphics', 'Balance', 'Multiplayer', 'Platform', 'spaCy_noun']"
+PS0850,"['Performance', 'Gameplay', 'Story', 'Controls/UX', 'Customer Support', 'spaCy_noun']"
+PS0851,"['spaCy_noun', 'Gameplay']"
+PS0853,['spaCy_noun']
+PS0855,['spaCy_noun']
+PS0859,['spaCy_noun']
+PS0860,['spaCy_noun']
+PS0861,"['Performance', 'Gameplay', 'Graphics', 'Balance', 'Customer Support', 'spaCy_noun']"
+PS0862,['Graphics']
+PS0863,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS0864,"['Graphics', 'spaCy_noun', 'Gameplay']"
+PS0865,"['spaCy_noun', 'Audio']"
+PS0867,['spaCy_noun']
+PS0868,"['Customer Support', 'spaCy_noun', 'Monetization', 'Community']"
+PS0869,"['Performance', 'spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS0870,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS0871,"['Gameplay', 'Graphics', 'Innovation', 'Balance', 'Multiplayer', 'spaCy_noun']"
+PS0872,['spaCy_noun']
+PS0873,['spaCy_noun']
+PS0874,['spaCy_noun']
+PS0875,"['Customer Support', 'Controls/UX', 'Gameplay', 'Platform', 'spaCy_noun', 'DRM', 'Management']"
+PS0876,['spaCy_noun']
+PS0878,['spaCy_noun']
+PS0880,['Community']
+PS0881,"['spaCy_noun', 'Progression']"
+PS0884,['spaCy_noun']
+PS0887,['spaCy_noun']
+PS0888,['spaCy_noun']
+PS0889,['spaCy_noun']
+PS0890,"['Performance', 'Gameplay', 'Story', 'spaCy_noun', 'Management']"
+PS0891,['spaCy_noun']
+PS0892,['spaCy_noun']
+PS0893,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS0894,['Audio']
+PS0895,['spaCy_noun']
+PS0896,"['spaCy_noun', 'Audio']"
+PS0897,"['Multiplayer', 'spaCy_noun', 'Balance']"
+PS0898,['spaCy_noun']
+PS0899,['spaCy_noun']
+PS0900,"['spaCy_noun', 'Graphics']"
+PS0902,"['Controls/UX', 'Gameplay', 'Story', 'Graphics', 'Progression', 'Customer Support', 'spaCy_noun', 'Management', 'Audio']"
+PS0903,['Audio']
+PS0904,['spaCy_noun']
+PS0906,['spaCy_noun']
+PS0908,['spaCy_noun']
+PS0909,['spaCy_noun']
+PS0910,['Graphics']
+PS0911,['Audio']
+PS0912,['spaCy_noun']
+PS0913,['spaCy_noun']
+PS0914,['spaCy_noun']
+PS0915,['Gameplay']
+PS0917,"['Business', 'spaCy_noun']"
+PS0918,['spaCy_noun']
+PS0919,['spaCy_noun']
+PS0922,['spaCy_noun']
+PS0923,['spaCy_noun']
+PS0925,['spaCy_noun']
+PS0926,"['spaCy_noun', 'Gameplay']"
+PS0932,"['Performance', 'Gameplay', 'Story', 'Controls/UX', 'Cinematics', 'Graphics', 'Balance', 'Monetization', 'spaCy_noun', 'Audio']"
+PS0933,"['spaCy_noun', 'Management']"
+PS0934,"['spaCy_noun', 'Controls/UX', 'Graphics']"
+PS0935,['spaCy_noun']
+PS0936,['spaCy_noun']
+PS0938,"['Multiplayer', 'spaCy_noun', 'Controls/UX', 'Performance']"
+PS0939,"['Controls/UX', 'Gameplay', 'Performance', 'Business', 'Multiplayer', 'Monetization', 'spaCy_noun']"
+PS0940,['spaCy_noun']
+PS0941,"['Customer Support', 'spaCy_noun']"
+PS0942,"['Story', 'Customer Support', 'spaCy_noun', 'Gameplay']"
+PS0944,['Gameplay']
+PS0945,['spaCy_noun']
+PS0948,"['Gameplay', 'Balance', 'Progression', 'spaCy_noun', 'Audio']"
+PS0950,"['Customer Support', 'spaCy_noun']"
+PS0952,['spaCy_noun']
+PS0953,"['spaCy_noun', 'Progression']"
+PS0954,['spaCy_noun']
+PS0955,['spaCy_noun']
+PS0956,['spaCy_noun']
+PS0957,['spaCy_noun']
+PS0958,"['Controls/UX', 'Gameplay', 'Story', 'Performance', 'Business', 'spaCy_noun']"
+PS0962,['Gameplay']
+PS0963,"['spaCy_noun', 'Gameplay']"
+PS0965,['spaCy_noun']
+PS0966,"['spaCy_noun', 'Gameplay']"
+PS0968,['spaCy_noun']
+PS0969,['spaCy_noun']
+PS0970,['spaCy_noun']
+PS0971,"['spaCy_noun', 'Audio']"
+PS0972,['spaCy_noun']
+PS0973,['spaCy_noun']
+PS0974,"['Business', 'spaCy_noun']"
+PS0975,"['Platform', 'spaCy_noun']"
+PS0976,"['spaCy_noun', 'Performance']"
+PS0977,"['Customer Support', 'spaCy_noun', 'Progression', 'Gameplay']"
+PS0978,['spaCy_noun']
+PS0979,"['spaCy_noun', 'Audio', 'Balance']"
+PS0980,['spaCy_noun']
+PS0983,['spaCy_noun']
+PS0984,"['Gameplay', 'Graphics', 'Multiplayer', 'Monetization', 'Customer Support', 'spaCy_noun']"
+PS0985,['spaCy_noun']
+PS0986,['spaCy_noun']
+PS0987,"['Business', 'spaCy_noun']"
+PS0988,['spaCy_noun']
+PS0989,['spaCy_noun']
+PS0990,['spaCy_noun']
+PS0991,['spaCy_noun']
+PS0992,"['Story', 'spaCy_noun']"
+PS0993,['spaCy_noun']
+PS0994,['spaCy_noun']
+PS0995,['spaCy_noun']
+PS0996,['spaCy_noun']
+PS0997,"['Customer Support', 'Community', 'Platform', 'spaCy_noun', 'DRM']"
+PS0998,"['Controls/UX', 'Gameplay', 'Graphics', 'spaCy_noun', 'Audio']"
+PS1000,['Gameplay']
+PS1001,"['spaCy_noun', 'Audio']"
+PS1002,['Audio']
+PS1004,"['Business', 'spaCy_noun', 'Progression']"
+PS1005,['spaCy_noun']
+PS1006,"['spaCy_noun', 'Gameplay']"
+PS1007,"['spaCy_noun', 'Gameplay']"
+PS1008,"['Controls/UX', 'Gameplay', 'Platform', 'Progression', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS1012,['Audio']
+PS1014,['spaCy_noun']
+PS1015,"['Gameplay', 'Story', 'Progression', 'spaCy_noun', 'Management']"
+PS1016,"['Platform', 'spaCy_noun', 'Gameplay']"
+PS1017,"['Business', 'spaCy_noun', 'Progression', 'Audio']"
+PS1018,['spaCy_noun']
+PS1019,"['Business', 'Customer Support', 'spaCy_noun']"
+PS1020,"['spaCy_noun', 'Gameplay']"
+PS1021,"['spaCy_noun', 'Modding']"
+PS1023,['spaCy_noun']
+PS1024,['spaCy_noun']
+PS1025,['spaCy_noun']
+PS1027,['spaCy_noun']
+PS1029,['Audio']
+PS1032,['spaCy_noun']
+PS1033,['spaCy_noun']
+PS1035,"['Business', 'spaCy_noun', 'Graphics']"
+PS1036,['spaCy_noun']
+PS1039,['spaCy_noun']
+PS1040,['spaCy_noun']
+PS1041,"['spaCy_noun', 'Gameplay']"
+PS1042,"['Customer Support', 'spaCy_noun', 'Progression']"
+PS1044,['spaCy_noun']
+PS1045,['spaCy_noun']
+PS1046,['spaCy_noun']
+PS1047,['Business']
+PS1051,['spaCy_noun']
+PS1053,['spaCy_noun']
+PS1054,"['Gameplay', 'Business', 'Multiplayer', 'Progression', 'Customer Support', 'spaCy_noun']"
+PS1055,"['spaCy_noun', 'Graphics']"
+PS1057,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS1058,"['spaCy_noun', 'Audio']"
+PS1059,"['Customer Support', 'Gameplay']"
+PS1060,['Business']
+PS1062,['spaCy_noun']
+PS1063,"['Graphics', 'spaCy_noun', 'Progression', 'Gameplay']"
+PS1064,['Customer Support']
+PS1065,['spaCy_noun']
+PS1066,['spaCy_noun']
+PS1067,['spaCy_noun']
+PS1068,"['spaCy_noun', 'Performance']"
+PS1070,['spaCy_noun']
+PS1071,['Audio']
+PS1073,"['Controls/UX', 'Gameplay', 'Graphics', 'Community', 'Customer Support', 'spaCy_noun']"
+PS1074,['spaCy_noun']
+PS1075,['spaCy_noun']
+PS1078,"['spaCy_noun', 'Performance', 'Gameplay']"
+PS1081,['spaCy_noun']
+PS1083,"['spaCy_noun', 'Monetization', 'Audio', 'Gameplay']"
+PS1085,['spaCy_noun']
+PS1086,['spaCy_noun']
+PS1087,"['spaCy_noun', 'Gameplay']"
+PS1088,['Business']
+PS1089,['spaCy_noun']
+PS1090,"['Replayability', 'Gameplay', 'Monetization', 'Progression', 'Community', 'spaCy_noun', 'Management']"
+PS1091,['spaCy_noun']
+PS1092,"['Performance', 'Graphics', 'Platform', 'Customer Support', 'spaCy_noun']"
+PS1093,"['Controls/UX', 'Gameplay', 'Story', 'Cinematics', 'Progression', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS1094,['spaCy_noun']
+PS1095,['spaCy_noun']
+PS1096,['spaCy_noun']
+PS1098,['spaCy_noun']
+PS1099,"['spaCy_noun', 'Gameplay']"
+PS1101,['spaCy_noun']
+PS1102,"['spaCy_noun', 'Gameplay']"
+PS1103,"['Performance', 'Gameplay', 'Graphics', 'Customer Support', 'spaCy_noun', 'Management', 'Audio']"
+PS1105,['spaCy_noun']
+PS1107,['spaCy_noun']
+PS1109,['spaCy_noun']
+PS1110,['Audio']
+PS1111,['spaCy_noun']
+PS1112,"['spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS1113,"['Controls/UX', 'Gameplay', 'Story', 'Progression', 'spaCy_noun']"
+PS1114,['spaCy_noun']
+PS1115,"['spaCy_noun', 'Innovation', 'Controls/UX', 'Gameplay']"
+PS1116,"['spaCy_noun', 'Balance']"
+PS1119,"['Gameplay', 'Multiplayer', 'Monetization', 'Customer Support', 'spaCy_noun', 'Management']"
+PS1120,"['Customer Support', 'spaCy_noun']"
+PS1123,['spaCy_noun']
+PS1124,"['spaCy_noun', 'Performance', 'Gameplay']"
+PS1125,"['Controls/UX', 'Gameplay', 'Story', 'Innovation', 'Balance', 'Customer Support', 'spaCy_noun']"
+PS1126,"['spaCy_noun', 'Gameplay']"
+PS1127,['spaCy_noun']
+PS1128,"['spaCy_noun', 'DRM']"
+PS1129,['Business']
+PS1130,['spaCy_noun']
+PS1131,['spaCy_noun']
+PS1132,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS1133,"['Controls/UX', 'Gameplay', 'Cinematics', 'Graphics', 'Innovation', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS1134,['Cinematics']
+PS1135,['spaCy_noun']
+PS1136,"['spaCy_noun', 'Gameplay']"
+PS1137,"['spaCy_noun', 'Gameplay']"
+PS1139,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS1140,['spaCy_noun']
+PS1142,['spaCy_noun']
+PS1144,['Business']
+PS1147,['spaCy_noun']
+PS1148,['Management']
+PS1150,"['spaCy_noun', 'Gameplay']"
+PS1151,['spaCy_noun']
+PS1152,"['Controls/UX', 'Gameplay', 'Graphics', 'Multiplayer', 'Customer Support', 'spaCy_noun']"
+PS1153,"['Graphics', 'spaCy_noun', 'Monetization', 'Gameplay']"
+PS1154,['spaCy_noun']
+PS1156,['spaCy_noun']
+PS1157,"['spaCy_noun', 'Gameplay']"
+PS1158,['spaCy_noun']
+PS1159,['spaCy_noun']
+PS1160,['spaCy_noun']
+PS1161,['spaCy_noun']
+PS1162,['spaCy_noun']
+PS1165,['spaCy_noun']
+PS1166,"['spaCy_noun', 'Gameplay']"
+PS1167,"['Customer Support', 'spaCy_noun']"
+PS1168,"['spaCy_noun', 'Progression', 'Gameplay']"
+PS1169,"['Audio', 'Graphics', 'spaCy_noun']"
+PS1170,"['Gameplay', 'Graphics', 'Community', 'Customer Support', 'spaCy_noun']"
+PS1171,['spaCy_noun']
+PS1172,['spaCy_noun']
+PS1173,"['Story', 'spaCy_noun', 'Gameplay']"
+PS1174,['spaCy_noun']
+PS1175,['spaCy_noun']
+PS1176,['spaCy_noun']
+PS1177,['spaCy_noun']
+PS1178,"['Story', 'spaCy_noun', 'Gameplay']"
+PS1179,['spaCy_noun']
+PS1180,"['spaCy_noun', 'Management', 'Gameplay']"
+PS1183,"['spaCy_noun', 'Modding', 'Audio']"
+PS1184,['spaCy_noun']
+PS1185,['spaCy_noun']
+PS1187,['Audio']
+PS1188,['spaCy_noun']
+PS1189,['Audio']
+PS1190,"['spaCy_noun', 'Gameplay']"
+PS1191,"['spaCy_noun', 'Gameplay', 'Graphics']"
+PS1195,['spaCy_noun']
+PS1196,['spaCy_noun']
+PS1198,"['Customer Support', 'Multiplayer', 'spaCy_noun']"
+PS1199,"['Gameplay', 'Progression', 'Community', 'Platform', 'spaCy_noun']"
+PS1200,['spaCy_noun']
+PS1201,"['spaCy_noun', 'Management', 'Controls/UX']"
+PS1202,['spaCy_noun']
+PS1203,['spaCy_noun']
+PS1204,['spaCy_noun']
+PS1205,['spaCy_noun']
+PS1207,['spaCy_noun']
+PS1208,"['Multiplayer', 'spaCy_noun', 'Graphics']"
+PS1209,"['Controls/UX', 'Gameplay', 'Progression', 'Customer Support', 'spaCy_noun']"
+PS1210,['spaCy_noun']
+PS1211,"['spaCy_noun', 'Gameplay']"
+PS1212,"['Performance', 'Gameplay', 'Progression', 'spaCy_noun', 'Management']"
+PS1213,['spaCy_noun']
+PS1214,['spaCy_noun']
+PS1215,"['Business', 'spaCy_noun', 'Management', 'Performance']"
+PS1217,['spaCy_noun']
+PS1218,"['Platform', 'Gameplay']"
+PS1220,['spaCy_noun']
+PS1221,['spaCy_noun']
+PS1222,['spaCy_noun']
+PS1223,['spaCy_noun']
+PS1225,"['Graphics', 'spaCy_noun']"
+PS1226,['spaCy_noun']
+PS1227,"['Story', 'spaCy_noun', 'Gameplay']"
+PS1228,"['Performance', 'Gameplay', 'Multiplayer', 'Customer Support', 'spaCy_noun', 'Management']"
+PS1229,"['Graphics', 'spaCy_noun', 'Gameplay']"
+PS1230,['spaCy_noun']
+PS1231,"['spaCy_noun', 'Gameplay']"
+PS1235,['spaCy_noun']
+PS1236,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS1237,['spaCy_noun']
+PS1238,"['spaCy_noun', 'Gameplay']"
+PS1239,"['Gameplay', 'Multiplayer', 'Monetization', 'Customer Support', 'spaCy_noun', 'DRM', 'Audio']"
+PS1240,"['Customer Support', 'spaCy_noun']"
+PS1241,['spaCy_noun']
+PS1243,"['spaCy_noun', 'Gameplay']"
+PS1244,"['spaCy_noun', 'DRM', 'Controls/UX']"
+PS1245,['spaCy_noun']
+PS1246,"['spaCy_noun', 'Innovation', 'Gameplay']"
+PS1248,['spaCy_noun']
+PS1249,"['Controls/UX', 'Performance', 'Gameplay', 'Customer Support', 'spaCy_noun']"
+PS1250,"['Graphics', 'spaCy_noun', 'Gameplay']"
+PS1251,"['Story', 'spaCy_noun']"
+PS1252,"['Customer Support', 'Multiplayer', 'spaCy_noun', 'Gameplay']"
+PS1253,['spaCy_noun']
+PS1254,['spaCy_noun']
+PS1255,"['Multiplayer', 'spaCy_noun']"
+PS1257,"['spaCy_noun', 'Gameplay', 'Graphics']"
+PS1258,"['spaCy_noun', 'Audio', 'Gameplay']"
+PS1259,"['spaCy_noun', 'Monetization', 'Controls/UX', 'Gameplay']"
+PS1260,"['Gameplay', 'Story', 'Graphics', 'Multiplayer', 'Monetization', 'Progression', 'Customer Support', 'spaCy_noun', 'Management']"
+PS1261,"['Cinematics', 'spaCy_noun', 'Gameplay']"
+PS1262,['spaCy_noun']
+PS1263,['Audio']
+PS1265,['spaCy_noun']
+PS1266,"['Customer Support', 'spaCy_noun', 'Performance']"
+PS1268,"['Controls/UX', 'Gameplay', 'Performance', 'Graphics', 'Multiplayer', 'Progression', 'Customer Support', 'spaCy_noun', 'Management']"
+PS1269,['spaCy_noun']
+PS1270,['Gameplay']
+PS1271,['Audio']
+PS1272,['spaCy_noun']
+PS1273,['spaCy_noun']
+PS1274,"['Multiplayer', 'spaCy_noun', 'Controls/UX']"
+PS1275,['spaCy_noun']
+PS1276,"['Customer Support', 'spaCy_noun', 'Gameplay', 'Graphics']"
+PS1277,['spaCy_noun']
+PS1278,"['Performance', 'Gameplay', 'Controls/UX', 'Business', 'Multiplayer', 'Progression', 'Platform', 'spaCy_noun']"
+PS1279,['spaCy_noun']
+PS1280,['spaCy_noun']
+PS1282,"['Gameplay', 'Multiplayer', 'Progression', 'spaCy_noun', 'Management']"
+PS1283,"['Customer Support', 'spaCy_noun', 'Controls/UX']"
+PS1284,"['Controls/UX', 'Gameplay', 'Story', 'Graphics', 'Innovation', 'Multiplayer', 'Monetization', 'Progression', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS1285,['spaCy_noun']
+PS1286,['spaCy_noun']
+PS1287,"['Story', 'Customer Support', 'spaCy_noun']"
+PS1288,['spaCy_noun']
+PS1289,['spaCy_noun']
+PS1290,['Business']
+PS1294,"['spaCy_noun', 'Gameplay']"
+PS1295,['spaCy_noun']
+PS1296,"['Performance', 'Gameplay', 'spaCy_noun', 'DRM', 'Management']"
+PS1297,['spaCy_noun']
+PS1298,"['Gameplay', 'Story', 'Graphics', 'Business', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS1299,['spaCy_noun']
+PS1300,['spaCy_noun']
+PS1301,"['spaCy_noun', 'Management']"
+PS1303,"['Business', 'Multiplayer', 'spaCy_noun']"
+PS1307,"['Multiplayer', 'spaCy_noun', 'Management', 'Gameplay']"
+PS1308,"['Customer Support', 'spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS1309,['spaCy_noun']
+PS1310,['Audio']
+PS1311,"['spaCy_noun', 'Gameplay']"
+PS1312,"['Platform', 'spaCy_noun', 'Performance']"
+PS1313,"['spaCy_noun', 'Controls/UX']"
+PS1314,['spaCy_noun']
+PS1315,['Audio']
+PS1316,"['Graphics', 'spaCy_noun']"
+PS1317,['spaCy_noun']
+PS1318,['Audio']
+PS1319,"['spaCy_noun', 'Gameplay']"
+PS1320,['spaCy_noun']
+PS1322,"['spaCy_noun', 'Audio']"
+PS1324,['spaCy_noun']
+PS1327,['spaCy_noun']
+PS1328,"['spaCy_noun', 'Management', 'Gameplay']"
+PS1330,"['spaCy_noun', 'Audio']"
+PS1331,['spaCy_noun']
+PS1332,"['spaCy_noun', 'Progression', 'Performance', 'Graphics']"
+PS1336,['spaCy_noun']
+PS1337,['spaCy_noun']
+PS1338,"['spaCy_noun', 'Gameplay']"
+PS1339,['spaCy_noun']
+PS1340,"['spaCy_noun', 'DRM']"
+PS1343,"['spaCy_noun', 'Gameplay']"
+PS1345,"['spaCy_noun', 'Gameplay']"
+PS1346,['spaCy_noun']
+PS1347,['spaCy_noun']
+PS1349,['spaCy_noun']
+PS1350,"['Business', 'spaCy_noun', 'Gameplay']"
+PS1352,['spaCy_noun']
+PS1353,['spaCy_noun']
+PS1355,['spaCy_noun']
+PS1356,['spaCy_noun']
+PS1357,"['spaCy_noun', 'Audio']"
+PS1359,['spaCy_noun']
+PS1360,['spaCy_noun']
+PS1361,['Audio']
+PS1364,['Customer Support']
+PS1366,"['Story', 'spaCy_noun', 'Controls/UX', 'Gameplay']"
+PS1367,"['Gameplay', 'Story', 'Monetization', 'Customer Support', 'spaCy_noun']"
+PS1368,"['spaCy_noun', 'Progression']"
+PS1369,"['Business', 'spaCy_noun', 'Monetization', 'Gameplay']"
+PS1371,['spaCy_noun']
+PS1372,"['Multiplayer', 'spaCy_noun', 'Audio', 'Gameplay']"
+PS1373,['spaCy_noun']
+PS1374,"['Gameplay', 'Story', 'Graphics', 'Monetization', 'spaCy_noun']"
+PS1375,['spaCy_noun']
+PS1376,"['Controls/UX', 'Gameplay', 'Story', 'Performance', 'Graphics', 'Balance', 'Monetization', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS1377,['spaCy_noun']
+PS1378,['spaCy_noun']
+PS1380,['Gameplay']
+PS1384,"['Customer Support', 'spaCy_noun', 'Audio', 'Gameplay']"
+PS1385,"['Gameplay', 'Graphics', 'Customer Support', 'spaCy_noun', 'Audio']"
+PS1386,"['spaCy_noun', 'Gameplay']"
+PS1388,['spaCy_noun']
+PS1390,['spaCy_noun']
+PS1391,['spaCy_noun']
+PS1393,['spaCy_noun']
+PS1394,['spaCy_noun']
+PS1395,"['spaCy_noun', 'Gameplay']"
+PS1396,"['Controls/UX', 'Multiplayer', 'Progression', 'spaCy_noun', 'Audio']"
+PS1399,"['Story', 'spaCy_noun', 'Gameplay']"
+PS1401,['spaCy_noun']
+PS1403,['Platform']
+PS1405,['Audio']
+PS1406,['Gameplay']

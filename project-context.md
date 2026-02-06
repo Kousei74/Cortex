@@ -89,6 +89,29 @@ _Derived from CORTEX Blueprint (overview.txt)_
 
 ---
 
+## 5. Issue Tracker & Visual Resolution System (V1)
+
+> **Status**: LOCKED (Authoritative Specification)
+> **Philosophy**: "Visual Decision Ledger". A lossy, curated representation of execution. Not a chat or collaboration tool.
+
+### 5.1 Core Concepts
+*   **Option 3 (Control)**: Seniors/Leads only. Authority over issue creation, metadata (Severity, Deadline), and lifecycle (Open/Close). "The Governance Layer".
+*   **Option 4 (Resolution)**: All Users. Visual tracking via a Directed Acyclic Graph (DAG). "The Execution Layer".
+
+### 5.2 Node Logic (The Visual Tree)
+*   **🟡 Yellow (Provisional)**: Ideas, partial fixes. Replaceable. Do not create branches.
+*   **🔵 Blue (Accepted/Incomplete)**: Working direction. Creates a temporary branch. Must resolve (merge or discontinue) before issue closure.
+*   **🟢 Green (Accepted)**: The "Pill of Truth". Result of a direct acceptance or a blue branch merge. Merging a blue branch collapses the branch into a single Green node.
+*   **🔴 Red (Rejected)**: Dead end. Immutable. Work continues from a new node.
+
+### 5.3 Critical Rules
+*   **Branching**: Only one main branch. Side branches only for Blue nodes.
+*   **Deletion**: Users can only delete *their own* nodes within 30 minutes of creation. No deletion after tagging.
+*   **Closure**: Only Seniors can create "End Nodes" to close issues.
+*   **No Chat**: Discussion happens externally. This system records *decisions* and *actions*.
+
+---
+
 ## Immutability Contract
 
 The following are IMMUTABLE and must never be violated:
@@ -97,6 +120,7 @@ The following are IMMUTABLE and must never be violated:
 - Locally Optimistic philosophy
 - Performance guarantees (300ms rule, 60 FPS)
 - Edge-case handling doctrines
+- Issue Tracker Core Philosophy (Visual Decision Ledger)
 
 The following are MUTABLE and may change with explicit user approval:
 - Technology stack choices
@@ -105,3 +129,12 @@ The following are MUTABLE and may change with explicit user approval:
 - Queue or storage implementations
 
 If a proposed change conflicts with immutable rules, the change MUST be rejected.
+
+---
+
+## 6. Change Cycle: Feature: Issue Tracker & Visual Resolution System (V1)
+
+> **Status**: IN PROGRESS
+> **Date**: 2026-01-30
+
+**Objective**: Implement the visualization strategies and resolution logic defined in `visualization_logic_spec.md` and `implementation_plan.md` (Epic 3). This includes the "Dependency Pivot" logic, "Smart-Switch" layout strategy, and the backend reporting engine.

@@ -1,9 +1,11 @@
-
 import { Outlet } from "react-router-dom"
 import Sidebar from "@/components/sidebar"
 import RightPanel from "@/components/right-panel"
+import { useNetworkStatus } from "@/hooks/use-network-status"
 
 export default function MainLayout() {
+    useNetworkStatus(); // Initialize global network listeners
+
     return (
         <div className="h-screen bg-primary-custom flex overflow-hidden">
             {/* Fixed Left Sidebar */}

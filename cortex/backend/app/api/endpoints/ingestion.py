@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict
 import uuid
 import asyncio
+import os
 # Import the OCR utility
 from app.core.ocr import extract_text_from_image
 
@@ -55,6 +56,7 @@ async def upload_file_blob(file_id: str, request: Request):
     """
     Step 2: Stream the binary content for the registered file ID.
     Performs OCR if the file looks like an image.
+    Saves file to disk for processing.
     """
     if file_id not in upload_sessions:
         raise HTTPException(status_code=404, detail="Upload session not found")
@@ -70,6 +72,21 @@ async def upload_file_blob(file_id: str, request: Request):
             # Warning: In real streaming, chunks might differ, but for this simple PUT, 
             # we expect the full body. We'll verify approximate size or just Log it.
             pass
+
+        # Save to Disk
+        upload_dir = os.path.join(os.getcwd(), "uploads") # Ensure absolute path consistency
+        # Ensure dir exists (redundant safety)
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        filename = session["filename"]
+        # Secure filename? For now trust internal UUID + original name
+        safe_filename = f"{file_id}_{filename}"
+        file_path = os.path.join(upload_dir, safe_filename)
+        
+        with open(file_path, "wb") as f:
+            f.write(body)
+            
+        session["file_path"] = file_path
 
         # Check for OCR candidacy
         ocr_text = None

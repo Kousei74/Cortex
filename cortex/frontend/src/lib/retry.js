@@ -36,7 +36,7 @@ export const fetchWithRetry = async (url, options, retries = 3, backoff = 300) =
  * Better strategy for this project:
  * The `uploadWithRetry` logic will be implemented directly in api.js or here as a specialized function.
  */
-export const uploadWithRetry = (url, headers, file, onProgress, retries = 3, backoff = 300) => {
+export const uploadWithRetry = (url, headers, file, onProgress, onStatus, retries = 3, initialBackoff = 500) => {
     return new Promise((resolve, reject) => {
         const attempt = (n) => {
             const xhr = new XMLHttpRequest();
@@ -56,17 +56,16 @@ export const uploadWithRetry = (url, headers, file, onProgress, retries = 3, bac
             xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
-                        const response = JSON.parse(xhr.responseText);
+                        const response = xhr.responseText ? JSON.parse(xhr.responseText) : { success: true };
                         resolve(response);
                     } catch (e) {
                         // JSON error is likely application error, usually not worth retrying unless backend sent garbage 500 html
-                        // Treating as failure.
-                        if (n > 0) retry(n);
+                        if (n > 0) retry(n, "Invalid JSON response");
                         else reject(new Error("Invalid JSON response"));
                     }
                 } else if (xhr.status >= 500 || xhr.status === 429 || xhr.status === 408) {
                     // SERVER ERROR -> Retry
-                    if (n > 0) retry(n);
+                    if (n > 0) retry(n, `Server Error ${xhr.status}`);
                     else reject(new Error(xhr.statusText || `Upload Exception ${xhr.status}`));
                 } else {
                     // Client Error (4xx) -> Fail immediately
@@ -75,16 +74,28 @@ export const uploadWithRetry = (url, headers, file, onProgress, retries = 3, bac
             };
 
             xhr.onerror = () => {
-                if (n > 0) retry(n);
+                if (n > 0) retry(n, "Network Error");
                 else reject(new Error("Network Error"));
             };
 
             xhr.send(file);
         };
 
-        const retry = async (n) => {
-            console.warn(`Retrying upload... (${n} attempts left)`);
-            await delay(backoff * (4 - n)); // Simple backoff scaling
+        const retry = async (n, reason) => {
+            const attemptsMade = retries - n + 1;
+            // Exponential backoff: 500 * 2^(attempts)
+            const baseDelay = initialBackoff * Math.pow(2, attemptsMade - 1);
+            // Jitter: +/- 20% random
+            const jitter = baseDelay * 0.2 * (Math.random() * 2 - 1);
+            const delayTime = Math.max(0, baseDelay + jitter);
+
+            console.warn(`Upload failed (${reason}). Retrying in ${Math.round(delayTime)}ms... (${n} attempts left)`);
+
+            if (onStatus) {
+                onStatus(`Optimizing route... (${n} left)`);
+            }
+
+            await delay(delayTime);
             attempt(n - 1);
         };
 
