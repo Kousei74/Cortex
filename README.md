@@ -6,16 +6,13 @@ Cortex is a high-performance, locally optimistic data ingestion and visualizatio
 
 ## 🌟 Core Philosophy: "The Illusion of Instant"
 
-- **Locally Optimistic UI**: User actions (upload, tag, pivot) happen *instantly* in the UI. The server synchronizes in the background.
-- **The "Zeno" Standard**: Progress bars never stall. They move asymptotically to 99% until the server confirms completion.
-- **60 FPS Mandate**: Heavy math runs in Web Workers. Layouts use `Framer Motion` layout projection to prevent layout shifts.
-- **Zero-Cost Infrastructure**: Designed to run on free-tier capable serverless/edge infrastructure (Vercel + Supabase).
+- User actions (upload, tag, pivot) happen *instantly* in the UI. The server synchronizes in the background.
+- Heavy math runs in Web Workers. Layouts use `Framer Motion` layout projection to prevent layout shifts.
+- Designed to run on free-tier capable serverless/edge infrastructure (Vercel + Supabase).
 
 ---
 
 ## 🏗 System Architecture
-
-The system is split into two sovereign domains that communicate asynchronously:
 
 ### 1. **Frontend: "The Illusionist"** (React + Vite)
 - **State**: `Zustand` with persistent storage (survives refreshes).
