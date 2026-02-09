@@ -128,9 +128,14 @@ python -m uvicorn app.main:app --reload --port 8000
 | **Headless Ingestion** | ✅ Done | Metadata/Binary separation. |
 | **Smart Dashboard** | ✅ Done | Auto-pivots based on Time/Cluster availability. |
 | **Satellite Detection** | ✅ Done | Backend logic for schema-on-read. |
-| **Cluster Resolution** | 🚧 In Progress | UI for merging/dismissing entities. |
-| **Offline Mode** | 🚧 In Progress | Read-only state when network fails. |
-| **Canvas Fallback** | ⏳ Todo | Switch to VisX for >10k data points. |
+| **Cluster Resolution** | 🚧 In Progress | UI for merging, splitting, and dismissing entities. |
+| **Offline Mode** | 🚧 In Progress | Read-only degraded state with cached views on network failure. |
+| **Canvas Fallback** | ⏳ Todo | Automatic switch to VisX for datasets exceeding 10k points. |
+| **Issue Tracker (V1)** | 🚧 In Progress | Structured issue creation, assignment, and lifecycle control with role-based permissions. |
+| **Visual Issue Resolution Tree** | 🚧 In Progress | Directed flowchart of issue progression with Yellow/Blue/Green/Red decision states. |
+| **Branch & Merge Workflow** | 🚧 In Progress | Temporary blue-branch execution paths that collapse into a single accepted resolution node. |
+| **Role-Based Governance** | 🚧 In Progress | Senior-only approvals, merges, and closures with immutable decision enforcement. |
+| **Ticket Chaining** | ⏳ Todo | Parent and linked ticket relationships for reopening or extending resolved issues. |
 
 ---
 
