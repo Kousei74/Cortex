@@ -1,6 +1,6 @@
 <h1 align="center">CORTEX</h1>
 
-> **The "Illusionist" Dashboard & Ingestion Engine**
+> **The Dashboard & Ingestion Engine**
 
 Cortex is a high-performance, locally optimistic data ingestion and visualization platform designed for the GameSpot/Metacritic ecosystem. It prioritizes **perceived performance** above all else, using a "Shadow Backend" architecture to ensure the UI never freezes, stutters, or stalls—even during heavy data processing.
 
