@@ -15,14 +15,14 @@ Cortex is a high-performance, locally optimistic data ingestion and visualizatio
 ## 🏗 System Architecture
 
 ### 1. **Frontend: "The Illusionist"** (React + Vite)
-- **State**: `Zustand` with persistent storage (survives refreshes).
-- **Visuals**: `Framer Motion` for layout transitions, `Recharts` for sub-10k point visualization.
-- **Resilience**: "Dead Man's Switch" shifts to Read-Only `IndexedDB` mode if the internet cuts out.
+- **State**: `Zustand` with persistent storage (survives refreshes)
+- **Visuals**: `Framer Motion` for layout transitions, `Recharts` for sub-10k point visualization
+- **Resilience**: "Dead Man's Switch" shifts to Read-Only `IndexedDB` mode if the internet cuts out
 
 ### 2. **Backend: "The Shadow"** (FastAPI + Python)
-- **Ingestion**: "Headless" upload. Metadata is sent first (`POST /ingest/meta`) to generate an ID instantly. Binary data streams in parallel (`PUT /ingest/blob`).
-- **Processing**: `PGMQ` (Postgres Message Queue) handles async jobs (OCR, Sentiment Analysis, Clustering).
-- **Smart Analysis**: Automatically detects "Satellites" (Time, Cluster context) to decide whether to render a **Temporal** (Time-Series) or **Snapshot** (Pivot) dashboard.
+- **Ingestion**: "Headless" upload. Metadata is sent first (`POST /ingest/meta`) to generate an ID instantly. Binary data streams in parallel (`PUT /ingest/blob`)
+- **Processing**: `PGMQ` (Postgres Message Queue) handles async jobs (OCR, Sentiment Analysis, Clustering)
+- **Smart Analysis**: Automatically detects "Satellites" (Time, Cluster context) to decide whether to render a **Temporal** (Time-Series) or **Snapshot** (Pivot) dashboard
 
 ---
 
