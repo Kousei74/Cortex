@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { TemporalWidget } from './visualizers/temporal-widget';
 import { SnapshotWidget } from './visualizers/snapshot-widget';
 import { ScatterWidget } from './visualizers/scatter-widget';
-import { PieWidget } from './visualizers/pie-widget';
+import { KPICardWidget } from './visualizers/kpi-card-widget';
+import { SubAnchorRow } from './sub-anchor-row';
 import { AlertCircle } from 'lucide-react';
 
 /**
  * ReportView (The Switchboard)
  * Renders the correct view based on Layout Strategy.
  */
-export function ReportView({ payload, status, error, onRetry }) {
+export function ReportView({ payload, status, error, onRetry, onSelect }) {
     const [selectedSnapshotIndex, setSelectedSnapshotIndex] = useState(
         payload?.default_option_index || 0
     );
@@ -57,52 +58,51 @@ export function ReportView({ payload, status, error, onRetry }) {
         );
     }
 
-    // 3. Temporal Supreme
+    // 3. Temporal Supreme (Anchor = Bar Chart, Sub-anchor = Bar + Line secondary)
     if (payload?.layout_strategy === 'TEMPORAL_SUPREME') {
         return (
-            <div className="relative w-full fluid-rounded-lg border-2 border-dashed border-subtle-custom bg-surface-custom/30 overflow-hidden pt-6 px-6 pb-2">
-                <TemporalWidget widget={payload.anchor_visual} />
+            <div className="w-full mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Anchor is always the stacked bar chart */}
+                {payload.anchor_visual?.type === 'STACKED_BAR' ? (
+                    <SnapshotWidget widget={payload.anchor_visual} onSelect={onSelect} />
+                ) : payload.anchor_visual?.type === 'KPI_CARD' ? (
+                    <div className="relative w-full flex justify-center">
+                        <KPICardWidget widget={payload.anchor_visual} />
+                    </div>
+                ) : null}
+                {/* Sub-anchor row: donut + line chart */}
+                <SubAnchorRow sub_anchor={payload.sub_anchor} />
             </div>
         );
     }
 
-    // 4. Snapshot Pivot
+    // 4. Snapshot Pivot (Anchor = Bar Chart, Sub-anchor = Donut + Treemap)
     if (payload?.layout_strategy === 'SNAPSHOT_PIVOT') {
         const options = payload.anchor_options || [];
         const activeWidget = options[selectedSnapshotIndex];
 
         return (
-            <div className="relative w-full fluid-rounded-lg border-2 border-dashed border-subtle-custom bg-surface-custom/30 overflow-hidden pt-6 px-6 pb-2">
-                {/* Tabs for Options */}
-                <div className="flex space-x-2 border-b border-gray-700 mb-6 overflow-x-auto pb-2">
-                    {options.map((opt, idx) => (
-                        <button
-                            key={opt.id}
-                            onClick={() => setSelectedSnapshotIndex(idx)}
-                            className={`px-3 py-1 text-sm font-mono font-medium whitespace-nowrap rounded-t-md transition-all duration-300 ${idx === selectedSnapshotIndex
-                                ? 'border-b-2 border-primary-custom text-primary-custom bg-transparent'
-                                : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'
-                                }`}
-                        >
-                            {opt.title}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Active Widget Render */}
+            <div className="w-full mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {activeWidget && (
-                    <div className="animate-in fade-in duration-300">
-                        {activeWidget.type === 'STACKED_BAR' || activeWidget.type === 'COMBO_CHART' ? (
-                            <SnapshotWidget widget={activeWidget} />
-                        ) : activeWidget.type === 'SCATTER_PLOT' ? (
-                            <ScatterWidget widget={activeWidget} />
-                        ) : activeWidget.type === 'PIE_CHART' ? (
-                            <PieWidget widget={activeWidget} />
+                    <div className="w-full">
+                        {activeWidget.type === 'STACKED_BAR' ? (
+                            <SnapshotWidget
+                                widget={activeWidget}
+                                onSelect={onSelect}
+                            />
+                        ) : activeWidget.type === 'KPI_CARD' ? (
+                            <div className="relative w-full flex justify-center">
+                                <KPICardWidget widget={activeWidget} />
+                            </div>
                         ) : (
-                            <div className="text-gray-400 p-4">Unknown Widget Type: {activeWidget.type}</div>
+                            <div className="text-gray-400 p-4 border border-dashed border-gray-700 rounded text-center">
+                                Widget Type {activeWidget.type} not yet implemented in V2 Anchor
+                            </div>
                         )}
                     </div>
                 )}
+                {/* Sub-anchor row: donut + treemap */}
+                <SubAnchorRow sub_anchor={payload.sub_anchor} />
             </div>
         );
     }

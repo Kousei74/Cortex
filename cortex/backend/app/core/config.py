@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
 
+    # Visualization Constants (The Constitution)
+    MAX_CLUSTERS: int = 50
+    MIN_ROWS_TIME: int = 30
+    METRIC_DENSITY_THRESHOLD: float = 0.05
+    TIME_DOMAIN_IQR_THRESHOLD: float = 10.0
+
     class Config:
         case_sensitive = True
         env_file = ".env"

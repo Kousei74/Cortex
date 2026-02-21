@@ -1,95 +1,61 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useWorkspaceStore } from '../store/workspace-store';
+import { toast } from 'sonner'; // Assuming sonner is used for toasts
 
-const API_BASE_URL = "http://localhost:8000";
+/**
+ * useResolution Hook
+ * Handles the business logic for resolving items:
+ * - Optimistic Updates (immediate State change)
+ * - Backend API Calls (background)
+ * - Undo Stack (revert capability)
+ */
+export function useResolution() {
+    const { incrementResolved, setResolutionStats } = useWorkspaceStore();
+    const [undoStack, setUndoStack] = useState([]);
 
-export function useResolution(jobId) {
-    const [context, setContext] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+    // Temporary: Mock API Logic
+    const resolveItems = useCallback(async (itemIds, action) => {
+        const count = itemIds.length;
+        if (count === 0) return;
 
-    // Initial Fetch
-    const fetchContext = useCallback(async () => {
-        if (!jobId) return;
-        try {
-            const token = localStorage.getItem("cortex_token");
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        // 1. Optimistic Update
+        incrementResolved(count);
 
-            const res = await fetch(`${API_BASE_URL}/resolution/jobs/${jobId}/resolution-context`, { headers });
-            if (!res.ok) throw new Error("Failed to load resolution context");
+        // 2. Add to Undo Stack
+        const undoAction = {
+            id: Date.now(),
+            itemIds,
+            action,
+            timestamp: new Date()
+        };
+        setUndoStack(prev => [undoAction, ...prev].slice(0, 5)); // Keep last 5
 
-            const data = await res.json();
-            setContext(data);
-        } catch (err) {
-            console.error(err);
-            setError(err.message);
-        }
-    }, [jobId]);
+        // 3. Show Toast with Undo
+        toast.success(`${count} Items Resolved`, {
+            description: `Action: ${action}`,
+            action: {
+                label: 'Undo',
+                onClick: () => handleUndo(undoAction)
+            },
+        });
 
-    // Re-fetch on mount
-    useEffect(() => {
-        fetchContext();
-    }, [fetchContext]);
+        // 4. Mock Backend Call (TODO: Replace with fetch)
+        console.log(`[Resolution] Resolving ${count} items with action ${action}`);
+        await new Promise(r => setTimeout(r, 500));
 
-    // Apply Action
-    const resolveItems = async (itemIds) => {
-        setIsLoading(true);
-        try {
-            const token = localStorage.getItem("cortex_token");
-            const headers = {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-            };
+    }, [incrementResolved]);
 
-            const res = await fetch(`${API_BASE_URL}/resolution/bulk`, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    job_id: jobId,
-                    item_ids: itemIds,
-                    action: "RESOLVE"
-                })
-            });
+    const handleUndo = useCallback((actionToUndo) => {
+        // Revert Logic (Simplified for now)
+        console.log(`[Undo] Reverting action ${actionToUndo.id}`);
+        toast.info("Action Undone (Mock)");
 
-            if (!res.ok) throw new Error("Failed to apply resolution");
-
-            const newContext = await res.json();
-            setContext(newContext); // Update local state with result
-        } catch (err) {
-            console.error(err);
-            // Optimistic rollback not implemented for V1
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const fetchClusterRows = async (clusterId) => {
-        try {
-            const token = localStorage.getItem("cortex_token");
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const url = `${API_BASE_URL}/resolution/jobs/${jobId}/cluster/${clusterId}?t=${Date.now()}`;
-            console.log(`[useResolution] Fetching: ${url}`);
-
-            const res = await fetch(url, { headers });
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`Fetch Failed (${res.status}): ${text}`);
-            }
-            return await res.json();
-        } catch (err) {
-            console.error("[useResolution] Cluster Fetch Error:", err);
-            // toast.error(`Data synced failed: ${err.message}`); // Optional: Don't spam toasts?
-            // Actually, for debugging, let's spam ONE toast.
-            return { error: err.message };
-        }
-    }
+        // In real impl: Decrement resolved count, restore items
+    }, []);
 
     return {
-        context,
-        isLoading,
-        error,
         resolveItems,
-        fetchClusterRows,
-        refreshContext: fetchContext
+        undoStack,
+        handleUndo
     };
 }

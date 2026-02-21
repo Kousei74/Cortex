@@ -9,7 +9,10 @@ class WidgetType(str, Enum):
     SCATTER_PLOT = "SCATTER_PLOT"
     COMBO_CHART = "COMBO_CHART"
     STATS_CARD = "STATS_CARD"
-    PIE_CHART = "PIE_CHART"
+    HISTOGRAM = "HISTOGRAM"
+    KPI_CARD = "KPI_CARD"
+    DONUT = "DONUT"
+    TREEMAP = "TREEMAP"
 
 class JobStatus(str, Enum):
     PENDING = "pending"
@@ -34,10 +37,16 @@ class BarChartWidget(BaseWidget):
     categories: List[str]
     series: List[Dict[str, Any]]
 
-class PieChartWidget(BaseWidget):
-    type: Literal[WidgetType.PIE_CHART] = WidgetType.PIE_CHART
-    categories: List[str]
+class HistogramWidget(BaseWidget):
+    type: Literal[WidgetType.HISTOGRAM] = WidgetType.HISTOGRAM
+    bins: List[str]
     series: List[Dict[str, Any]]
+
+class KPICardWidget(BaseWidget):
+    type: Literal[WidgetType.KPI_CARD] = WidgetType.KPI_CARD
+    value: Union[int, float, str]
+    label: str
+    context: Optional[str] = None
 
 class ComboChartWidget(BaseWidget):
     type: Literal[WidgetType.COMBO_CHART] = WidgetType.COMBO_CHART
@@ -49,33 +58,81 @@ class ScatterWidget(BaseWidget):
     type: Literal[WidgetType.SCATTER_PLOT] = WidgetType.SCATTER_PLOT
     data_points: List[Dict[str, Any]]
 
+class DonutWidget(BaseWidget):
+    """Sentiment class distribution as a donut chart (sub-anchor visual 1)."""
+    type: Literal["DONUT"] = "DONUT"
+    slices: List[Dict[str, Any]]  # [{name, value, percentage}]
+
+class TreemapWidget(BaseWidget):
+    """Title or cluster distribution as a treemap (sub-anchor visual 2, isTimestamp=False)."""
+    type: Literal["TREEMAP"] = "TREEMAP"
+    nodes: List[Dict[str, Any]]   # [{name, value}]
+
 # Polymorphic Type for "Any Widget"
-WidgetObject = Union[MultiLineWidget, BarChartWidget, PieChartWidget, ComboChartWidget, ScatterWidget]
+WidgetObject = Union[
+    "TemporalAnchorWidget", # Forward ref or defined below
+    MultiLineWidget, BarChartWidget, ComboChartWidget, ScatterWidget,
+    HistogramWidget, KPICardWidget, DonutWidget, TreemapWidget
+]
+
+# --- Special Anchor Widgets ---
+
+class TemporalResolution(BaseModel):
+    label: str # "Yearly", "Quarterly", "Monthly"
+    x_axis: List[str]
+    series: List[Dict[str, Any]] # The lines/areas
+
+class TemporalAnchorWidget(BaseWidget):
+    type: Literal["TEMPORAL_ANCHOR"] = "TEMPORAL_ANCHOR"
+    resolutions: Dict[str, TemporalResolution] # keys: 'Y', 'Q', 'M'
+    default_resolution: str = 'M'
+
+
+class SubAnchorBlock(BaseModel):
+    """
+    The sub-anchor row: always two visuals.
+    donut = sentiment distribution (always present)
+    secondary = line chart if isTimestamp, treemap otherwise
+    """
+    donut: DonutWidget
+    secondary_type: Literal["LINE", "TREEMAP"]
+    secondary: Union["TemporalAnchorWidget", TreemapWidget]
+
 
 # --- The Response Reality (Tagged Union) ---
+
 
 class TemporalPayload(BaseModel):
     """
     Option A: The Dictator.
-    Time exists. You see the Timeline.
+    Time exists. Anchor is always the stacked bar chart.
+    isTimestamp governs sub-anchor 2nd visual only.
     """
     layout_strategy: Literal["TEMPORAL_SUPREME"] = "TEMPORAL_SUPREME"
+    is_timestamp: bool = True
     meta: Dict[str, Any]
-    
-    # Single Source of Truth
-    anchor_visual: WidgetObject
+
+    # Anchor is always the stacked bar chart
+    anchor_visual: BarChartWidget
+    # Sub-anchor row (donut + line chart)
+    sub_anchor: Optional[SubAnchorBlock] = None
+
 
 class SnapshotPayload(BaseModel):
     """
     Option B: The Negotiator.
-    Time is missing. You choose the view.
+    Time is missing. Anchor is always the stacked bar chart.
+    isTimestamp governs sub-anchor 2nd visual only.
     """
     layout_strategy: Literal["SNAPSHOT_PIVOT"] = "SNAPSHOT_PIVOT"
+    is_timestamp: bool = False
     meta: Dict[str, Any]
-    
-    # The Options Menu
+
+    # Anchor is always the stacked bar chart
     anchor_options: List[WidgetObject]
     default_option_index: int = 0
+    # Sub-anchor row (donut + treemap)
+    sub_anchor: Optional[SubAnchorBlock] = None
 
 class UnsupportedPayload(BaseModel):
     """

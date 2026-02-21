@@ -31,7 +31,7 @@ export const useStagingStore = create((set, get) => ({
         const updatedFiles = [...currentFiles, ...fileObjects]
 
         set({ files: updatedFiles })
-        await idbSet(STAGING_KEY, updatedFiles)
+        // persistence removed
     },
 
     removeFile: async (id) => {
@@ -39,12 +39,12 @@ export const useStagingStore = create((set, get) => ({
         const updatedFiles = currentFiles.filter(f => f.id !== id)
 
         set({ files: updatedFiles })
-        await idbSet(STAGING_KEY, updatedFiles)
+        // persistence removed
     },
 
     clearBatch: async () => {
         set({ files: [] })
-        await idbSet(STAGING_KEY, [])
+        // persistence removed
     },
 
     uploadBatch: async (api) => {
@@ -93,24 +93,15 @@ export const useStagingStore = create((set, get) => ({
         })
 
         await Promise.all(uploadPromises)
-
-        // Update persistent store after batch completes
-        await idbSet(STAGING_KEY, get().files)
     },
 
     // Hydration
     hydrate: async () => {
         try {
-            const files = await idbGet(STAGING_KEY)
-            if (files) {
-                // Reset 'uploading' to 'staged' if implementation was interrupted
-                const sanitized = files.map(f =>
-                    f.status === 'uploading' ? { ...f, status: 'staged', progress: 0, message: '' } : f
-                )
-                set({ files: sanitized, initialized: true })
-            } else {
-                set({ initialized: true })
-            }
+            // CLEAR any existing data to enforce "Fresh Start"
+            await idbSet(STAGING_KEY, [])
+
+            set({ files: [], initialized: true })
         } catch (error) {
             console.error("Failed to hydrate staging store", error)
             set({ initialized: true })

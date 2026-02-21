@@ -1,43 +1,84 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Optional
-from pydantic import BaseModel
-from app.schemas.resolution import ResolutionContext, ResolutionAction
-from app.services.resolution import ResolutionService
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from pydantic import BaseModel, Field
+from typing import List, Literal, Optional, Dict, Any
+from datetime import datetime
+import os
+import json
 
 router = APIRouter()
 
-class BulkActionRequest(BaseModel):
+# --- Schemas ---
+
+class ResolutionAction(BaseModel):
+    item_ids: List[str] = Field(..., min_items=1, description="List of IDs to resolve")
+    action_type: Literal["KEEP", "DELETE", "MERGE", "IGNORE"]
+    target_cluster: Optional[str] = None # For merge operations
+    reason: Optional[str] = None
+
+class ResolutionResponse(BaseModel):
     job_id: str
-    item_ids: List[str]
-    action: ResolutionAction
+    status: Literal["processing", "completed", "failed"]
+    affected_count: int
+    message: str
 
-@router.get("/jobs/{job_id}/resolution-context", response_model=ResolutionContext)
-async def get_resolution_context(job_id: str):
-    """
-    Returns the Mutable Operational State (Header Stats).
-    Does NOT return analytical data.
-    """
-    return ResolutionService.get_context(job_id)
+class ResolutionRow(BaseModel):
+    ID: str
+    Title: str
+    Cluster: str
+    Sentiment: Optional[float] = None
+    Confidence: Optional[float] = None
+    
+# --- Logic ---
 
-@router.get("/jobs/{job_id}/cluster/{cluster_id}", response_model=List[dict])
-async def get_cluster_rows(job_id: str, cluster_id: str):
+@router.post("/bulk", response_model=ResolutionResponse)
+async def bulk_resolve(payload: ResolutionAction, background_tasks: BackgroundTasks):
     """
-    Returns Raw Rows for the Diverging View.
-    Includes 'status' field (RESOLVED/UNRESOLVED).
+    Apply a resolution action to a set of items.
+    This is an ATOMIC operation (simulated for V1).
     """
-    # Note: cluster_id 'all' returns all? Or make optional?
-    # Router expects string. 
-    cid = None if cluster_id == "all" else cluster_id
-    return ResolutionService.get_cluster_rows(job_id, cid)
+    
+    # 1. Validation (Simulated)
+    if payload.action_type == "MERGE" and not payload.target_cluster:
+        raise HTTPException(status_code=400, detail="Target cluster required for MERGE action")
 
-@router.post("/bulk", response_model=ResolutionContext)
-async def apply_bulk_action(payload: BulkActionRequest):
-    """
-    Mutates Resolution State.
-    Returns updated Context.
-    """
-    return ResolutionService.apply_bulk_action(
-        job_id=payload.job_id,
-        item_ids=payload.item_ids,
-        action=payload.action
+    # 2. Logic (Mock for V1 - will be connected to DB later)
+    # in V2 this would update the 'status' column in DB
+    
+    # 3. Background Task: Invalidate Cache or Update Index
+    background_tasks.add_task(process_resolution_background, payload)
+
+    return ResolutionResponse(
+        job_id=f"res_{datetime.now().timestamp()}",
+        status="processing",
+        affected_count=len(payload.item_ids),
+        message=f"Queued {payload.action_type} for {len(payload.item_ids)} items"
     )
+
+@router.get("/rows/{job_id}", response_model=List[Dict[str, Any]])
+async def get_resolution_rows(job_id: str):
+    """
+    Fetch the raw rows for the resolution table.
+    Reads from the JSON artifact generated during analysis.
+    """
+    # Sanitize job_id to prevent traversal
+    safe_job_id = os.path.basename(job_id)
+    file_path = f"uploads/{safe_job_id}_resolution.json"
+    
+    if not os.path.exists(file_path):
+        # Mock data if file doesn't exist (for development/testing)
+        # return []
+        raise HTTPException(status_code=404, detail="Resolution data not found for this job")
+        
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            # Limit to 1000 for V1 safety
+            return data[:1000]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load resolution data: {str(e)}")
+
+async def process_resolution_background(payload: ResolutionAction):
+    # Simulate work
+    import asyncio
+    await asyncio.sleep(0.5)
+    print(f"[ResolutionWorker] Processed {payload.action_type} on {len(payload.item_ids)} items.")
