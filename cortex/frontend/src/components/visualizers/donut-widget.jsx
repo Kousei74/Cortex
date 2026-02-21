@@ -13,9 +13,35 @@ const COLOR_PALETTE = [
     "#0e9f6e", // teal-green
 ];
 
+const OTHERS_COLOR = "#e2e8f0"; // bright silver — visible on dark bg between saturated slices
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
 const DonutTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload;
+
+    // "Others" slice — show breakdown of all sub-items
+    if (d.isOthers && d.children?.length) {
+        return (
+            <div className="bg-surface-primary/95 border border-white/10 p-3 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-[200px]">
+                <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: OTHERS_COLOR }} />
+                    <span className="text-white font-mono font-bold text-sm">Others</span>
+                    <span className="ml-auto text-gray-400 font-mono text-xs">{d.percentage}%</span>
+                </div>
+                <div className="space-y-1.5">
+                    {d.children.map((child, i) => (
+                        <div key={i} className="flex items-center justify-between gap-4 text-xs font-mono">
+                            <span className="text-gray-300">{child.name}</span>
+                            <span className="text-gray-400 tabular-nums">{child.percentage}%</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // Normal slice
     return (
         <div className="bg-surface-primary/95 border border-white/10 p-3 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-[160px]">
             <div className="flex items-center gap-2 mb-2">
@@ -30,9 +56,41 @@ const DonutTooltip = ({ active, payload }) => {
     );
 };
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 export const DonutWidget = memo(function DonutWidget({ widget }) {
-    const slices = widget?.slices || [];
-    if (!slices.length) return null;
+    const rawSlices = widget?.slices || [];
+    if (!rawSlices.length) return null;
+
+    // Compute total for percentage calculation
+    const total = rawSlices.reduce((s, sl) => s + sl.value, 0);
+
+    // Split into main slices (>1%) and "others" bucket (≤1%)
+    const mainSlices = [];
+    const othersChildren = [];
+
+    rawSlices.forEach(sl => {
+        const pct = total > 0 ? (sl.value / total) * 100 : 0;
+        const rounded = Math.round(pct * 10) / 10; // 1 decimal
+        if (pct > 1) {
+            mainSlices.push({ ...sl, percentage: rounded });
+        } else {
+            othersChildren.push({ ...sl, percentage: rounded });
+        }
+    });
+
+    // Build final data — append "Others" at the end if there are any
+    const chartData = mainSlices;
+    if (othersChildren.length > 0) {
+        const othersValue = othersChildren.reduce((s, c) => s + c.value, 0);
+        const othersPct = total > 0 ? Math.round((othersValue / total) * 100 * 10) / 10 : 0;
+        chartData.push({
+            name: 'Others',
+            value: othersValue,
+            percentage: othersPct,
+            isOthers: true,
+            children: othersChildren,
+        });
+    }
 
     return (
         <AnchorContainer>
@@ -40,19 +98,19 @@ export const DonutWidget = memo(function DonutWidget({ widget }) {
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
-                            data={slices}
+                            data={chartData}
                             cx="50%"
                             cy="50%"
                             innerRadius="55%"
                             outerRadius="80%"
                             dataKey="value"
-                            paddingAngle={2}
+                            paddingAngle={0.5}
                             isAnimationActive={false}
                         >
-                            {slices.map((slice, idx) => (
+                            {chartData.map((slice, idx) => (
                                 <Cell
                                     key={slice.name}
-                                    fill={COLOR_PALETTE[idx % COLOR_PALETTE.length]}
+                                    fill={slice.isOthers ? OTHERS_COLOR : COLOR_PALETTE[idx % COLOR_PALETTE.length]}
                                     stroke="none"
                                 />
                             ))}

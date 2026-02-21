@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TemporalWidget } from './visualizers/temporal-widget';
-import { SnapshotWidget } from './visualizers/snapshot-widget';
+import { SnapshotWidget } from './visualizers/bar_chart';
 import { ScatterWidget } from './visualizers/scatter-widget';
 import { KPICardWidget } from './visualizers/kpi-card-widget';
 import { SubAnchorRow } from './sub-anchor-row';
