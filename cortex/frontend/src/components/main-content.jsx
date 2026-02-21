@@ -1,88 +1,113 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { useAnalysisStore } from "@/store/analysisStore"
-import { ZenoProgress } from "./zeno-progress"
+import { useWorkspaceStore } from "@/store/workspace-store"
+import { CortexLoader } from "./cortex-loader"
 import { ReportView } from "./report-view"
-import { ResolutionView } from "./resolution/resolution-view" // Ensure this import path is correct
-import { ResolutionHeader } from "./resolution/resolution-header"
-import { AnchorSwitch } from "./resolution/anchor-switch"
 import { KpiCardsRow } from "./kpi-cards"
-import { useResolution } from "@/hooks/use-resolution" // Ensure import
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import SentimentChart from "@/components/sentiment-chart"
-
-// Template Data (Keep for fallback)
-const topicsData = [
-    { topic: "UI/UX Feedback", count: 1245 },
-    { topic: "Feature Requests", count: 987 },
-    { topic: "Performance Issues", count: 654 },
-]
-const platformStatus = [
-    { name: "Internal Database", status: "ONLINE" },
-    { name: "Social Media API", status: "ONLINE" },
-]
 
 export default function MainContent() {
     const { jobId, status, progress, payload, error } = useAnalysisStore()
-    const [viewMode, setViewMode] = useState('CONSOLIDATED')
+    const { setResolutionStats, viewMode, setSelectedCluster } = useWorkspaceStore()
 
-    // Resolution Hook (conditional)
-    const { context, resolveItems } = useResolution(jobId)
+    // Sync Stats when Payload Arrives
+    useEffect(() => {
+        if (payload?.meta) {
+            setResolutionStats({
+                totalItems: payload.meta.kpis?.total_rows || 0,
+                resolvedItems: 0,
+                conflicts: 0
+            })
+        }
+    }, [payload, setResolutionStats])
 
-    // MODE SWITCH: Active Analysis vs Static Dashboard
+    const handleSelect = (cluster) => {
+        console.log("Cluster Selected:", cluster);
+        setSelectedCluster(cluster);
+    };
+
+    const isLoading = status === 'PROCESSING' || status === 'PENDING';
+    const isError = status === 'FAILED' || status === 'TIMEOUT';
+
+    // ── ACTIVE ANALYSIS MODE ────────────────────────────────────────────────
     if (jobId) {
         return (
-            <div className="p-6 space-y-6 custom-scrollbar h-full flex flex-col">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-mono font-bold text-primary-custom tracking-wider">COMMAND CENTER</h1>
-                    <p className="text-secondary-custom text-sm font-mono mt-1">ACTIVE NEURAL LINK LINKED: {jobId}</p>
-                </div>
+            // Relative wrapper so absolute inset-0 loader fills this box exactly
+            <div className="relative h-full">
+                <AnimatePresence mode="wait">
 
-                {/* Zeno Progress ( temporarily disabled per user request )
-                {(status === 'PROCESSING' || status === 'PENDING') && (
-                    <div className="mb-6">
-                        <ZenoProgress status={status} progress={progress} />
-                        <div className="flex justify-between text-xs font-mono text-secondary-custom mt-2">
-                            <span>STATUS: {status}</span>
-                            <span>{Math.floor(progress)}%</span>
-                        </div>
-                    </div>
-                )}
-                */}
-
-                <div className="flex-1 min-h-0 relative space-y-6">
-                    {/* 1. Resolution Header (Disabled)
-                    {context && viewMode === 'DIVERGING' && (
-                        <ResolutionHeader
-                            context={context}
-                            onResolveAll={() => resolveItems(context.clusters?.['all'] || [])}
-                        />
-                    )}
-                    */}
-
-                    {/* 2. KPI Cards */}
-                    {payload && payload.meta && (
-                        <KpiCardsRow meta={payload.meta} />
+                    {/* LOADING: orb only, perfectly centered both axes */}
+                    {isLoading && (
+                        <motion.div
+                            key="cortex-loader"
+                            className="h-full w-full flex items-center justify-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        >
+                            <CortexLoader status={status} />
+                        </motion.div>
                     )}
 
-                    {/* 3. Anchor Switch (Disabled - Focus on Consolidated) 
-                    <AnchorSwitch viewMode={viewMode} setViewMode={setViewMode} />
-                    */}
+                    {/* DONE: full dashboard fades in after loader has exited */}
+                    {!isLoading && (
+                        <motion.div
+                            key="cortex-content"
+                            className="p-6 h-full flex flex-col"
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.55, ease: 'easeInOut' }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-end justify-between mb-2 flex-shrink-0">
+                                <h1 className="text-3xl font-mono font-bold text-primary-custom tracking-wider">
+                                    COMMAND CENTER
+                                </h1>
+                            </div>
 
-                    {/* 4. Visualization Area (Forced Consolidated) */}
-                    <ReportView
-                        payload={payload}
-                        status={status}
-                        error={error}
-                        onRetry={() => { }}
-                    />
-                </div>
+                            {/* Error banner */}
+                            {isError && (
+                                <div
+                                    className="mb-4 flex-shrink-0 px-4 py-3 rounded-xl font-mono text-xs"
+                                    style={{
+                                        border: '1px solid rgba(255,59,48,0.3)',
+                                        color: '#ff3b30',
+                                        background: 'rgba(255,59,48,0.05)'
+                                    }}
+                                >
+                                    ANALYSIS FAILED — {status}
+                                </div>
+                            )}
+
+                            {/* Scrollable Central Pane */}
+                            <div
+                                className="flex-1 min-h-0 overflow-y-auto space-y-6"
+                                style={{ scrollbarWidth: 'none' }}
+                            >
+                                {payload?.meta && <KpiCardsRow meta={payload.meta} />}
+
+                                <div className="relative">
+                                    <ReportView
+                                        payload={payload}
+                                        status={status}
+                                        error={error}
+                                        onRetry={() => { }}
+                                        onSelect={handleSelect}
+                                    />
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                </AnimatePresence>
             </div>
-        )
+        );
     }
 
-    // STATIC TEMPLATE (Default View)
-    // STATIC TEMPLATE (Default View)
+    // ── STATIC TEMPLATE (no job active) ─────────────────────────────────────
     return (
         <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 custom-scrollbar text-center">
             <div className="max-w-md space-y-4">

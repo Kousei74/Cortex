@@ -18,3 +18,8 @@ _bmad-output/
 .agent/
 .claude/commands/bmad/core/tasks/
 *.md
+cortex/backend/uploads/
+test_data/
+tests/
+verify_api.py
+verify_internal.py

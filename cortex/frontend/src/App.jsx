@@ -60,7 +60,7 @@ function AnimatedRoutes() {
                     <Route
                         path="/dashboard"
                         element={
-                            <motion.div {...PAGE_TRANSITION} className="min-h-full">
+                            <motion.div {...PAGE_TRANSITION} className="h-full">
                                 <MainContent />
                             </motion.div>
                         }
