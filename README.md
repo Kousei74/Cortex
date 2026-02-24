@@ -62,7 +62,7 @@ cortex/
 │   └── src/
 │       ├── components/
 │       │   ├── visualizers/
-│       │   │   ├── bar_chart.jsx       # Stacked bar (snapshot pivot)
+│       │   │   ├── bar_chart.jsx       # Stacked bar
 │       │   │   ├── temporal-widget.jsx # Time-series line chart
 │       │   │   ├── donut-widget.jsx    # Donut with "Others" bucketing
 │       │   │   ├── treemap-widget.jsx  # Game/title treemap
@@ -162,17 +162,15 @@ SUPABASE_KEY=your_service_role_key
 
 | Feature | Status | Notes |
 | :--- | :---: | :--- |
-| Drag & Drop Ingestion | ✅ Done | Magic Byte validation, multi-file |
+| Drag & Drop Ingestion | ✅ Done | Byte validation, multi-file |
 | Async Analysis Pipeline | ✅ Done | PGMQ-backed, status polling |
 | Smart Layout Detection | ✅ Done | Auto Temporal vs Snapshot pivot |
 | Orb Loader | ✅ Done | Full-screen pulsing orb, error state in red |
 | Command Center Dashboard | ✅ Done | KPI cards, charts, smooth fade-in transition |
-| Donut "Others" Bucketing | ✅ Done | Slices ≤1% collapsed with hover breakdown |
+| Donut "Others" Bucketing | ✅ Done | Slices collapsed with hover breakdown |
 | Cluster Resolution UI | 🚧 In Progress | Merge, dismiss, conflict tracking |
 | Offline / Degraded Mode | 🚧 In Progress | Read-only IndexedDB fallback |
 | Role-Based Governance | ⏳ Planned | Senior approvals, immutable decisions |
 | Canvas Fallback (>10k pts) | ⏳ Planned | VisX for large dataset rendering |
 
 ---
-
-> **Built for speed. Designed for flow.**
