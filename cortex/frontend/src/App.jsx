@@ -8,6 +8,7 @@ import StagingArea from "@/components/staging-area"
 import MainLayout from "@/components/layout/main-layout"
 import MainContent from "@/components/main-content"
 import SingleInstanceLock from "@/components/single-instance-lock"
+import ServiceHub from "@/components/service-hub"
 
 // Placeholder components for other routes (moved from Dashboard.jsx)
 const PlaceholderPage = ({ title }) => (
@@ -79,7 +80,7 @@ function AnimatedRoutes() {
                         path="/service"
                         element={
                             <motion.div {...PAGE_TRANSITION} className="min-h-full">
-                                <PlaceholderPage title="SERVICE HUB" />
+                                <ServiceHub />
                             </motion.div>
                         }
                     />

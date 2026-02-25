@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
 
+    # Slack OAuth
+    SLACK_CLIENT_ID:     str = os.getenv("SLACK_CLIENT_ID", "")
+    SLACK_CLIENT_SECRET: str = os.getenv("SLACK_CLIENT_SECRET", "")
+    SLACK_REDIRECT_URI:  str = os.getenv("SLACK_REDIRECT_URI", "http://localhost:8000/service/slack/callback")
+    FRONTEND_URL:        str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
     # Visualization Constants (The Constitution)
     MAX_CLUSTERS: int = 50
     MIN_ROWS_TIME: int = 30

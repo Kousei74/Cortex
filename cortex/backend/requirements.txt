@@ -10,3 +10,4 @@ email-validator
 supabase
 pydantic-settings
 easyocr
+httpx

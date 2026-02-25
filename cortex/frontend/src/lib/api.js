@@ -118,6 +118,30 @@ export const api = {
             throw new Error(error.detail || "Job Creation Failed");
         }
         return response.json();
+    },
+
+    createIssue: async (payload) => {
+        const isChild = payload.type === "existing";
+        const url = isChild
+            ? `${API_BASE_URL}/service/issues/child`
+            : `${API_BASE_URL}/service/issues`;
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ detail: "Issue submission failed" }));
+            let msg = err.detail || "Issue submission failed";
+            if (typeof msg === "object") msg = JSON.stringify(msg);
+            throw new Error(msg);
+        }
+        return response.json();
     }
 };
 

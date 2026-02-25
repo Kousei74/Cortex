@@ -3,3 +3,4 @@ from . import auth
 from . import ingestion
 from . import reports
 from . import resolution
+from . import service_hub

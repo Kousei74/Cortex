@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import health, auth, ingestion, reports, resolution
+from app.api.endpoints import health, auth, ingestion, reports, resolution, service_hub
 
 app = FastAPI(
     title="Cortex Engine",
@@ -30,6 +30,7 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(ingestion.router, prefix="/ingest", tags=["ingestion"])
 app.include_router(reports.router, prefix="/reports", tags=["reports"])
 app.include_router(resolution.router, prefix="/resolution", tags=["resolution"])
+app.include_router(service_hub.router, prefix="/service", tags=["service"])
 
 @app.get("/")
 def root():
