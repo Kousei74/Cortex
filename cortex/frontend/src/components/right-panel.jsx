@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Card } from "@/components/ui/card"
+import { ShieldCheck } from "lucide-react"
 import SlackIcon from "@/assets/slack.svg?react"
 
 // ─── Priority config ──────────────────────────────────────────────────────────
@@ -55,15 +56,31 @@ function ReviewExplorer() {
                 <h3 className="text-lg font-mono font-bold text-primary-custom uppercase">Review Explorer</h3>
             </div>
 
-            <div className="flex-1 overflow-auto p-4 space-y-4 custom-scrollbar">
+            <div className={`flex-1 overflow-auto custom-scrollbar ${!loading && issues.length === 0 ? "flex flex-col" : "p-4 space-y-4"}`}>
                 {loading && (
-                    <p className="text-secondary-custom text-xs font-mono text-center py-2">Loading…</p>
+                    <p className="text-secondary-custom text-xs font-mono text-center py-4">Loading…</p>
                 )}
 
                 {!loading && issues.length === 0 && (
-                    <p className="text-secondary-custom text-xs font-mono text-center py-2">
-                        No issues filed yet.
-                    </p>
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+                        <div className="w-12 h-12 frosted-glass border border-subtle-custom fluid-rounded-lg
+                            flex items-center justify-center
+                            shadow-[0_0_16px_rgba(52,199,89,0.06)]">
+                            <ShieldCheck
+                                className="text-[var(--semantic-success)]"
+                                style={{ width: 20, height: 20 }}
+                                strokeWidth={1.5}
+                            />
+                        </div>
+                        <div className="text-center space-y-1">
+                            <p className="text-primary-custom text-[10px] font-mono font-bold uppercase tracking-widest">
+                                Status: Clear
+                            </p>
+                            <p className="text-secondary-custom text-[10px] font-mono leading-relaxed">
+                                No active issues<br />detected in stream.
+                            </p>
+                        </div>
+                    </div>
                 )}
 
                 {issues.map((issue) => {

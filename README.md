@@ -168,6 +168,8 @@ SUPABASE_KEY=your_service_role_key
 | Orb Loader | ✅ Done | Full-screen pulsing orb, error state in red |
 | Command Center Dashboard | ✅ Done | KPI cards, charts, smooth fade-in transition |
 | Donut "Others" Bucketing | ✅ Done | Slices collapsed with hover breakdown |
+| Service Hub | ✅ Done | File new issues or link child issues |
+| Slack Integration | ✅ Done | Live channel notifications in sidebar |
 | Cluster Resolution UI | 🚧 In Progress | Merge, dismiss, conflict tracking |
 | Offline / Degraded Mode | 🚧 In Progress | Read-only IndexedDB fallback |
 | Role-Based Governance | ⏳ Planned | Senior approvals, immutable decisions |
