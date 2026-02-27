@@ -65,7 +65,7 @@ cortex/
 │       │   │   ├── bar_chart.jsx       # Stacked bar
 │       │   │   ├── temporal-widget.jsx # Time-series line chart
 │       │   │   ├── donut-widget.jsx    # Donut with "Others" bucketing
-│       │   │   ├── treemap-widget.jsx  # Game/title treemap
+│       │   │   ├── treemap-widget.jsx  # Title treemap
 │       │   │   ├── scatter-widget.jsx  # Confidence scatter
 │       │   │   ├── kpi-card-widget.jsx # Single KPI card
 │       │   │   └── anchor-container.jsx# Shared chart wrapper (inset glow)
