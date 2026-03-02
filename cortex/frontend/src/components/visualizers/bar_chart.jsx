@@ -62,10 +62,10 @@ export const SnapshotWidget = memo(function SnapshotWidget({ widget, onSelect })
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={chartData}
-                        margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                        margin={{ top: 10, right: 5, left: 5, bottom: 20 }}
                         stackOffset="expand"
                         barSize={28}
-                        barGap={4}
+                    //barGap={4}
                     >
                         <CartesianGrid
                             strokeDasharray="3 3"
@@ -112,7 +112,7 @@ export const SnapshotWidget = memo(function SnapshotWidget({ widget, onSelect })
                                     dataKey={s.name}
                                     stackId="a"
                                     fill={color}
-                                    radius={radius}
+                                    //radius={radius}
                                     isAnimationActive={false}
                                     className="cursor-pointer"
                                     onClick={(data, index) => onSelect?.(chartData[index]?.category)}

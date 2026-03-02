@@ -32,11 +32,16 @@ export const api = {
         return response.json();
     },
 
-    signup: async (email, password, fullName) => {
+    signup: async (email, password, fullName, deptId = null) => {
         const response = await fetch(`${API_BASE_URL}/auth/signup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, full_name: fullName }),
+            body: JSON.stringify({
+                email,
+                password,
+                full_name: fullName,
+                dept_id: deptId
+            }),
         });
 
         if (!response.ok) {
@@ -140,6 +145,96 @@ export const api = {
             let msg = err.detail || "Issue submission failed";
             if (typeof msg === "object") msg = JSON.stringify(msg);
             throw new Error(msg);
+        }
+        return response.json();
+    },
+
+    getIssues: async (status = "open", limit = 50, deptId = "", empId = "", role = "team_member") => {
+        const params = new URLSearchParams({
+            status,
+            limit: limit.toString(),
+            ...(deptId && { dept_id: deptId }),
+            ...(empId && { emp_id: empId }),
+            ...(role && { role })
+        });
+        const response = await fetch(`${API_BASE_URL}/service/issues?${params.toString()}`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error("Failed to fetch issues");
+        return response.json();
+    },
+
+    getIssueGraph: async (issueId) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/graph`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error("Failed to fetch issue graph");
+        return response.json();
+    },
+
+    getIssue: async (issueId) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error("Failed to fetch issue details");
+        return response.json();
+    },
+
+    tagIssueNode: async (issueId, tag) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/tag`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({ tag })
+        });
+        if (!response.ok) throw new Error("Failed to tag node");
+        return response.json();
+    },
+
+    mergeBlueBranch: async (targetParentId, branchNodes, metadataSummary, empId, deptId) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/merge`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({
+                target_parent_id: targetParentId,
+                branch_nodes: branchNodes,
+                metadata_summary: metadataSummary,
+                emp_id: empId,
+                dept_id: deptId
+            })
+        });
+        if (!response.ok) throw new Error("Failed to merge branch");
+        return response.json();
+    },
+
+    deleteIssueNode: async (issueId) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ detail: "Failed to delete" }));
+            throw new Error(err.detail || "Failed to delete node");
+        }
+        return response.json();
+    },
+
+    closeIssue: async (issueId) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/close`, {
+            method: "POST",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ detail: "Failed to close issue" }));
+            throw new Error(err.detail || "Failed to close issue");
         }
         return response.json();
     }

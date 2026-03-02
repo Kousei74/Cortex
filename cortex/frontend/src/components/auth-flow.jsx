@@ -17,6 +17,7 @@ export default function AuthFlow() {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [fullName, setFullName] = useState("")
+    const [deptId, setDeptId] = useState("")
 
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -70,7 +71,7 @@ export default function AuthFlow() {
         }
 
         try {
-            await signup(email, password, fullName);
+            await signup(email, password, fullName, deptId);
         } catch (err) {
             setError(err.message);
             setIsLoading(false);
@@ -249,6 +250,21 @@ export default function AuthFlow() {
                                                 onChange={(e) => setFullName(e.target.value)}
                                                 className="bg-surface-custom border-subtle-custom text-primary-custom placeholder:text-secondary-custom/50 fluid-rounded focus:border-[var(--accent-blue-bright)] soft-glow-hover soft-focus transition-all duration-300 h-12"
                                             />
+                                            <select
+                                                value={deptId}
+                                                onChange={(e) => setDeptId(e.target.value)}
+                                                className="w-full bg-surface-custom border border-subtle-custom text-primary-custom fluid-rounded focus:border-[var(--accent-blue-bright)] soft-glow-hover soft-focus transition-all duration-300 h-12 px-3 appearance-none cursor-pointer"
+                                                style={{ color: deptId ? 'inherit' : 'rgba(255,255,255,0.5)' }}
+                                            >
+                                                <option value="" disabled>Select Department (Optional)</option>
+                                                <option value="D01" className="text-primary-custom bg-surface-custom">Dev1 (D01)</option>
+                                                <option value="D02" className="text-primary-custom bg-surface-custom">Dev2 (D02)</option>
+                                                <option value="D03" className="text-primary-custom bg-surface-custom">Dev3 (D03)</option>
+                                                <option value="D04" className="text-primary-custom bg-surface-custom">CS1 (D04)</option>
+                                                <option value="D05" className="text-primary-custom bg-surface-custom">CS2 (D05)</option>
+                                                <option value="D06" className="text-primary-custom bg-surface-custom">Analyst (D06)</option>
+                                                <option value="D07" className="text-primary-custom bg-surface-custom">Risk (D07)</option>
+                                            </select>
                                             <Input
                                                 type="email"
                                                 placeholder="Email Address"

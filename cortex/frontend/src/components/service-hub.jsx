@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FADE_IN } from "@/lib/animations"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
+import { useAuth } from "@/context/AuthContext"
 
 // ─── Priority config ───────────────────────────────────────────────
 const PRIORITIES = [
@@ -204,14 +205,14 @@ const Icons = {
 
 // ─── New Issue Form ────────────────────────────────────────────────
 
-function NewIssueForm({ onSubmit, isLoading }) {
+function NewIssueForm({ onSubmit, isLoading, user }) {
     const [form, setForm] = useState({
         issueHeader: "",
-        deptId: "",
-        empId: "",
+        assignedTeam: "",
         priority: "",
         description: "",
-        createdBy: "",
+        parentTicket: "",
+        chainedTo: "",
     })
     const [error, setError] = useState(null)
 
@@ -233,11 +234,14 @@ function NewIssueForm({ onSubmit, isLoading }) {
             type: "new",
             issue_header: form.issueHeader.trim(),
             date: new Date().toISOString().split("T")[0],
-            dept_id: form.deptId.trim() || null,
-            emp_id: form.empId.trim() || null,
+            assigned_team: form.assignedTeam.trim() || null,
             priority: form.priority,
             description: form.description.trim(),
-            created_by: form.createdBy.trim() || null,
+            created_by: user?.full_name || "System",
+            emp_id: user?.emp_id || "unknown",
+            dept_id: user?.dept_id || null,
+            parent_ticket: form.parentTicket.trim() || null,
+            chained_to: form.chainedTo.trim() || null,
         }
         await onSubmit(payload)
     }
@@ -282,26 +286,38 @@ function NewIssueForm({ onSubmit, isLoading }) {
                 <LiveDateDisplay />
             </div>
 
-            {/* DeptID + EmpID — side by side */}
+            {/* Assigned Team */}
+            <div>
+                <FieldLabel optional>Assigned Team</FieldLabel>
+                <StyledInput
+                    type="text"
+                    placeholder="e.g. ENG-01"
+                    value={form.assignedTeam}
+                    onChange={set("assignedTeam")}
+                    icon={Icons.dept}
+                />
+            </div>
+
+            {/* Parent Ticket & Chained To */}
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <FieldLabel>Dept ID</FieldLabel>
+                    <FieldLabel optional>Parent Ticket</FieldLabel>
                     <StyledInput
                         type="text"
-                        placeholder="e.g. ENG-01"
-                        value={form.deptId}
-                        onChange={set("deptId")}
-                        icon={Icons.dept}
+                        placeholder="e.g. ISS-XXXX"
+                        value={form.parentTicket}
+                        onChange={set("parentTicket")}
+                        icon={Icons.link}
                     />
                 </div>
                 <div>
-                    <FieldLabel optional>Emp ID</FieldLabel>
+                    <FieldLabel optional>Chained To</FieldLabel>
                     <StyledInput
                         type="text"
-                        placeholder="e.g. EMP-042"
-                        value={form.empId}
-                        onChange={set("empId")}
-                        icon={Icons.id}
+                        placeholder="e.g. ISS-YYYY"
+                        value={form.chainedTo}
+                        onChange={set("chainedTo")}
+                        icon={Icons.link}
                     />
                 </div>
             </div>
@@ -323,18 +339,6 @@ function NewIssueForm({ onSubmit, isLoading }) {
                 />
             </div>
 
-            {/* Created By */}
-            <div>
-                <FieldLabel optional>Created By (Emp ID)</FieldLabel>
-                <StyledInput
-                    type="text"
-                    placeholder="Your Employee ID"
-                    value={form.createdBy}
-                    onChange={set("createdBy")}
-                    icon={Icons.user}
-                />
-            </div>
-
             {/* Submit */}
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
@@ -351,33 +355,20 @@ function NewIssueForm({ onSubmit, isLoading }) {
 
 // ─── Existing Issue Form ───────────────────────────────────────────
 
-function ExistingIssueForm({ onSubmit, isLoading }) {
+function ExistingIssueForm({ onSubmit, isLoading, user }) {
     const [form, setForm] = useState({
         parentIssueId: "",
         issueSubHeader: "",
-        deptId: "",
-        priority: "",
         description: "",
-        createdBy: "",
-        parentPriority: "", // fetched / entered to derive child constraints
     })
     const [error, setError] = useState(null)
 
     const set = (k) => (e) => setForm(f => ({ ...f, [k]: typeof e === "string" ? e : e.target.value }))
 
-    // When parent issue ID is blurred, the parent priority might be fetched in future.
-    // For now, the user specifies parentPriority so we can derive child constraint.
-    const childAllowed = form.parentPriority
-        ? allowedChildPriorities(form.parentPriority)
-        : null
-
     const validate = () => {
         if (!form.parentIssueId.trim()) return "Parent Issue ID is required."
         if (!form.issueSubHeader.trim()) return "Issue Sub-Header is required."
-        if (!form.priority) return "Priority is required."
         if (!form.description.trim()) return "Issue Description is required."
-        if (form.priority && childAllowed && !childAllowed.includes(form.priority))
-            return `Priority must be ${childAllowed.map(p => p.toUpperCase()).join(" / ")} (inherited constraint).`
         return null
     }
 
@@ -391,10 +382,10 @@ function ExistingIssueForm({ onSubmit, isLoading }) {
             parent_issue_id: form.parentIssueId.trim(),
             issue_subheader: form.issueSubHeader.trim(),
             date: new Date().toISOString().split("T")[0],
-            priority: form.priority,
-            dept_id: form.deptId.trim() || null,
             description: form.description.trim(),
-            created_by: form.createdBy.trim() || null,
+            created_by: user?.full_name || "System",
+            emp_id: user?.emp_id || "unknown",
+            dept_id: user?.dept_id || null,
         }
         await onSubmit(payload)
     }
@@ -425,28 +416,19 @@ function ExistingIssueForm({ onSubmit, isLoading }) {
                 <FieldLabel>Parent Issue ID</FieldLabel>
                 <StyledInput
                     type="text"
-                    placeholder="e.g. ISS-2024-001"
+                    placeholder="e.g. ISS-XXXX"
                     value={form.parentIssueId}
                     onChange={set("parentIssueId")}
                     icon={Icons.link}
                 />
             </div>
 
-            {/* Parent Priority hint — to derive constraint */}
-            <div>
-                <FieldLabel optional>Parent Priority (for inheritance check)</FieldLabel>
-                <PriorityDropdown
-                    value={form.parentPriority}
-                    onChange={(v) => setForm(f => ({ ...f, parentPriority: v, priority: "" }))}
-                />
-            </div>
-
             {/* Sub-header */}
             <div>
-                <FieldLabel>Issue Sub-Header</FieldLabel>
+                <FieldLabel>Node Header / Summary</FieldLabel>
                 <StyledInput
                     type="text"
-                    placeholder="Child issue headline"
+                    placeholder="Brief headline for this update node"
                     value={form.issueSubHeader}
                     onChange={set("issueSubHeader")}
                     icon={Icons.header}
@@ -460,35 +442,6 @@ function ExistingIssueForm({ onSubmit, isLoading }) {
                 <LiveDateDisplay />
             </div>
 
-            {/* Priority — constrained */}
-            <div>
-                <FieldLabel>
-                    Priority
-                    {form.parentPriority && (
-                        <span className="ml-2 text-[10px] text-[var(--semantic-warning)] font-mono uppercase">
-                            ≥ {form.parentPriority}
-                        </span>
-                    )}
-                </FieldLabel>
-                <PriorityDropdown
-                    value={form.priority}
-                    onChange={(v) => setForm(f => ({ ...f, priority: v }))}
-                    allowed={childAllowed}
-                />
-            </div>
-
-            {/* DeptID */}
-            <div>
-                <FieldLabel>Dept ID</FieldLabel>
-                <StyledInput
-                    type="text"
-                    placeholder="e.g. ENG-01"
-                    value={form.deptId}
-                    onChange={set("deptId")}
-                    icon={Icons.dept}
-                />
-            </div>
-
             {/* Description */}
             <div>
                 <FieldLabel>Issue Description</FieldLabel>
@@ -497,18 +450,6 @@ function ExistingIssueForm({ onSubmit, isLoading }) {
                     onChange={set("description")}
                     placeholder="Describe the child issue… (max 500 characters)"
                     maxLength={500}
-                />
-            </div>
-
-            {/* Created By */}
-            <div>
-                <FieldLabel optional>Created By (Emp ID)</FieldLabel>
-                <StyledInput
-                    type="text"
-                    placeholder="Your Employee ID"
-                    value={form.createdBy}
-                    onChange={set("createdBy")}
-                    icon={Icons.user}
                 />
             </div>
 
@@ -529,7 +470,9 @@ function ExistingIssueForm({ onSubmit, isLoading }) {
 // ─── Root Component ────────────────────────────────────────────────
 
 export default function ServiceHub() {
-    const [activeTab, setActiveTab] = useState("new")
+    const { user } = useAuth()
+    const isSenior = user?.role === "senior"
+    const [activeTab, setActiveTab] = useState(isSenior ? "new" : "existing")
     const [isLoading, setIsLoading] = useState(false)
 
     const handleSubmit = async (payload) => {
@@ -582,21 +525,23 @@ export default function ServiceHub() {
                 >
                     {/* Tab Switcher — mirrors auth-flow */}
                     <TabsList className="flex w-full bg-transparent p-0 mb-8 border-b border-subtle-custom/20 gap-8 h-auto">
-                        <TabsTrigger
-                            value="new"
-                            className="
-                                    flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
-                                    font-mono text-base font-bold uppercase tracking-widest
-                                    text-secondary-custom transition-all duration-300
-                                    data-[state=active]:bg-transparent data-[state=active]:shadow-none
-                                    data-[state=active]:text-[var(--accent-blue-bright)]
-                                    data-[state=active]:border-[var(--accent-blue-bright)]
-                                    data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
-                                    hover:text-primary-custom
-                                "
-                        >
-                            New Issue
-                        </TabsTrigger>
+                        {isSenior && (
+                            <TabsTrigger
+                                value="new"
+                                className="
+                                        flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
+                                        font-mono text-base font-bold uppercase tracking-widest
+                                        text-secondary-custom transition-all duration-300
+                                        data-[state=active]:bg-transparent data-[state=active]:shadow-none
+                                        data-[state=active]:text-[var(--accent-blue-bright)]
+                                        data-[state=active]:border-[var(--accent-blue-bright)]
+                                        data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
+                                        hover:text-primary-custom
+                                    "
+                            >
+                                New Issue
+                            </TabsTrigger>
+                        )}
                         <TabsTrigger
                             value="existing"
                             className="
@@ -614,12 +559,14 @@ export default function ServiceHub() {
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="new" className="mt-0 focus-visible:ring-0 outline-none">
-                        <NewIssueForm onSubmit={handleSubmit} isLoading={isLoading} />
-                    </TabsContent>
+                    {isSenior && (
+                        <TabsContent value="new" className="mt-0 focus-visible:ring-0 outline-none">
+                            <NewIssueForm onSubmit={handleSubmit} isLoading={isLoading} user={user} />
+                        </TabsContent>
+                    )}
 
                     <TabsContent value="existing" className="mt-0 focus-visible:ring-0 outline-none">
-                        <ExistingIssueForm onSubmit={handleSubmit} isLoading={isLoading} />
+                        <ExistingIssueForm onSubmit={handleSubmit} isLoading={isLoading} user={user} />
                     </TabsContent>
                 </Tabs>
             </motion.div>
