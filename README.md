@@ -6,7 +6,7 @@ CORTEX is a high-performance data ingestion and visualization platform built for
 
 ---
 
-## 🌟 Core Philosophy: "The Illusion of Instant"
+## 🌟 Core Philosophy: 
 
 - User actions (upload, trigger analysis) happen *instantly* in the UI. The backend synchronizes asynchronously.
 - Heavy math runs server-side via FastAPI + background workers. Layouts use `Framer Motion` to prevent shifts.
