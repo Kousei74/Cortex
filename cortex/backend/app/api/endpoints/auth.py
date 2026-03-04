@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.security import create_access_token, get_password_hash, verify_password, oauth2_scheme, decode_access_token
-from app.core.database import supabase
+from app.core.database import service_role_supabase as supabase
 from typing import Dict, Optional, Literal
 from datetime import timedelta
 
@@ -95,7 +95,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     
     access_token_expires = timedelta(minutes=300) # Long expiration for dev
     access_token = create_access_token(
-        data={"sub": user["email"]},
+        data={
+            "sub": user["email"],
+            "aud": "authenticated", # Required by most standard Supabase configurations
+            "role": "authenticated", # Tells Supabase PostgREST to assume 'authenticated' role
+            "emp_id": user.get("emp_id"),
+            "dept_id": user.get("dept_id"),
+            "user_role": user.get("role")
+        },
         expires_delta=access_token_expires
     )
     

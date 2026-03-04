@@ -5,9 +5,11 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 
+from app.core.config import settings
+
 # SECRET KEY - In production, this should be in .env
-# Using a fixed key for MVP development
-SECRET_KEY = "cortex-shadow-engine-secret-key-change-me"
+# We use the Supabase JWT Secret to ensure PostgREST accepts our tokens for RLS
+SECRET_KEY = settings.SUPABASE_JWT_SECRET
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 300
 
@@ -33,7 +35,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 def decode_access_token(token: str):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # We must explicitly validate the audience since we added 'aud': 'authenticated'
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], audience="authenticated")
         return payload
     except JWTError:
         return None

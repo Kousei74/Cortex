@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, List, Dict, Any
@@ -7,7 +7,8 @@ import httpx
 import uuid
 
 from app.core.config import settings
-from app.core.database import supabase
+from app.core.database import get_supabase
+from supabase import Client
 
 router = APIRouter()
 
@@ -62,41 +63,38 @@ class IssueResponse(BaseModel):
     message: str
     parent_id: Optional[str] = None
 
-# ─── Helper Functions ────────────────────────────────────────────────────────
-
-def delete_issue_subtree(node_id: str):
-    """
-    Deletes a node and relies on Postgres ON DELETE CASCADE to remove children.
-    """
-    supabase.table("issues").delete().eq("issue_id", node_id).execute()
-
-
 # ─── Issue Endpoints ─────────────────────────────────────────────────────────
 
 @router.post("/issues", response_model=IssueResponse, status_code=status.HTTP_201_CREATED)
-async def create_issue(request: NewIssueRequest):
+async def create_issue(request: NewIssueRequest, supabase: Client = Depends(get_supabase)):
     issue_id = f"ISS-{str(uuid.uuid4())[:8].upper()}"
     data = {
-        "issue_id": issue_id,
-        "type": "new",
+        "id": issue_id,
         "header": request.issue_header,
-        "date": str(request.date),
-        "assigned_team": request.assigned_team,
-        "priority": request.priority,
         "description": request.description,
-        "created_by": request.created_by,
-        "emp_id": request.emp_id,
-        "dept_id": request.dept_id,
-        "created_at": datetime.now().isoformat(),
-        "parent_ticket": request.parent_ticket,
-        "chained_to": request.chained_to,
-        "tag": "green", # Root issue nodes act as green truth anchors
+        "priority": request.priority,
         "status": "open",
-        "last_activity": datetime.now().isoformat()
+        "created_by_emp_id": request.emp_id,
+        "assigned_dept_id": request.assigned_team,
+        "dept_id": request.dept_id,
+        "parent_external_ticket": request.parent_ticket,
+        "chained_issue_id": request.chained_to,
+        "created_at": datetime.now().isoformat(),
+        "last_activity_at": datetime.now().isoformat()
     }
     
     try:
         supabase.table("issues").insert(data).execute()
+        
+        # Also create initial assignment history entry if assigned team is provided
+        if request.assigned_team:
+            supabase.table("issue_assignments_history").insert({
+                "issue_id": issue_id,
+                "assigned_dept_id": request.assigned_team,
+                "assigned_by_emp_id": request.emp_id,
+                "assigned_at": datetime.now().isoformat()
+            }).execute()
+            
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
         
@@ -104,112 +102,125 @@ async def create_issue(request: NewIssueRequest):
 
 
 @router.post("/issues/child", response_model=IssueResponse, status_code=status.HTTP_201_CREATED)
-async def create_child_issue(request: ExistingIssueRequest):
-    res = supabase.table("issues").select("*").eq("issue_id", request.parent_issue_id).execute()
-    if not res.data:
-        raise HTTPException(status_code=404, detail=f"Parent issue '{request.parent_issue_id}' not found.")
-    parent = res.data[0]
+async def create_child_issue(request: ExistingIssueRequest, supabase: Client = Depends(get_supabase)):
+    # Determine the root issue tracking. The frontend parent_issue_id could be a root issue OR a child node.
+    # Check if parent is a root issue:
+    res = supabase.table("issues").select("id, status").eq("id", request.parent_issue_id).execute()
+    
+    if res.data:
+        root_id = res.data[0]["id"]
+        status = res.data[0]["status"]
+    else:
+        # Check if parent is a node instead
+        node_res = supabase.table("issue_nodes").select("id, root_issue_id").eq("id", request.parent_issue_id).execute()
+        if not node_res.data:
+            raise HTTPException(status_code=404, detail=f"Parent issue '{request.parent_issue_id}' not found.")
+        root_id = node_res.data[0]["root_issue_id"]
+        
+        root_res = supabase.table("issues").select("status").eq("id", root_id).execute()
+        status = root_res.data[0]["status"] if root_res.data else "closed"
 
-    if parent.get("status") == "closed":
+    if status == "closed":
         raise HTTPException(status_code=400, detail="Cannot add nodes to a closed issue.")
 
-    # Apply Ruthless Cleanliness Rule: If ANY sibling has tag "yellow" or "red", they instantly vanish
-    sibs_res = supabase.table("issues").select("issue_id, tag").eq("parent_id", request.parent_issue_id).execute()
+    # Apply Ruthless Cleanliness Rule: If ANY sibling node has tag "yellow" or "red", they instantly vanish
+    sibs_res = supabase.table("issue_nodes").select("id, tag").eq("parent_node_id", request.parent_issue_id).execute()
     for sib in sibs_res.data:
         if sib.get("tag") in ["yellow", "red"]:
-            delete_issue_subtree(sib["issue_id"])
+            supabase.table("issue_nodes").delete().eq("id", sib["id"]).execute()
 
-    issue_id = f"NODE-{str(uuid.uuid4())[:8].upper()}"
+    node_id = f"NODE-{str(uuid.uuid4())[:8].upper()}"
     data = {
-        "issue_id": issue_id,
-        "type": "existing",
-        "parent_id": request.parent_issue_id,
+        "id": node_id,
+        "root_issue_id": root_id,
+        "parent_node_id": request.parent_issue_id,
         "header": request.issue_subheader,
-        "date": str(request.date),
         "description": request.description,
-        "created_by": request.created_by,
-        "emp_id": request.emp_id,
+        "node_type": "update",
+        "tag": "pending",
+        "created_by_emp_id": request.emp_id,
         "dept_id": request.dept_id,
-        "created_at": datetime.now().isoformat(),
-        "tag": "pending", # Requires senior tagging
-        "status": "open",
+        "created_at": datetime.now().isoformat()
     }
     
     try:
-        supabase.table("issues").insert(data).execute()
-        
-        # Update last activity of the root issue
-        root_id = request.parent_issue_id
-        while True:
-            r_res = supabase.table("issues").select("parent_id").eq("issue_id", root_id).execute()
-            if not r_res.data or not r_res.data[0].get("parent_id"):
-                break
-            root_id = r_res.data[0]["parent_id"]
-            
-        supabase.table("issues").update({"last_activity": datetime.now().isoformat()}).eq("issue_id", root_id).execute()
+        supabase.table("issue_nodes").insert(data).execute()
+        supabase.table("issues").update({"last_activity_at": datetime.now().isoformat()}).eq("id", root_id).execute()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
         
-    return IssueResponse(issue_id=issue_id, type="existing", status="open",
+    return IssueResponse(issue_id=node_id, type="existing", status="open",
                          message="Node added successfully. Awaiting Senior Review.", parent_id=request.parent_issue_id)
 
 
 @router.patch("/issues/{issue_id}/tag")
-async def tag_issue_node(issue_id: str, request: IssueTagRequest):
-    res = supabase.table("issues").select("*").eq("issue_id", issue_id).execute()
+async def tag_issue_node(issue_id: str, request: IssueTagRequest, supabase: Client = Depends(get_supabase)):
+    if issue_id.startswith("ISS-"):
+        raise HTTPException(status_code=400, detail="Cannot arbitrarily tag root issue nodes. They remain source of truth.")
+
+    res = supabase.table("issue_nodes").select("*").eq("id", issue_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Node not found.")
     node = res.data[0]
     
-    if node.get("type") == "new":
-        raise HTTPException(status_code=400, detail="Cannot arbitrarily tag root issue nodes.")
-
     # Ruthless pruning for Red nodes at the end of Blue branches
     if request.tag == "red" and node.get("tag") == "blue":
-        # System axing a blue branch - delete branch
-        delete_issue_subtree(issue_id)
+        # System axing a blue branch - delete branch entirely (relies on cascade if applicable, else delete self)
+        supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
         return {"message": "Blue branch rotting limb pruned successfully."}
 
-    supabase.table("issues").update({"tag": request.tag}).eq("issue_id", issue_id).execute()
+    supabase.table("issue_nodes").update({"tag": request.tag}).eq("id", issue_id).execute()
     return {"message": f"Node {issue_id} tagged as {request.tag}", "node": {**node, "tag": request.tag}}
 
 
 @router.post("/issues/merge")
-async def merge_blue_branch(request: IssueMergeRequest):
-    res = supabase.table("issues").select("*").eq("issue_id", request.target_parent_id).execute()
-    if not res.data:
+async def merge_blue_branch(request: IssueMergeRequest, supabase: Client = Depends(get_supabase)):
+    # Verify the target parent exists and find the root
+    p_res = supabase.table("issues").select("id").eq("id", request.target_parent_id).execute()
+    n_res = supabase.table("issue_nodes").select("id, root_issue_id").eq("id", request.target_parent_id).execute()
+    
+    if p_res.data:
+        root_id = request.target_parent_id
+    elif n_res.data:
+        root_id = n_res.data[0]["root_issue_id"]
+    else:
         raise HTTPException(status_code=404, detail="Target parent not found.")
         
     issue_id = f"MERGE-{str(uuid.uuid4())[:8].upper()}"
     
-    # Collapse the blue branch (remove nodes from graph, store metadata inside truth pill)
-    branch_history = []
-    for b_id in request.branch_nodes:
-        b_res = supabase.table("issues").select("*").eq("issue_id", b_id).execute()
-        if b_res.data:
-            node = b_res.data[0]
-            # Convert datetime objects if any, mostly strings though
-            branch_history.append(node)
-            delete_issue_subtree(b_id)
-            
-    data = {
-        "issue_id": issue_id,
-        "type": "merged_truth",
-        "parent_id": request.target_parent_id,
-        "header": "Merged Truth Pill",
-        "description": request.metadata_summary,
-        "emp_id": request.emp_id,
-        "dept_id": request.dept_id,
-        "created_by": "System Auto-Merge",
-        "date": str(date.today()),
-        "metadata": {"branch_history": branch_history}, # Embedded metadata
-        "created_at": datetime.now().isoformat(),
-        "tag": "green",
-        "status": "open",
-    }
-    
     try:
-        supabase.table("issues").insert(data).execute()
+        data = {
+            "id": issue_id,
+            "root_issue_id": root_id,
+            "parent_node_id": request.target_parent_id,
+            "header": "Merged Truth Pill",
+            "description": request.metadata_summary,
+            "node_type": "merged_truth",
+            "tag": "green",
+            "created_by_emp_id": request.emp_id,
+            "dept_id": request.dept_id,
+            "created_at": datetime.now().isoformat()
+        }
+        supabase.table("issue_nodes").insert(data).execute()
+        
+        # Collapse the blue branch
+        for b_id in request.branch_nodes:
+            b_res = supabase.table("issue_nodes").select("*").eq("id", b_id).execute()
+            if b_res.data:
+                node = b_res.data[0]
+                meta = {
+                    "merge_node_id": issue_id,
+                    "original_node_id": node["id"],
+                    "historical_header": node["header"],
+                    "historical_description": node["description"],
+                    "historical_created_by": node["created_by_emp_id"],
+                    "historical_created_at": node["created_at"]
+                }
+                supabase.table("issue_node_metadata").insert(meta).execute()
+                supabase.table("issue_nodes").delete().eq("id", b_id).execute()
+                
+        supabase.table("issues").update({"last_activity_at": datetime.now().isoformat()}).eq("id", root_id).execute()
+
     except Exception as e:
          raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
          
@@ -217,59 +228,48 @@ async def merge_blue_branch(request: IssueMergeRequest):
 
 
 @router.delete("/issues/{issue_id}")
-async def delete_issue_node(issue_id: str):
-    res = supabase.table("issues").select("*").eq("issue_id", issue_id).execute()
+async def delete_issue_node(issue_id: str, supabase: Client = Depends(get_supabase)):
+    if issue_id.startswith("ISS-"):
+        raise HTTPException(status_code=400, detail="Cannot delete root issues. Close them instead.")
+        
+    res = supabase.table("issue_nodes").select("*").eq("id", issue_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Node not found.")
     node = res.data[0]
         
-    if node.get("type") == "new":
-        raise HTTPException(status_code=400, detail="Cannot delete root issues. Close them instead.")
-        
     created_at = datetime.fromisoformat(node["created_at"])
     # 30 minute offset logic mapped dynamically, typically the client enforces auth match first
+    # Server-side validation of the 30 minute rule to prevent API abuse
     if datetime.now() - created_at > timedelta(minutes=30):
         # Allow seniors to delete via an active JWT check if implemented, otherwise block
-        # For this prototype we will enforce 30 mins universally apart from explicit Senior DB-level RLS overrides
         raise HTTPException(status_code=403, detail="30-minute delete window has expired. Node is permanent.")
         
     if node.get("tag") != "pending":
          raise HTTPException(status_code=403, detail="Cannot delete a node that has already been evaluated by a Senior.")
 
-    delete_issue_subtree(issue_id)
+    supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
     return {"message": "Node deleted successfully within window."}
 
 
 @router.post("/issues/{issue_id}/close")
-async def close_issue(issue_id: str):
-    res = supabase.table("issues").select("*").eq("issue_id", issue_id).execute()
-    if not res.data or res.data[0].get("type") != "new":
+async def close_issue(issue_id: str, supabase: Client = Depends(get_supabase)):
+    res = supabase.table("issues").select("*").eq("id", issue_id).execute()
+    if not res.data:
         raise HTTPException(status_code=404, detail="Root issue not found.")
-    issue = res.data[0]
         
-    # Check if any active blue branches exist
-    all_res = supabase.table("issues").select("*").execute()
-    all_nodes = all_res.data
-    
-    def has_blue(node_id):
-        # Simple recursive check in-memory for this issue tree
-        children = [n for n in all_nodes if n.get("parent_id") == node_id]
-        for c in children:
-            if c.get("tag") == "blue": return True
-            if has_blue(c["issue_id"]): return True
-        return False
-        
-    if has_blue(issue_id):
+    # Check if any active blue branches exist under this issue
+    blue_res = supabase.table("issue_nodes").select("id").eq("root_issue_id", issue_id).eq("tag", "blue").execute()
+    if blue_res.data:
         raise HTTPException(status_code=400, detail="Cannot close issue while active Blue branches exist.")
         
-    supabase.table("issues").update({"status": "closed", "last_activity": datetime.now().isoformat()}).eq("issue_id", issue_id).execute()
+    supabase.table("issues").update({"status": "closed", "last_activity_at": datetime.now().isoformat()}).eq("id", issue_id).execute()
     return {"message": "Issue closed successfully."}
 
 
 @router.get("/issues", response_model=list)
-async def list_issues(status: str = "open", limit: int = 50, dept_id: str = None, emp_id: str = None, role: str = "team_member"):
+async def list_issues(status: str = "open", limit: int = 50, dept_id: str = None, emp_id: str = None, role: str = "team_member", supabase: Client = Depends(get_supabase)):
     """Returns root issues sorted by last activity descending. Implements Python level RBAC matching SQL RLS."""
-    query = supabase.table("issues").select("*").eq("type", "new").eq("status", status)
+    query = supabase.table("issues").select("*").eq("status", status)
     res = query.execute()
     all_roots = res.data
     
@@ -279,7 +279,7 @@ async def list_issues(status: str = "open", limit: int = 50, dept_id: str = None
     
     for issue in all_roots:
         if status == "closed":
-            act = datetime.fromisoformat(issue.get("last_activity")) if issue.get("last_activity") else datetime.fromisoformat(issue.get("created_at"))
+            act = datetime.fromisoformat(issue.get("last_activity_at")) if issue.get("last_activity_at") else datetime.fromisoformat(issue.get("created_at"))
             # remove timezone info for comparison if it exists
             if act.tzinfo: act = act.replace(tzinfo=None)
             if act < six_months_ago:
@@ -288,65 +288,94 @@ async def list_issues(status: str = "open", limit: int = 50, dept_id: str = None
         # Access control
         if role == "senior":
             accessible.append(issue)
-        elif issue.get("emp_id") == emp_id:
+        elif issue.get("created_by_emp_id") == emp_id:
             accessible.append(issue)
         elif issue.get("dept_id") == dept_id:
              accessible.append(issue)
-        elif issue.get("assigned_team") == dept_id:
+        elif issue.get("assigned_dept_id") == dept_id:
              accessible.append(issue)
             
-    accessible.sort(key=lambda x: x.get("last_activity", x.get("created_at", "")), reverse=True)
-    return accessible[:limit]
+    accessible.sort(key=lambda x: x.get("last_activity_at", x.get("created_at", "")), reverse=True)
+    
+    # Format to match existing frontend expectations
+    formatted_issues = []
+    for issue in accessible[:limit]:
+        formatted = dict(issue)
+        formatted["issue_id"] = issue["id"]
+        formatted["assigned_team"] = issue.get("assigned_dept_id")
+        formatted["last_activity"] = issue.get("last_activity_at")
+        formatted["type"] = "new"  # roots mapped as new
+        formatted_issues.append(formatted)
+
+    return formatted_issues
 
 
 @router.get("/issues/{issue_id}/graph")
-async def get_issue_graph(issue_id: str):
+async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase)):
     """Returns the DAG representation for the React Flow frontend."""
-    res = supabase.table("issues").select("*").execute()
-    all_data = res.data
-    
-    root = next((n for n in all_data if n["issue_id"] == issue_id), None)
-    if not root:
+    # Fetch Root
+    root_res = supabase.table("issues").select("*").eq("id", issue_id).execute()
+    if not root_res.data:
         raise HTTPException(status_code=404, detail="Issue not found.")
-        
+    root = root_res.data[0]
+    
+    # Fetch Nodes
+    nodes_res = supabase.table("issue_nodes").select("*").eq("root_issue_id", issue_id).execute()
+    issue_nodes = nodes_res.data
+    
     nodes = []
     edges = []
     
-    def traverse(node_id):
-        node = next((n for n in all_data if n["issue_id"] == node_id), None)
-        if not node: return
-        
+    # Add Root Node
+    nodes.append({
+        "id": root["id"],
+        "data": {
+            "label": root.get("header"),
+            "tag": "green", # Roots are green by definition
+            "author": root.get("created_by_emp_id"),
+            "description": root.get("description"),
+            "created_at": root.get("created_at"),
+            "type": "new"
+        }
+    })
+    
+    for n in issue_nodes:
         nodes.append({
-            "id": node["issue_id"],
+            "id": n["id"],
             "data": {
-                "label": node.get("header", node.get("issue_id")),
-                "tag": node.get("tag", "pending"),
-                "author": node.get("created_by", "Unknown"),
-                "description": node.get("description", ""),
-                "created_at": node.get("created_at"),
-                "type": node.get("type")
+                "label": n.get("header"),
+                "tag": n.get("tag"),
+                "author": n.get("created_by_emp_id"),
+                "description": n.get("description"),
+                "created_at": n.get("created_at"),
+                "type": n.get("node_type")
             }
         })
         
-        children = [n for n in all_data if n.get("parent_id") == node_id]
-        for child in children:
-            child_id = child["issue_id"]
+        parent_id = n.get("parent_node_id") or n.get("root_issue_id")
+        if parent_id:
             edges.append({
-                "id": f"e-{node_id}-{child_id}",
-                "source": node_id,
-                "target": child_id
+                "id": f"e-{parent_id}-{n['id']}",
+                "source": parent_id,
+                "target": n["id"]
             })
-            traverse(child_id)
             
-    traverse(issue_id)
     return {"nodes": nodes, "edges": edges}
 
 @router.get("/issues/{issue_id}", response_model=dict)
-async def get_issue(issue_id: str):
-    res = supabase.table("issues").select("*").eq("issue_id", issue_id).execute()
+async def get_issue(issue_id: str, supabase: Client = Depends(get_supabase)):
+    res = supabase.table("issues").select("*").eq("id", issue_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Issue not found.")
-    return res.data[0]
+    
+    issue = res.data[0]
+    # Format to match frontend
+    issue["issue_id"] = issue["id"]
+    issue["assigned_team"] = issue.get("assigned_dept_id")
+    issue["last_activity"] = issue.get("last_activity_at")
+
+    return issue
+
 
 
 # ─── Slack OAuth Endpoints ────────────────────────────────────────────────────

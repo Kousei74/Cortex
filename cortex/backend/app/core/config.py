@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+    # Note: This MUST match the JWT Secret found in Supabase Dashboard -> Project Settings -> API
+    SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "cortex-shadow-engine-secret-key-change-me-to-supabase-jwt-secret")
+    # Required for auth endpoints to query the users table when RLS is enabled
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
     # Slack OAuth
     SLACK_CLIENT_ID:     str = os.getenv("SLACK_CLIENT_ID", "")

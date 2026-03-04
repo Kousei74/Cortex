@@ -53,10 +53,10 @@ export default function Dashboard() {
                                 }
                             />
                             <Route
-                                path="/integrations"
+                                path="/issue-tracker"
                                 element={
                                     <motion.div {...PAGE_TRANSITION} className="min-h-full">
-                                        <PlaceholderPage title="INTEGRATIONS" />
+                                        <PlaceholderPage title="ISSUE TRACKER" />
                                     </motion.div>
                                 }
                             />
