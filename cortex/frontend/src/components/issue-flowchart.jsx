@@ -1,11 +1,13 @@
 import { useState, useCallback, useEffect } from "react"
 import {
     ReactFlow,
+    ReactFlowProvider,
     Background,
     Controls,
     MiniMap,
     useNodesState,
     useEdgesState,
+    useReactFlow,
     Handle,
     Position,
     addEdge,
@@ -209,7 +211,16 @@ const getLayoutedElements = (nodes, edges) => {
 // ─── Main Component ────────────────────────────────────────────────
 
 export default function IssueFlowchart({ issueId }) {
+    return (
+        <ReactFlowProvider>
+            <IssueFlowchartInner issueId={issueId} />
+        </ReactFlowProvider>
+    )
+}
+
+function IssueFlowchartInner({ issueId }) {
     const { user } = useAuth()
+    const { getNode } = useReactFlow()
     const [nodes, setNodes, onNodesChange] = useNodesState([])
     const [edges, setEdges, onEdgesChange] = useEdgesState([])
     const [isLoading, setIsLoading] = useState(true)
@@ -302,7 +313,7 @@ export default function IssueFlowchart({ issueId }) {
         setIsLoading(true)
         const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
 
-        const parentNode = nodes.find(n => n.id === parentId)
+        const parentNode = getNode(parentId)
         let newX = parentNode ? parentNode.position.x : 0
         let newY = parentNode ? parentNode.position.y : 0
 

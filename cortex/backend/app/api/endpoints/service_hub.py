@@ -332,7 +332,9 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
             "author": root.get("created_by_emp_id"),
             "description": root.get("description"),
             "created_at": root.get("created_at"),
-            "type": "new"
+            "type": "new",
+            "layout_x": 0.0,
+            "layout_y": 0.0
         }
     })
     
