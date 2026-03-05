@@ -1,10 +1,11 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FADE_IN } from "@/lib/animations"
 import { useAuth } from "@/context/AuthContext"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function AuthFlow() {
     const { login, signup } = useAuth()
@@ -21,6 +22,8 @@ export default function AuthFlow() {
 
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [showPassword, setShowPassword] = useState(false)
+    const passwordInputRef = useRef(null)
 
     const handleLogin = async () => {
         setIsLoading(true);
@@ -212,6 +215,12 @@ export default function AuthFlow() {
                                                     placeholder="Email Address"
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            e.preventDefault()
+                                                            passwordInputRef.current?.focus()
+                                                        }
+                                                    }}
                                                     className="bg-surface-custom border-subtle-custom text-primary-custom placeholder:text-secondary-custom/50 fluid-rounded focus:border-[var(--accent-blue-bright)] soft-glow-hover soft-focus transition-all duration-300 pl-10 h-12"
                                                 />
                                             </div>
@@ -220,12 +229,41 @@ export default function AuthFlow() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                                 </svg>
                                                 <Input
-                                                    type="password"
+                                                    ref={passwordInputRef}
+                                                    type={showPassword ? "text" : "password"}
                                                     placeholder="Password"
                                                     value={password}
                                                     onChange={(e) => setPassword(e.target.value)}
-                                                    className="bg-surface-custom border-subtle-custom text-primary-custom placeholder:text-secondary-custom/50 fluid-rounded focus:border-[var(--accent-blue-bright)] soft-glow-hover soft-focus transition-all duration-300 pl-10 h-12"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            e.preventDefault()
+                                                            handleLogin()
+                                                        }
+                                                    }}
+                                                    className="bg-surface-custom border-subtle-custom text-primary-custom placeholder:text-secondary-custom/50 fluid-rounded focus:border-[var(--accent-blue-bright)] soft-glow-hover soft-focus transition-all duration-300 pl-10 pr-12 h-12"
                                                 />
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-secondary-custom hover:text-[var(--accent-blue-bright)] transition-colors cursor-pointer select-none focus:outline-none"
+                                                    onMouseDown={() => setShowPassword(true)}
+                                                    onMouseUp={() => setShowPassword(false)}
+                                                    onMouseLeave={() => setShowPassword(false)}
+                                                    onTouchStart={(e) => { e.preventDefault(); setShowPassword(true) }}
+                                                    onTouchEnd={() => setShowPassword(false)}
+                                                    tabIndex={-1}
+                                                >
+                                                    <AnimatePresence mode="wait">
+                                                        <motion.div
+                                                            key={showPassword ? "show" : "hide"}
+                                                            initial={{ opacity: 0, scale: 0.8, rotate: -30 }}
+                                                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                                            exit={{ opacity: 0, scale: 0.8, rotate: 30 }}
+                                                            transition={{ duration: 0.15 }}
+                                                        >
+                                                            {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                                                        </motion.div>
+                                                    </AnimatePresence>
+                                                </button>
                                             </div>
                                         </div>
                                         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
