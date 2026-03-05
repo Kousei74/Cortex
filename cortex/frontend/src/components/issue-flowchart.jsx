@@ -155,17 +155,36 @@ const getLayoutedElements = (nodes, edges) => {
 
         if (!sourceNode || !targetNode) return edge;
 
-        // Dagre inherently structures the layout hierarchically Top-To-Bottom (TB).
-        // Forcing Vertical Handles prevents React Flow from doing wild S-curves if child nodes drift horizontally.
-        const sourceHandle = 'bottom-source';
-        const targetHandle = 'top-target';
-
         const dx = targetNode.position.x - sourceNode.position.x;
-        const isMainBranch = Math.abs(dx) <= 50; // if it's mostly directly underneath, it's a main branch
+        const dy = targetNode.position.y - sourceNode.position.y;
+
+        let sourceHandle = 'bottom-source';
+        let targetHandle = 'top-target';
+        let isMainBranch = true;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // Horizontal relationship is stronger (side-branch)
+            isMainBranch = false;
+            if (dx > 0) {
+                sourceHandle = 'right-source';
+                targetHandle = 'left-target';
+            } else {
+                sourceHandle = 'left-source';
+                targetHandle = 'right-target';
+            }
+        } else {
+            // Vertical relationship is stronger (main/reverse branch)
+            isMainBranch = Math.abs(dx) <= 50;
+            if (dy < 0) {
+                // Reverse edge
+                sourceHandle = 'top-source';
+                targetHandle = 'bottom-target';
+            }
+        }
 
         return {
             ...edge,
-            type: 'smoothstep', // Use smoothstep universally for PowerBI-like orthogonal routing
+            type: 'smoothstep',
             sourceHandle,
             targetHandle,
             style: {
