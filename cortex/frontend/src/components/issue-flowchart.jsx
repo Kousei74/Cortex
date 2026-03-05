@@ -141,11 +141,15 @@ const getLayoutedElements = (nodes, edges) => {
 
     const layoutedNodes = nodes.map((node) => {
         const nodeWithPosition = dagreGraph.node(node.id)
+
+        const parsedX = parseFloat(node.data?.layout_x)
+        const parsedY = parseFloat(node.data?.layout_y)
+
         return {
             ...node,
             position: {
-                x: node.data?.layout_x ?? (nodeWithPosition.x - 130),
-                y: node.data?.layout_y ?? (nodeWithPosition.y - 60),
+                x: !isNaN(parsedX) ? parsedX : (nodeWithPosition.x - 130),
+                y: !isNaN(parsedY) ? parsedY : (nodeWithPosition.y - 60),
             },
         }
     })
@@ -161,23 +165,26 @@ const getLayoutedElements = (nodes, edges) => {
 
         let sourceHandle = 'bottom-source';
         let targetHandle = 'top-target';
-        let isMainBranch = true;
 
-        if (Math.abs(dx) > Math.abs(dy)) {
-            // Horizontal relationship is stronger (side-branch)
-            isMainBranch = false;
+        // If the horizontal displacement is larger than vertical displacement,
+        // this is definitively a side branch (Left/Right)
+        const isHorizontal = Math.abs(dx) > Math.abs(dy);
+        const isMainBranch = !isHorizontal;
+
+        if (isHorizontal) {
             if (dx > 0) {
+                // Target is to the Right
                 sourceHandle = 'right-source';
                 targetHandle = 'left-target';
             } else {
+                // Target is to the Left
                 sourceHandle = 'left-source';
                 targetHandle = 'right-target';
             }
         } else {
-            // Vertical relationship is stronger (main/reverse branch)
-            isMainBranch = Math.abs(dx) <= 50;
+            // Target is Above or Below
             if (dy < 0) {
-                // Reverse edge
+                // Reverse edge (Target is Above)
                 sourceHandle = 'top-source';
                 targetHandle = 'bottom-target';
             }
@@ -353,7 +360,7 @@ export default function IssueFlowchart({ issueId }) {
                 id: e.id,
                 source: e.source,
                 target: e.target,
-                type: 'straight',
+                type: 'smoothstep',
                 animated: true,
                 style: { stroke: 'var(--accent-blue-bright)', strokeWidth: 3 },
             }))
@@ -441,8 +448,8 @@ export default function IssueFlowchart({ issueId }) {
                         exit={{ opacity: 0, y: -20 }}
                         id="trash-zone"
                         className={`absolute top-0 left-0 right-0 h-32 flex flex-col items-center justify-center z-[100] transition-colors duration-300 pointer-events-none ${isHoveringTrash
-                                ? "bg-gradient-to-b from-red-600/60 to-transparent backdrop-blur-sm"
-                                : "bg-gradient-to-b from-red-500/20 to-transparent backdrop-blur-sm"
+                            ? "bg-gradient-to-b from-red-600/60 to-transparent backdrop-blur-sm"
+                            : "bg-gradient-to-b from-red-500/20 to-transparent backdrop-blur-sm"
                             }`}
                     >
                         <Trash2 className={`w-12 h-12 transition-all duration-300 ${isHoveringTrash ? "scale-125 text-red-100" : "scale-100 text-red-300/50"}`} />
