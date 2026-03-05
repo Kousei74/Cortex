@@ -133,7 +133,7 @@ async def create_child_issue(request: ExistingIssueRequest, supabase: Client = D
     data = {
         "id": node_id,
         "root_issue_id": root_id,
-        "parent_node_id": request.parent_issue_id,
+        "parent_node_id": request.parent_issue_id if request.parent_issue_id != root_id else None,
         "header": request.issue_subheader,
         "description": request.description,
         "node_type": "update",
