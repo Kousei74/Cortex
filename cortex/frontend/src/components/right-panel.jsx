@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { CortexLoader } from "./cortex-loader"
 import { Card } from "@/components/ui/card"
 import { ShieldCheck } from "lucide-react"
 import SlackIcon from "@/assets/slack.svg?react"
@@ -58,7 +59,9 @@ function ReviewExplorer() {
 
             <div className={`flex-1 overflow-auto custom-scrollbar ${!loading && issues.length === 0 ? "flex flex-col" : "p-4 space-y-4"}`}>
                 {loading && (
-                    <p className="text-secondary-custom text-xs font-mono text-center py-4">Loading…</p>
+                    <div className="flex items-center justify-center p-8">
+                        <CortexLoader />
+                    </div>
                 )}
 
                 {!loading && issues.length === 0 && (

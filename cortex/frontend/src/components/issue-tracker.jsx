@@ -171,22 +171,20 @@ export default function IssueTracker() {
 
     // DETAIL VIEW (Flowchart)
     return (
-        <div className="flex flex-col h-full w-full overflow-hidden bg-[var(--bg-card)]">
-            {/* Nav Header */}
-            <div className="flex-shrink-0 p-4 border-b border-subtle-custom bg-surface-custom/80 backdrop-blur z-10 flex items-center shadow-sm">
-                <button
-                    onClick={() => setActiveIssueId(null)}
-                    className="flex items-center gap-2 text-secondary-custom hover:text-[var(--accent-blue-bright)] transition-colors font-mono text-sm uppercase tracking-widest group px-2 py-1"
-                >
-                    <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Ledger
-                </button>
-            </div>
+        <div className="absolute inset-0 z-10 overflow-hidden bg-[var(--bg-card)]">
+            {/* Floating Back Button */}
+            <button
+                onClick={() => setActiveIssueId(null)}
+                className="absolute top-6 left-6 z-50 flex items-center gap-2 bg-[var(--bg-panel)] border border-subtle-custom rounded-full px-5 py-2.5 text-secondary-custom hover:text-[var(--accent-blue-bright)] hover:border-[var(--accent-blue-bright)] hover:shadow-[0_0_15px_rgba(0,191,255,0.2)] transition-all font-mono text-xs font-bold uppercase tracking-widest group shadow-lg"
+            >
+                <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Ledger
+            </button>
 
             {/* Flowchart Area */}
-            <div className="flex-1 relative">
+            <div className="absolute inset-0">
                 <IssueFlowchart key={activeIssueId} issueId={activeIssueId} />
             </div>
         </div>

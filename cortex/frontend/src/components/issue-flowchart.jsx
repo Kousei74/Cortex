@@ -15,6 +15,7 @@ import { api } from "@/lib/api"
 import { motion } from "framer-motion"
 import { FADE_IN } from "@/lib/animations"
 import { toast } from "sonner"
+import { CortexLoader } from "./cortex-loader"
 
 // ─── Custom Node Configurations ────────────────────────────────────
 
@@ -26,20 +27,53 @@ const NODE_COLORS = {
     red: { bg: "rgba(255, 59, 48, 0.15)", border: "#ff3b30", text: "#ff3b30" },
 }
 
-const CustomNode = ({ data }) => {
-    const { label, tag, author, description, type } = data
+const PlusButton = ({ position, onClick }) => {
+    let posClass = ""
+    if (position === Position.Top) posClass = "-top-2 left-1/2 -translate-x-1/2"
+    if (position === Position.Bottom) posClass = "-bottom-2 left-1/2 -translate-x-1/2"
+    if (position === Position.Left) posClass = "-left-2 top-1/2 -translate-y-1/2"
+    if (position === Position.Right) posClass = "-right-2 top-1/2 -translate-y-1/2"
+
+    return (
+        <button
+            onClick={onClick}
+            className={`absolute ${posClass} bg-[var(--bg-panel)] border border-subtle-custom w-4 h-4 rounded-full flex items-center justify-center hover:border-[var(--accent-blue-bright)] hover:text-[var(--accent-blue-bright)] transition-colors z-50 text-secondary-custom cursor-pointer shadow-sm`}
+        >
+            <span className="text-[12px] leading-none mb-[1px]">+</span>
+        </button>
+    )
+}
+
+const CustomNode = ({ data, id }) => {
+    const { label, tag, author, description, type, onAddNode } = data
     const styling = NODE_COLORS[tag] || NODE_COLORS.pending
+
+    const isRoot = type === "new"
+    const isEnd = tag === "red"
 
     return (
         <div
-            className="rounded-xl border backdrop-blur-md px-4 py-3 min-w-[200px] max-w-[280px] shadow-lg transition-transform hover:scale-105"
+            className="rounded-xl border backdrop-blur-md px-4 py-3 min-w-[200px] max-w-[280px] shadow-lg transition-transform hover:scale-105 relative"
             style={{
                 backgroundColor: styling.bg,
                 borderColor: styling.border,
                 boxShadow: `0 4px 20px ${styling.bg}`,
             }}
         >
-            <Handle type="target" position={Position.Top} className="!bg-secondary-custom !w-3 !h-3" />
+            {/* Hidden handles for edges to explicitly target */}
+            <Handle type="target" position={Position.Top} className="opacity-0 w-1 h-1" />
+            <Handle type="source" position={Position.Bottom} className="opacity-0 w-1 h-1" />
+            <Handle type="source" position={Position.Left} className="opacity-0 w-1 h-1" />
+            <Handle type="source" position={Position.Right} className="opacity-0 w-1 h-1" />
+
+            {!isRoot && <PlusButton position={Position.Top} onClick={() => onAddNode?.(id, 'top')} />}
+
+            {!isRoot && !isEnd && (
+                <>
+                    <PlusButton position={Position.Left} onClick={() => onAddNode?.(id, 'left')} />
+                    <PlusButton position={Position.Right} onClick={() => onAddNode?.(id, 'right')} />
+                </>
+            )}
 
             <div className="flex justify-between items-start mb-2">
                 <div className="text-xs font-mono font-bold uppercase tracking-widest break-words pr-2 text-primary-custom">
@@ -62,7 +96,7 @@ const CustomNode = ({ data }) => {
                 <span className="text-primary-custom/80 uppercase tracking-widest">{author}</span>
             </div>
 
-            <Handle type="source" position={Position.Bottom} className="!bg-secondary-custom !w-3 !h-3" />
+            {!isEnd && <PlusButton position={Position.Bottom} onClick={() => onAddNode?.(id, 'bottom')} />}
         </div>
     )
 }
@@ -112,6 +146,49 @@ export default function IssueFlowchart({ issueId }) {
     const [edges, setEdges, onEdgesChange] = useEdgesState([])
     const [isLoading, setIsLoading] = useState(true)
 
+    const handleAddNode = useCallback((parentId, direction) => {
+        const newNodeId = `node_${Date.now()}`
+        const newNode = {
+            id: newNodeId,
+            type: 'custom',
+            data: {
+                label: 'NEW ISSUE',
+                tag: 'pending',
+                author: 'USER',
+                description: 'Draft issue generated for branch extending.',
+                type: 'child',
+                onAddNode: handleAddNode,
+            },
+            position: { x: 0, y: 0 }
+        }
+
+        const newEdge = {
+            id: `edge_${parentId}_${newNodeId}`,
+            source: parentId,
+            target: newNodeId,
+            type: 'smoothstep',
+            animated: true,
+            style: { stroke: 'var(--accent-blue-bright)', strokeWidth: 2 },
+        }
+
+        setNodes(nds => {
+            const nextNodes = [...nds, newNode]
+            setEdges(eds => {
+                const nextEdges = [...eds, newEdge]
+                const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nextNodes, nextEdges)
+
+                // Set the layouted elements in the next tick to overwrite the state properly
+                setTimeout(() => {
+                    setNodes(layoutedNodes)
+                    setEdges(layoutedEdges)
+                }, 0)
+
+                return nextEdges
+            })
+            return nextNodes
+        })
+    }, [setNodes, setEdges])
+
     const loadGraph = useCallback(async () => {
         if (!issueId) return
         setIsLoading(true)
@@ -122,7 +199,7 @@ export default function IssueFlowchart({ issueId }) {
             const initialNodes = data.nodes.map(n => ({
                 id: n.id,
                 type: 'custom',
-                data: { ...n.data },
+                data: { ...n.data, onAddNode: handleAddNode },
                 position: { x: 0, y: 0 }, // Handled by dagre
             }))
 
@@ -155,22 +232,22 @@ export default function IssueFlowchart({ issueId }) {
 
     if (isLoading) {
         return (
-            <div className="w-full h-full flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-[var(--accent-blue-bright)] border-t-transparent rounded-full animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+                <CortexLoader />
             </div>
         )
     }
 
     if (!nodes.length) {
         return (
-            <div className="w-full h-full flex items-center justify-center text-secondary-custom font-mono">
+            <div className="absolute inset-0 flex items-center justify-center text-secondary-custom font-mono">
                 GRAPH DATA UNAVAILABLE
             </div>
         )
     }
 
     return (
-        <motion.div {...FADE_IN} className="w-full h-full relative" style={{ background: "var(--bg-root)" }}>
+        <motion.div {...FADE_IN} className="absolute inset-0" style={{ background: "var(--bg-root)" }}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -181,12 +258,13 @@ export default function IssueFlowchart({ issueId }) {
                 fitViewOptions={{ padding: 0.2 }}
                 minZoom={0.1}
                 maxZoom={1.5}
-                attributionPosition="bottom-right"
+                proOptions={{ hideAttribution: true }}
             >
                 <Background color="#333" gap={16} />
-                <Controls className="!bg-surface-custom !border-subtle-custom !fill-primary-custom" />
+                <Controls className="custom-flow-controls" showInteractive={false} />
                 <MiniMap
-                    className="!bg-surface-custom !border-subtle-custom"
+                    className="!bg-[var(--bg-panel)] !border-subtle-custom rounded-lg overflow-hidden"
+                    style={{ backgroundColor: "var(--bg-panel)" }}
                     maskColor="rgba(0, 0, 0, 0.7)"
                     nodeColor={(n) => NODE_COLORS[n.data?.tag]?.border || "#8e8e93"}
                 />
@@ -197,6 +275,29 @@ export default function IssueFlowchart({ issueId }) {
                 <div className="text-xs font-mono text-primary-custom font-bold">DAG: {issueId}</div>
                 <div className="text-[10px] font-mono text-secondary-custom">Execution Ledger Graph</div>
             </div>
+
+            <style>{`
+                .custom-flow-controls {
+                    background-color: var(--bg-panel) !important;
+                    border: 1px solid var(--subtle-custom) !important;
+                    border-radius: 8px !important;
+                    overflow: hidden;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+                }
+                .custom-flow-controls button {
+                    background-color: transparent !important;
+                    border-bottom: 1px solid var(--subtle-custom) !important;
+                    fill: var(--secondary-custom) !important;
+                    transition: all 0.2s;
+                }
+                .custom-flow-controls button:last-child {
+                    border-bottom: none !important;
+                }
+                .custom-flow-controls button:hover {
+                    background-color: var(--surface-custom) !important;
+                    fill: var(--accent-blue-bright) !important;
+                }
+            `}</style>
         </motion.div>
     )
 }

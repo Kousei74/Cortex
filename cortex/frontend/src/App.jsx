@@ -88,7 +88,7 @@ function AnimatedRoutes() {
                     <Route
                         path="/issue-tracker"
                         element={
-                            <motion.div {...PAGE_TRANSITION} className="min-h-full">
+                            <motion.div {...PAGE_TRANSITION} className="h-full">
                                 <IssueTracker />
                             </motion.div>
                         }

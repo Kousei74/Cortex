@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { CheckCircle, AlertOctagon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { CortexLoader } from '@/components/cortex-loader';
 
 export function ResolutionView({ jobId, lastUpdated }) {
     const { fetchClusterRows, resolveItems } = useResolution(jobId);
@@ -34,7 +35,13 @@ export function ResolutionView({ jobId, lastUpdated }) {
         setRows(prev => prev.map(r => r.id === id ? { ...r, status: 'RESOLVED' } : r));
     };
 
-    if (isLoading) return <div className="p-8 text-center text-gray-500 font-mono">Loading data stream...</div>;
+    if (isLoading) {
+        return (
+            <div className="p-12 flex justify-center items-center">
+                <CortexLoader />
+            </div>
+        );
+    }
 
     if (rows.length === 0) {
         return (

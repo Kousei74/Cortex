@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { CortexLoader } from '@/components/cortex-loader';
 
 const AuthContext = createContext(null);
 
@@ -49,7 +50,13 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, loading }}>
-            {!loading && children}
+            {loading ? (
+                <div className="min-h-screen bg-[var(--bg-root)] flex items-center justify-center">
+                    <CortexLoader />
+                </div>
+            ) : (
+                children
+            )}
         </AuthContext.Provider>
     );
 };
