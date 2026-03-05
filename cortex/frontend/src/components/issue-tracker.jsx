@@ -95,19 +95,19 @@ export default function IssueTracker() {
                 </div>
 
                 {/* List Body */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-                    <div className="max-w-6xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <AnimatePresence mode="popLayout">
-                            {isLoading ? (
-                                <motion.div {...FADE_IN} className="flex justify-center p-12 col-span-full">
-                                    <CortexLoader />
-                                </motion.div>
-                            ) : issues.length === 0 ? (
-                                <motion.div {...FADE_IN} className="text-center p-8 text-secondary-custom font-mono text-sm col-span-full">
-                                    NO {statusFilter.toUpperCase()} ISSUES FOUND
-                                </motion.div>
-                            ) : (
-                                issues.map((issue) => (
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 flex flex-col">
+                    <AnimatePresence mode="wait">
+                        {isLoading ? (
+                            <motion.div key="loader" {...FADE_IN} className="flex-1 flex items-center justify-center min-h-[50vh]">
+                                <CortexLoader />
+                            </motion.div>
+                        ) : issues.length === 0 ? (
+                            <motion.div key="empty" {...FADE_IN} className="flex-1 flex items-center justify-center text-secondary-custom font-mono text-sm min-h-[50vh]">
+                                NO {statusFilter.toUpperCase()} ISSUES FOUND
+                            </motion.div>
+                        ) : (
+                            <motion.div key="grid" {...FADE_IN} className="max-w-6xl w-full mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 pb-8">
+                                {issues.map((issue) => (
                                     <motion.button
                                         layout
                                         initial={{ opacity: 0, y: 10 }}
@@ -160,10 +160,10 @@ export default function IssueTracker() {
                                             </div>
                                         </div>
                                     </motion.button>
-                                ))
-                            )}
-                        </AnimatePresence>
-                    </div>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         )
