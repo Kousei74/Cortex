@@ -65,10 +65,17 @@ const CustomNode = ({ data, id }) => {
             }}
         >
             {/* Hidden handles for edges to explicitly target */}
-            <Handle type="target" position={Position.Top} className="opacity-0 w-1 h-1" />
-            <Handle type="source" position={Position.Bottom} className="opacity-0 w-1 h-1" />
-            <Handle type="source" position={Position.Left} className="opacity-0 w-1 h-1" />
-            <Handle type="source" position={Position.Right} className="opacity-0 w-1 h-1" />
+            <Handle id="top-target" type="target" position={Position.Top} className="opacity-0 w-1 h-1" />
+            <Handle id="top-source" type="source" position={Position.Top} className="opacity-0 w-1 h-1" />
+
+            <Handle id="bottom-target" type="target" position={Position.Bottom} className="opacity-0 w-1 h-1" />
+            <Handle id="bottom-source" type="source" position={Position.Bottom} className="opacity-0 w-1 h-1" />
+
+            <Handle id="left-target" type="target" position={Position.Left} className="opacity-0 w-1 h-1" />
+            <Handle id="left-source" type="source" position={Position.Left} className="opacity-0 w-1 h-1" />
+
+            <Handle id="right-target" type="target" position={Position.Right} className="opacity-0 w-1 h-1" />
+            <Handle id="right-source" type="source" position={Position.Right} className="opacity-0 w-1 h-1" />
 
             {!isRoot && <PlusButton position={Position.Top} onClick={() => onAddNode?.(id, 'top')} />}
 
@@ -138,7 +145,54 @@ const getLayoutedElements = (nodes, edges) => {
         }
     })
 
-    return { nodes: layoutedNodes, edges }
+    const layoutedEdges = edges.map((edge) => {
+        const sourceNode = layoutedNodes.find(n => n.id === edge.source);
+        const targetNode = layoutedNodes.find(n => n.id === edge.target);
+
+        if (!sourceNode || !targetNode) return edge;
+
+        const dx = targetNode.position.x - sourceNode.position.x;
+        const dy = targetNode.position.y - sourceNode.position.y;
+
+        let sourceHandle = 'bottom-source';
+        let targetHandle = 'top-target';
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // Horizontal connection
+            if (dx > 0) {
+                sourceHandle = 'right-source';
+                targetHandle = 'left-target';
+            } else {
+                sourceHandle = 'left-source';
+                targetHandle = 'right-target';
+            }
+        } else {
+            // Vertical connection
+            if (dy > 0) {
+                sourceHandle = 'bottom-source';
+                targetHandle = 'top-target';
+            } else {
+                sourceHandle = 'top-source';
+                targetHandle = 'bottom-target';
+            }
+        }
+
+        const isMainBranch = Math.abs(dx) <= Math.abs(dy);
+
+        return {
+            ...edge,
+            type: 'smoothstep', // Use smoothstep universally for PowerBI-like orthogonal routing
+            sourceHandle,
+            targetHandle,
+            style: {
+                stroke: isMainBranch ? 'var(--accent-blue-bright)' : 'var(--secondary-custom)',
+                strokeWidth: isMainBranch ? 3 : 2,
+                strokeDasharray: isMainBranch ? 'none' : '5 5'
+            }
+        }
+    })
+
+    return { nodes: layoutedNodes, edges: layoutedEdges }
 }
 
 // ─── Main Component ────────────────────────────────────────────────
@@ -157,11 +211,31 @@ export default function IssueFlowchart({ issueId }) {
             let newX = parentNode.position.x
             let newY = parentNode.position.y
 
+            let sHandle = 'bottom-source';
+            let tHandle = 'top-target';
+
             // Stagger position based on direction clicked
-            if (direction === 'left') newX -= 320
-            else if (direction === 'right') newX += 320
-            else if (direction === 'bottom') newY += 160
-            else if (direction === 'top') newY -= 160
+            if (direction === 'left') {
+                newX -= 320;
+                sHandle = 'left-source';
+                tHandle = 'right-target';
+            }
+            else if (direction === 'right') {
+                newX += 320;
+                sHandle = 'right-source';
+                tHandle = 'left-target';
+            }
+            else if (direction === 'bottom') {
+                newY += 160;
+                sHandle = 'bottom-source';
+                tHandle = 'top-target';
+            }
+            else if (direction === 'top') {
+                newY -= 160;
+                // Reverse edge: newNode acts as visual parent flowing down into this node
+                sHandle = 'bottom-source';
+                tHandle = 'top-target';
+            }
 
             const newNodeId = `node_${Date.now()}`
             const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
@@ -189,7 +263,9 @@ export default function IssueFlowchart({ issueId }) {
                 id: `edge_${parentId}_${newNodeId}`,
                 source: isReverse ? newNodeId : parentId,
                 target: isReverse ? parentId : newNodeId,
-                type: isMainBranch ? 'straight' : 'smoothstep',
+                sourceHandle: sHandle,
+                targetHandle: tHandle,
+                type: 'smoothstep',
                 animated: true,
                 style: {
                     stroke: isMainBranch ? 'var(--accent-blue-bright)' : 'var(--secondary-custom)',
