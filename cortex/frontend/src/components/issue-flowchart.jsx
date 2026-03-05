@@ -20,6 +20,7 @@ import { FADE_IN } from "@/lib/animations"
 import { toast } from "sonner"
 import { CortexLoader } from "./cortex-loader"
 import { useAuth } from "@/context/AuthContext"
+import { Trash2 } from "lucide-react"
 
 // ─── Custom Node Configurations ────────────────────────────────────
 
@@ -211,6 +212,48 @@ export default function IssueFlowchart({ issueId }) {
     const [confirmText, setConfirmText] = useState("")
     const [refreshKey, setRefreshKey] = useState(0)
 
+    const [isDraggingNode, setIsDraggingNode] = useState(false)
+    const [isHoveringTrash, setIsHoveringTrash] = useState(false)
+
+    // Handlers
+    const onNodeDragStart = useCallback((event, node) => {
+        setIsDraggingNode(true)
+    }, [])
+
+    const onNodeDrag = useCallback((event, node) => {
+        const trashZone = document.getElementById('trash-zone')
+        if (trashZone) {
+            const rect = trashZone.getBoundingClientRect()
+            if (event.clientX >= rect.left && event.clientX <= rect.right &&
+                event.clientY >= rect.top && event.clientY <= rect.bottom) {
+                setIsHoveringTrash(true)
+            } else {
+                setIsHoveringTrash(false)
+            }
+        }
+    }, [])
+
+    const onNodeDragStop = useCallback(async (event, node) => {
+        setIsDraggingNode(false)
+        if (isHoveringTrash) {
+            setIsHoveringTrash(false)
+            if (node.id.startsWith("ISS-")) {
+                toast.error("Cannot delete root issues.")
+                setRefreshKey(prev => prev + 1)
+                return
+            }
+
+            try {
+                await api.deleteIssueNode(node.id)
+                toast.success("Node Terminated Successfully")
+                setRefreshKey(prev => prev + 1)
+            } catch (err) {
+                toast.error("Failed to delete node", { description: err.message })
+                setRefreshKey(prev => prev + 1)
+            }
+        }
+    }, [isHoveringTrash])
+
     const handleTagClick = useCallback((nodeId, currentTag) => {
         setActiveTagEdit({ nodeId, currentTag })
     }, [])
@@ -357,6 +400,9 @@ export default function IssueFlowchart({ issueId }) {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
+                onNodeDragStart={onNodeDragStart}
+                onNodeDrag={onNodeDrag}
+                onNodeDragStop={onNodeDragStop}
                 nodeTypes={nodeTypes}
                 fitView
                 fitViewOptions={{ padding: 0.2 }}
@@ -385,6 +431,27 @@ export default function IssueFlowchart({ issueId }) {
                 <div className="text-xs font-mono text-primary-custom font-bold">DAG: {issueId}</div>
                 <div className="text-[10px] font-mono text-secondary-custom">Execution Ledger Graph</div>
             </div>
+
+            {/* Trash Zone */}
+            <AnimatePresence>
+                {isDraggingNode && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        id="trash-zone"
+                        className={`absolute top-0 left-0 right-0 h-32 flex flex-col items-center justify-center z-[100] transition-colors duration-300 pointer-events-none ${isHoveringTrash
+                                ? "bg-gradient-to-b from-red-600/60 to-transparent backdrop-blur-sm"
+                                : "bg-gradient-to-b from-red-500/20 to-transparent backdrop-blur-sm"
+                            }`}
+                    >
+                        <Trash2 className={`w-12 h-12 transition-all duration-300 ${isHoveringTrash ? "scale-125 text-red-100" : "scale-100 text-red-300/50"}`} />
+                        <span className={`mt-2 font-mono text-sm tracking-widest font-bold transition-colors ${isHoveringTrash ? "text-red-100" : "text-red-300/50"}`}>
+                            DROP TO TRUNCATE
+                        </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Editing Modals */}
             <AnimatePresence>

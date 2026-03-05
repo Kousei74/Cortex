@@ -241,15 +241,8 @@ async def delete_issue_node(issue_id: str, supabase: Client = Depends(get_supaba
         raise HTTPException(status_code=404, detail="Node not found.")
     node = res.data[0]
         
-    created_at = datetime.fromisoformat(node["created_at"])
-    # 30 minute offset logic mapped dynamically, typically the client enforces auth match first
-    # Server-side validation of the 30 minute rule to prevent API abuse
-    if datetime.now() - created_at > timedelta(minutes=30):
-        # Allow seniors to delete via an active JWT check if implemented, otherwise block
-        raise HTTPException(status_code=403, detail="30-minute delete window has expired. Node is permanent.")
-        
-    if node.get("tag") != "pending":
-         raise HTTPException(status_code=403, detail="Cannot delete a node that has already been evaluated by a Senior.")
+    # Time and tag restrictions removed for drag-and-drop delete capability
+
 
     supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
     return {"message": "Node deleted successfully within window."}
