@@ -36,6 +36,12 @@ function ReviewExplorer() {
             if (r.ok) {
                 const data = await r.json()
                 setIssues(data)
+            } else if (r.status === 401 || r.status === 500) {
+                const text = await r.clone().text().catch(() => "");
+                if (text.includes("JWT expired")) {
+                    localStorage.removeItem("cortex_token");
+                    window.location.href = "/login";
+                }
             }
         } catch (_) {
             // silently fail — sidebar is non-critical

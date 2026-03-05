@@ -161,7 +161,16 @@ export const api = {
             method: "GET",
             headers: getAuthHeaders()
         });
-        if (!response.ok) throw new Error("Failed to fetch issues");
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 500) {
+                const text = await response.clone().text().catch(() => "");
+                if (text.includes("JWT expired")) {
+                    localStorage.removeItem("cortex_token");
+                    window.location.href = "/login";
+                }
+            }
+            throw new Error("Failed to fetch issues");
+        }
         return response.json();
     },
 
@@ -170,7 +179,16 @@ export const api = {
             method: "GET",
             headers: getAuthHeaders()
         });
-        if (!response.ok) throw new Error("Failed to fetch issue graph");
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 500) {
+                const text = await response.clone().text().catch(() => "");
+                if (text.includes("JWT expired")) {
+                    localStorage.removeItem("cortex_token");
+                    window.location.href = "/login";
+                }
+            }
+            throw new Error("Failed to fetch issue graph");
+        }
         return response.json();
     },
 
@@ -179,7 +197,16 @@ export const api = {
             method: "GET",
             headers: getAuthHeaders()
         });
-        if (!response.ok) throw new Error("Failed to fetch issue details");
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 500) {
+                const text = await response.clone().text().catch(() => "");
+                if (text.includes("JWT expired")) {
+                    localStorage.removeItem("cortex_token");
+                    window.location.href = "/login";
+                }
+            }
+            throw new Error("Failed to fetch issue details");
+        }
         return response.json();
     },
 

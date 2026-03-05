@@ -25,7 +25,7 @@ function AnimatedRoutes() {
 
     return (
         <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
+            <Routes location={location}>
                 {/* Public Route */}
                 <Route
                     path="/login"
