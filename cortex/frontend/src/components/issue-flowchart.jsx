@@ -196,7 +196,7 @@ const getLayoutedElements = (nodes, edges) => {
             sourceHandle,
             targetHandle,
             style: {
-                stroke: isMainBranch ? 'var(--accent-blue-bright)' : 'var(--secondary-custom)',
+                stroke: isMainBranch ? 'var(--accent-blue-bright)' : 'var(--text-secondary)',
                 strokeWidth: isMainBranch ? 3 : 2,
                 strokeDasharray: isMainBranch ? 'none' : '5 5'
             }
@@ -291,7 +291,7 @@ export default function IssueFlowchart({ issueId }) {
             type: 'smoothstep',
             animated: true,
             style: {
-                stroke: 'var(--secondary-custom)',
+                stroke: 'var(--text-secondary)',
                 strokeWidth: 2,
                 strokeDasharray: '5 5'
             }
@@ -420,7 +420,7 @@ export default function IssueFlowchart({ issueId }) {
                 defaultEdgeOptions={{
                     type: 'smoothstep',
                     animated: true,
-                    style: { stroke: 'var(--secondary-custom)', strokeWidth: 2, strokeDasharray: '5 5' }
+                    style: { stroke: 'var(--text-secondary)', strokeWidth: 2, strokeDasharray: '5 5' }
                 }}
             >
                 <Background color="#333" gap={16} />
