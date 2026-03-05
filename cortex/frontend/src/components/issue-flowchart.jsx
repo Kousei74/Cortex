@@ -67,18 +67,18 @@ const CustomNode = ({ data, id }) => {
                 boxShadow: `0 4px 20px ${styling.bg}`,
             }}
         >
-            {/* Hidden handles for edges to explicitly target - now slightly offset and hoverable so users can draw manual dotted lines */}
-            <Handle id="top-target" type="target" position={Position.Top} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mt-1.5 transition-opacity" style={{ left: '40%' }} />
-            <Handle id="top-source" type="source" position={Position.Top} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -mt-1.5 transition-opacity" style={{ left: '60%' }} />
+            {/* Centered hidden handles for precision routing. Make them large enough to hit when dragging manual edges but keep them physically centered. */}
+            <Handle id="top-target" type="target" position={Position.Top} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mt-2 transition-opacity z-10" style={{ left: '50%' }} />
+            <Handle id="top-source" type="source" position={Position.Top} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--semantic-success)] border-none -mt-2 transition-opacity z-10" style={{ left: '50%' }} />
 
-            <Handle id="bottom-target" type="target" position={Position.Bottom} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mb-1.5 transition-opacity" style={{ left: '40%' }} />
-            <Handle id="bottom-source" type="source" position={Position.Bottom} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -mb-1.5 transition-opacity" style={{ left: '60%' }} />
+            <Handle id="bottom-target" type="target" position={Position.Bottom} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mb-2 transition-opacity z-10" style={{ left: '50%' }} />
+            <Handle id="bottom-source" type="source" position={Position.Bottom} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--semantic-success)] border-none -mb-2 transition-opacity z-10" style={{ left: '50%' }} />
 
-            <Handle id="left-target" type="target" position={Position.Left} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -ml-1.5 transition-opacity" style={{ top: '40%' }} />
-            <Handle id="left-source" type="source" position={Position.Left} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -ml-1.5 transition-opacity" style={{ top: '60%' }} />
+            <Handle id="left-target" type="target" position={Position.Left} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -ml-2 transition-opacity z-10" style={{ top: '50%' }} />
+            <Handle id="left-source" type="source" position={Position.Left} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--semantic-success)] border-none -ml-2 transition-opacity z-10" style={{ top: '50%' }} />
 
-            <Handle id="right-target" type="target" position={Position.Right} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mr-1.5 transition-opacity" style={{ top: '40%' }} />
-            <Handle id="right-source" type="source" position={Position.Right} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -mr-1.5 transition-opacity" style={{ top: '60%' }} />
+            <Handle id="right-target" type="target" position={Position.Right} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mr-2 transition-opacity z-10" style={{ top: '50%' }} />
+            <Handle id="right-source" type="source" position={Position.Right} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--semantic-success)] border-none -mr-2 transition-opacity z-10" style={{ top: '50%' }} />
 
             {!isRoot && <PlusButton position={Position.Top} onClick={() => onAddNode?.(id, 'top')} />}
 
@@ -155,33 +155,13 @@ const getLayoutedElements = (nodes, edges) => {
 
         if (!sourceNode || !targetNode) return edge;
 
+        // Dagre inherently structures the layout hierarchically Top-To-Bottom (TB).
+        // Forcing Vertical Handles prevents React Flow from doing wild S-curves if child nodes drift horizontally.
+        const sourceHandle = 'bottom-source';
+        const targetHandle = 'top-target';
+
         const dx = targetNode.position.x - sourceNode.position.x;
-        const dy = targetNode.position.y - sourceNode.position.y;
-
-        let sourceHandle = 'bottom-source';
-        let targetHandle = 'top-target';
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            // Horizontal connection
-            if (dx > 0) {
-                sourceHandle = 'right-source';
-                targetHandle = 'left-target';
-            } else {
-                sourceHandle = 'left-source';
-                targetHandle = 'right-target';
-            }
-        } else {
-            // Vertical connection
-            if (dy > 0) {
-                sourceHandle = 'bottom-source';
-                targetHandle = 'top-target';
-            } else {
-                sourceHandle = 'top-source';
-                targetHandle = 'bottom-target';
-            }
-        }
-
-        const isMainBranch = Math.abs(dx) <= Math.abs(dy);
+        const isMainBranch = Math.abs(dx) <= 50; // if it's mostly directly underneath, it's a main branch
 
         return {
             ...edge,
@@ -401,6 +381,12 @@ export default function IssueFlowchart({ issueId }) {
                 minZoom={0.1}
                 maxZoom={1.5}
                 proOptions={{ hideAttribution: true }}
+                connectionLineType="smoothstep"
+                defaultEdgeOptions={{
+                    type: 'smoothstep',
+                    animated: true,
+                    style: { stroke: 'var(--secondary-custom)', strokeWidth: 2, strokeDasharray: '5 5' }
+                }}
             >
                 <Background color="#333" gap={16} />
                 <Controls className="custom-flow-controls" showInteractive={false} />
