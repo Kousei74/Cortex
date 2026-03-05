@@ -549,22 +549,22 @@ export default function IssueFlowchart({ issueId }) {
             <style>{`
                 .custom-flow-controls {
                     background-color: var(--bg-panel) !important;
-                    border: 1px solid var(--subtle-custom) !important;
+                    border: 1px solid var(--border-subtle) !important;
                     border-radius: 8px !important;
                     overflow: hidden;
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
                 }
                 .custom-flow-controls button {
                     background-color: transparent !important;
-                    border-bottom: 1px solid var(--subtle-custom) !important;
-                    fill: var(--secondary-custom) !important;
+                    border-bottom: 1px solid var(--border-subtle) !important;
+                    fill: var(--text-secondary) !important;
                     transition: all 0.2s;
                 }
                 .custom-flow-controls button:last-child {
                     border-bottom: none !important;
                 }
                 .custom-flow-controls button:hover {
-                    background-color: var(--surface-custom) !important;
+                    background-color: var(--surface-primary) !important;
                     fill: var(--accent-blue-bright) !important;
                 }
             `}</style>
