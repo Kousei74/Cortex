@@ -8,9 +8,12 @@ import {
     useEdgesState,
     Handle,
     Position,
+    addEdge,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import dagre from "dagre"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
 import { motion } from "framer-motion"
 import { FADE_IN } from "@/lib/animations"
@@ -46,7 +49,7 @@ const PlusButton = ({ position, onClick }) => {
 }
 
 const CustomNode = ({ data, id }) => {
-    const { label, tag, author, date, type, onAddNode } = data
+    const { label, tag, author, date, type, onAddNode, onTagClick } = data
     const styling = NODE_COLORS[tag] || NODE_COLORS.pending
 
     const isRoot = type === "new"
@@ -64,18 +67,18 @@ const CustomNode = ({ data, id }) => {
                 boxShadow: `0 4px 20px ${styling.bg}`,
             }}
         >
-            {/* Hidden handles for edges to explicitly target */}
-            <Handle id="top-target" type="target" position={Position.Top} className="opacity-0 w-1 h-1" />
-            <Handle id="top-source" type="source" position={Position.Top} className="opacity-0 w-1 h-1" />
+            {/* Hidden handles for edges to explicitly target - now slightly offset and hoverable so users can draw manual dotted lines */}
+            <Handle id="top-target" type="target" position={Position.Top} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mt-1.5 transition-opacity" style={{ left: '40%' }} />
+            <Handle id="top-source" type="source" position={Position.Top} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -mt-1.5 transition-opacity" style={{ left: '60%' }} />
 
-            <Handle id="bottom-target" type="target" position={Position.Bottom} className="opacity-0 w-1 h-1" />
-            <Handle id="bottom-source" type="source" position={Position.Bottom} className="opacity-0 w-1 h-1" />
+            <Handle id="bottom-target" type="target" position={Position.Bottom} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mb-1.5 transition-opacity" style={{ left: '40%' }} />
+            <Handle id="bottom-source" type="source" position={Position.Bottom} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -mb-1.5 transition-opacity" style={{ left: '60%' }} />
 
-            <Handle id="left-target" type="target" position={Position.Left} className="opacity-0 w-1 h-1" />
-            <Handle id="left-source" type="source" position={Position.Left} className="opacity-0 w-1 h-1" />
+            <Handle id="left-target" type="target" position={Position.Left} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -ml-1.5 transition-opacity" style={{ top: '40%' }} />
+            <Handle id="left-source" type="source" position={Position.Left} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -ml-1.5 transition-opacity" style={{ top: '60%' }} />
 
-            <Handle id="right-target" type="target" position={Position.Right} className="opacity-0 w-1 h-1" />
-            <Handle id="right-source" type="source" position={Position.Right} className="opacity-0 w-1 h-1" />
+            <Handle id="right-target" type="target" position={Position.Right} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mr-1.5 transition-opacity" style={{ top: '40%' }} />
+            <Handle id="right-source" type="source" position={Position.Right} className="opacity-0 w-3 h-3 cursor-crosshair hover:opacity-100 bg-[var(--semantic-success)] border-none -mr-1.5 transition-opacity" style={{ top: '60%' }} />
 
             {!isRoot && <PlusButton position={Position.Top} onClick={() => onAddNode?.(id, 'top')} />}
 
@@ -91,12 +94,13 @@ const CustomNode = ({ data, id }) => {
                     <div className="text-xs font-mono font-bold uppercase tracking-widest leading-snug break-words pr-2 text-primary-custom" style={{ wordBreak: 'break-word' }}>
                         {displayLabel}
                     </div>
-                    <div
-                        className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border mt-0.5"
-                        style={{ color: styling.text, borderColor: styling.text }}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onTagClick?.(id, tag); }}
+                        className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border mt-0.5 cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+                        style={{ color: styling.text, borderColor: styling.text, backgroundColor: styling.bg }}
                     >
                         {tag}
-                    </div>
+                    </button>
                 </div>
 
                 <div className="flex justify-between items-center text-[10px] font-mono border-t border-subtle-custom pt-2 mt-1">
@@ -203,6 +207,47 @@ export default function IssueFlowchart({ issueId }) {
     const [edges, setEdges, onEdgesChange] = useEdgesState([])
     const [isLoading, setIsLoading] = useState(true)
 
+    const [activeTagEdit, setActiveTagEdit] = useState(null)
+    const [tagConfirm, setTagConfirm] = useState(null)
+    const [confirmText, setConfirmText] = useState("")
+
+    const handleTagClick = useCallback((nodeId, currentTag) => {
+        setActiveTagEdit({ nodeId, currentTag })
+    }, [])
+
+    const handleConfirmTag = async () => {
+        if (confirmText !== "Confirm") {
+            toast.error("Validation Failed", { description: "You must type exactly 'Confirm'." })
+            return
+        }
+
+        try {
+            // Optimistic Update
+            setNodes(nds => nds.map(n => n.id === tagConfirm.nodeId ? { ...n, data: { ...n.data, tag: tagConfirm.newTag } } : n))
+            await api.tagIssueNode(tagConfirm.nodeId, tagConfirm.newTag)
+            toast.success("Tag Updated Successfully")
+            setTagConfirm(null)
+            setConfirmText("")
+        } catch (err) {
+            toast.error("Update failed", { description: err.message })
+            // Refresh graph to revert on failure
+            loadGraph()
+        }
+    }
+
+    const onConnect = useCallback((params) => {
+        setEdges((eds) => addEdge({
+            ...params,
+            type: 'smoothstep',
+            animated: true,
+            style: {
+                stroke: 'var(--secondary-custom)',
+                strokeWidth: 2,
+                strokeDasharray: '5 5'
+            }
+        }, eds))
+    }, [setEdges])
+
     const handleAddNode = useCallback((parentId, direction) => {
         setNodes(nds => {
             const parentNode = nds.find(n => n.id === parentId)
@@ -249,11 +294,12 @@ export default function IssueFlowchart({ issueId }) {
                     tag: 'pending',
                     author: authorName,
                     date: currentDate,
-                    type: 'child'
+                    type: 'child',
+                    onAddNode: null, // assigned below
+                    onTagClick: handleTagClick
                 },
                 position: { x: newX, y: newY }
             }
-            // Bind function afterward to avoid dependency closure staleness loops if possible
             newNode.data.onAddNode = handleAddNode
 
             const isMainBranch = direction === 'bottom' || direction === 'top'
@@ -292,7 +338,8 @@ export default function IssueFlowchart({ issueId }) {
                 data: {
                     ...n.data,
                     date: n.data.created_at ? new Date(n.data.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
-                    onAddNode: handleAddNode
+                    onAddNode: handleAddNode,
+                    onTagClick: handleTagClick
                 },
                 position: { x: 0, y: 0 }, // Handled by dagre layout generator
             }))
@@ -347,6 +394,7 @@ export default function IssueFlowchart({ issueId }) {
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
                 nodeTypes={nodeTypes}
                 fitView
                 fitViewOptions={{ padding: 0.2 }}
@@ -369,6 +417,92 @@ export default function IssueFlowchart({ issueId }) {
                 <div className="text-xs font-mono text-primary-custom font-bold">DAG: {issueId}</div>
                 <div className="text-[10px] font-mono text-secondary-custom">Execution Ledger Graph</div>
             </div>
+
+            {/* Editing Modals */}
+            <AnimatePresence>
+                {activeTagEdit && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] backdrop-blur-xl bg-black/40 flex items-center justify-center p-4"
+                        onClick={() => setActiveTagEdit(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="bg-surface-custom border border-subtle-custom p-6 rounded-2xl shadow-2xl flex flex-col gap-4 min-w-[300px]"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h3 className="text-secondary-custom font-mono text-sm uppercase tracking-widest text-center mb-2">SELECT NEW STATUS</h3>
+                            <div className="flex flex-col gap-3">
+                                {['pending', 'yellow', 'blue', 'green', 'red'].map(opt => (
+                                    <button
+                                        key={opt}
+                                        onClick={() => {
+                                            setActiveTagEdit(null)
+                                            setTagConfirm({ nodeId: activeTagEdit.nodeId, newTag: opt })
+                                        }}
+                                        className="py-3 px-4 rounded-xl font-mono uppercase font-bold text-center transition-all border hover:scale-105 active:scale-95"
+                                        style={{ color: NODE_COLORS[opt].text, backgroundColor: NODE_COLORS[opt].bg, borderColor: NODE_COLORS[opt].border }}
+                                    >
+                                        {opt}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {tagConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[110] backdrop-blur-xl bg-black/50 flex items-center justify-center p-4"
+                        onClick={() => setTagConfirm(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="bg-surface-custom border border-subtle-custom p-8 rounded-2xl shadow-2xl flex flex-col gap-6 max-w-sm w-full"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h3 className="text-white font-mono text-lg font-bold text-center uppercase">CONFIRM TAG CHANGE</h3>
+                            <p className="text-secondary-custom text-sm font-mono text-center">
+                                To confirm, type <span className="text-white font-bold">"Confirm"</span> and press Proceed
+                            </p>
+
+                            <Input
+                                value={confirmText}
+                                onChange={e => setConfirmText(e.target.value)}
+                                placeholder="Type Confirm"
+                                className="text-center font-mono border-subtle-custom bg-[var(--bg-root)] focus:border-[var(--accent-blue-bright)]"
+                                onKeyDown={e => {
+                                    if (e.key === "Enter") handleConfirmTag()
+                                }}
+                            />
+
+                            <div className="flex gap-4 mt-2">
+                                <Button
+                                    onClick={() => { setTagConfirm(null); setConfirmText(""); }}
+                                    className="flex-1 bg-transparent border border-subtle-custom text-secondary-custom hover:text-white hover:bg-white/5 transition-all"
+                                >
+                                    CANCEL
+                                </Button>
+                                <Button
+                                    onClick={handleConfirmTag}
+                                    className="flex-1 gradient-button text-white font-bold soft-shadow"
+                                >
+                                    PROCEED
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <style>{`
                 .custom-flow-controls {
