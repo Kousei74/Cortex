@@ -16,6 +16,7 @@ import { motion } from "framer-motion"
 import { FADE_IN } from "@/lib/animations"
 import { toast } from "sonner"
 import { CortexLoader } from "./cortex-loader"
+import { useAuth } from "@/context/AuthContext"
 
 // ─── Custom Node Configurations ────────────────────────────────────
 
@@ -45,11 +46,14 @@ const PlusButton = ({ position, onClick }) => {
 }
 
 const CustomNode = ({ data, id }) => {
-    const { label, tag, author, description, type, onAddNode } = data
+    const { label, tag, author, date, type, onAddNode } = data
     const styling = NODE_COLORS[tag] || NODE_COLORS.pending
 
     const isRoot = type === "new"
     const isEnd = tag === "red"
+
+    // Truncate label to ~50 chars
+    const displayLabel = label?.length > 50 ? label.substring(0, 50) + "..." : label
 
     return (
         <div
@@ -75,25 +79,23 @@ const CustomNode = ({ data, id }) => {
                 </>
             )}
 
-            <div className="flex justify-between items-start mb-2">
-                <div className="text-xs font-mono font-bold uppercase tracking-widest break-words pr-2 text-primary-custom">
-                    {label}
+            <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-start">
+                    <div className="text-xs font-mono font-bold uppercase tracking-widest leading-snug break-words pr-2 text-primary-custom" style={{ wordBreak: 'break-word' }}>
+                        {displayLabel}
+                    </div>
+                    <div
+                        className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border mt-0.5"
+                        style={{ color: styling.text, borderColor: styling.text }}
+                    >
+                        {tag}
+                    </div>
                 </div>
-                <div
-                    className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border"
-                    style={{ color: styling.text, borderColor: styling.text }}
-                >
-                    {tag}
+
+                <div className="flex justify-between items-center text-[10px] font-mono border-t border-subtle-custom pt-2 mt-1">
+                    <span className="text-secondary-custom/60 uppercase tracking-widest">{date || "UNKNOWN DATE"}</span>
+                    <span className="text-primary-custom/80 uppercase tracking-widest truncate max-w-[100px] text-right">{author}</span>
                 </div>
-            </div>
-
-            <div className="text-[10px] font-mono text-secondary-custom mb-3 line-clamp-3">
-                {description}
-            </div>
-
-            <div className="flex justify-between items-center text-[10px] font-mono border-t border-subtle-custom pt-2">
-                <span className="text-secondary-custom/60 uppercase">{type === "new" ? "ROOT" : "NODE"}</span>
-                <span className="text-primary-custom/80 uppercase tracking-widest">{author}</span>
             </div>
 
             {!isEnd && <PlusButton position={Position.Bottom} onClick={() => onAddNode?.(id, 'bottom')} />}
@@ -142,52 +144,64 @@ const getLayoutedElements = (nodes, edges) => {
 // ─── Main Component ────────────────────────────────────────────────
 
 export default function IssueFlowchart({ issueId }) {
+    const { user } = useAuth()
     const [nodes, setNodes, onNodesChange] = useNodesState([])
     const [edges, setEdges, onEdgesChange] = useEdgesState([])
     const [isLoading, setIsLoading] = useState(true)
 
     const handleAddNode = useCallback((parentId, direction) => {
-        const newNodeId = `node_${Date.now()}`
-        const newNode = {
-            id: newNodeId,
-            type: 'custom',
-            data: {
-                label: 'NEW ISSUE',
-                tag: 'pending',
-                author: 'USER',
-                description: 'Draft issue generated for branch extending.',
-                type: 'child',
-                onAddNode: handleAddNode,
-            },
-            position: { x: 0, y: 0 }
-        }
-
-        const newEdge = {
-            id: `edge_${parentId}_${newNodeId}`,
-            source: parentId,
-            target: newNodeId,
-            type: 'smoothstep',
-            animated: true,
-            style: { stroke: 'var(--accent-blue-bright)', strokeWidth: 2 },
-        }
-
         setNodes(nds => {
-            const nextNodes = [...nds, newNode]
-            setEdges(eds => {
-                const nextEdges = [...eds, newEdge]
-                const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nextNodes, nextEdges)
+            const parentNode = nds.find(n => n.id === parentId)
+            if (!parentNode) return nds
 
-                // Set the layouted elements in the next tick to overwrite the state properly
-                setTimeout(() => {
-                    setNodes(layoutedNodes)
-                    setEdges(layoutedEdges)
-                }, 0)
+            let newX = parentNode.position.x
+            let newY = parentNode.position.y
 
-                return nextEdges
-            })
-            return nextNodes
+            // Stagger position based on direction clicked
+            if (direction === 'left') newX -= 320
+            else if (direction === 'right') newX += 320
+            else if (direction === 'bottom') newY += 160
+            else if (direction === 'top') newY -= 160
+
+            const newNodeId = `node_${Date.now()}`
+            const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
+            const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+
+            const newNode = {
+                id: newNodeId,
+                type: 'custom',
+                data: {
+                    label: 'NEW ISSUE',
+                    tag: 'pending',
+                    author: authorName,
+                    date: currentDate,
+                    type: 'child'
+                },
+                position: { x: newX, y: newY }
+            }
+            // Bind function afterward to avoid dependency closure staleness loops if possible
+            newNode.data.onAddNode = handleAddNode
+
+            const isMainBranch = direction === 'bottom' || direction === 'top'
+            const isReverse = direction === 'top'
+
+            const newEdge = {
+                id: `edge_${parentId}_${newNodeId}`,
+                source: isReverse ? newNodeId : parentId,
+                target: isReverse ? parentId : newNodeId,
+                type: isMainBranch ? 'straight' : 'smoothstep',
+                animated: true,
+                style: {
+                    stroke: isMainBranch ? 'var(--accent-blue-bright)' : 'var(--secondary-custom)',
+                    strokeWidth: isMainBranch ? 3 : 2,
+                    strokeDasharray: isMainBranch ? 'none' : '5 5'
+                },
+            }
+
+            setEdges(eds => [...eds, newEdge])
+            return [...nds, newNode]
         })
-    }, [setNodes, setEdges])
+    }, [user, setEdges, setNodes])
 
     const loadGraph = useCallback(async () => {
         if (!issueId) return
@@ -199,17 +213,21 @@ export default function IssueFlowchart({ issueId }) {
             const initialNodes = data.nodes.map(n => ({
                 id: n.id,
                 type: 'custom',
-                data: { ...n.data, onAddNode: handleAddNode },
-                position: { x: 0, y: 0 }, // Handled by dagre
+                data: {
+                    ...n.data,
+                    date: n.data.created_at ? new Date(n.data.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
+                    onAddNode: handleAddNode
+                },
+                position: { x: 0, y: 0 }, // Handled by dagre layout generator
             }))
 
             const initialEdges = data.edges.map(e => ({
                 id: e.id,
                 source: e.source,
                 target: e.target,
-                type: 'smoothstep',
+                type: 'straight',
                 animated: true,
-                style: { stroke: 'var(--accent-blue-bright)', strokeWidth: 2 },
+                style: { stroke: 'var(--accent-blue-bright)', strokeWidth: 3 },
             }))
 
             const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
