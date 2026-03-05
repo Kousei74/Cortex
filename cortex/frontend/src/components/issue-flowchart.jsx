@@ -190,6 +190,7 @@ export default function IssueFlowchart({ issueId }) {
     const [activeTagEdit, setActiveTagEdit] = useState(null)
     const [tagConfirm, setTagConfirm] = useState(null)
     const [confirmText, setConfirmText] = useState("")
+    const [refreshKey, setRefreshKey] = useState(0)
 
     const handleTagClick = useCallback((nodeId, currentTag) => {
         setActiveTagEdit({ nodeId, currentTag })
@@ -211,7 +212,7 @@ export default function IssueFlowchart({ issueId }) {
         } catch (err) {
             toast.error("Update failed", { description: err.message })
             // Refresh graph to revert on failure
-            loadGraph()
+            setRefreshKey(prev => prev + 1)
         }
     }
 
@@ -228,82 +229,28 @@ export default function IssueFlowchart({ issueId }) {
         }, eds))
     }, [setEdges])
 
-    const handleAddNode = useCallback((parentId, direction) => {
-        setNodes(nds => {
-            const parentNode = nds.find(n => n.id === parentId)
-            if (!parentNode) return nds
+    const handleAddNode = useCallback(async (parentId, direction) => {
+        setIsLoading(true)
+        const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
 
-            let newX = parentNode.position.x
-            let newY = parentNode.position.y
-
-            let sHandle = 'bottom-source';
-            let tHandle = 'top-target';
-
-            // Stagger position based on direction clicked
-            if (direction === 'left') {
-                newX -= 320;
-                sHandle = 'left-source';
-                tHandle = 'right-target';
-            }
-            else if (direction === 'right') {
-                newX += 320;
-                sHandle = 'right-source';
-                tHandle = 'left-target';
-            }
-            else if (direction === 'bottom') {
-                newY += 160;
-                sHandle = 'bottom-source';
-                tHandle = 'top-target';
-            }
-            else if (direction === 'top') {
-                newY -= 160;
-                // Reverse edge: newNode acts as visual parent flowing down into this node
-                sHandle = 'bottom-source';
-                tHandle = 'top-target';
-            }
-
-            const newNodeId = `node_${Date.now()}`
-            const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
-            const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
-
-            const newNode = {
-                id: newNodeId,
-                type: 'custom',
-                data: {
-                    label: 'NEW ISSUE',
-                    tag: 'pending',
-                    author: authorName,
-                    date: currentDate,
-                    type: 'child',
-                    onAddNode: null, // assigned below
-                    onTagClick: handleTagClick
-                },
-                position: { x: newX, y: newY }
-            }
-            newNode.data.onAddNode = handleAddNode
-
-            const isMainBranch = direction === 'bottom' || direction === 'top'
-            const isReverse = direction === 'top'
-
-            const newEdge = {
-                id: `edge_${parentId}_${newNodeId}`,
-                source: isReverse ? newNodeId : parentId,
-                target: isReverse ? parentId : newNodeId,
-                sourceHandle: sHandle,
-                targetHandle: tHandle,
-                type: 'smoothstep',
-                animated: true,
-                style: {
-                    stroke: isMainBranch ? 'var(--accent-blue-bright)' : 'var(--secondary-custom)',
-                    strokeWidth: isMainBranch ? 3 : 2,
-                    strokeDasharray: isMainBranch ? 'none' : '5 5'
-                },
-            }
-
-            setEdges(eds => [...eds, newEdge])
-            return [...nds, newNode]
-        })
-    }, [user, setEdges, setNodes])
+        try {
+            await api.createIssue({
+                type: "existing",
+                parent_issue_id: parentId,
+                issue_subheader: "NEW ISSUE",
+                date: new Date().toISOString().split('T')[0],
+                description: "Auto-generated flowchart node",
+                created_by: authorName,
+                emp_id: user?.emp_id || "SYS",
+                dept_id: user?.dept_id || "SYS"
+            })
+            toast.success("Node Added Successfully")
+            setRefreshKey(prev => prev + 1)
+        } catch (err) {
+            toast.error("Failed to add node", { description: err.message })
+            setIsLoading(false)
+        }
+    }, [user])
 
     const loadGraph = useCallback(async () => {
         if (!issueId) return
@@ -349,7 +296,7 @@ export default function IssueFlowchart({ issueId }) {
 
     useEffect(() => {
         loadGraph()
-    }, [loadGraph])
+    }, [loadGraph, refreshKey])
 
     if (isLoading) {
         return (
