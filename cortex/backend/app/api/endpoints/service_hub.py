@@ -45,6 +45,8 @@ class ExistingIssueRequest(BaseModel):
     created_by: str
     emp_id: str
     dept_id: Optional[str] = None
+    layout_x: Optional[float] = None
+    layout_y: Optional[float] = None
 
 class IssueTagRequest(BaseModel):
     tag: Literal["pending", "yellow", "blue", "green", "red"]
@@ -140,6 +142,8 @@ async def create_child_issue(request: ExistingIssueRequest, supabase: Client = D
         "tag": "pending",
         "created_by_emp_id": request.emp_id,
         "dept_id": request.dept_id,
+        "layout_x": request.layout_x,
+        "layout_y": request.layout_y,
         "created_at": datetime.now().isoformat()
     }
     
@@ -348,7 +352,9 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
                 "author": n.get("created_by_emp_id"),
                 "description": n.get("description"),
                 "created_at": n.get("created_at"),
-                "type": n.get("node_type")
+                "type": n.get("node_type"),
+                "layout_x": n.get("layout_x"),
+                "layout_y": n.get("layout_y")
             }
         })
         

@@ -60,6 +60,8 @@ CREATE TABLE issue_nodes (
     tag issue_tag NOT NULL DEFAULT 'pending',
     created_by_emp_id TEXT NOT NULL,
     dept_id TEXT,
+    layout_x NUMERIC,
+    layout_y NUMERIC,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

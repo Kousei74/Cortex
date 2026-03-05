@@ -143,8 +143,8 @@ const getLayoutedElements = (nodes, edges) => {
         return {
             ...node,
             position: {
-                x: nodeWithPosition.x - 130, // subtract half width
-                y: nodeWithPosition.y - 60,  // subtract half height
+                x: node.data?.layout_x ?? (nodeWithPosition.x - 130),
+                y: node.data?.layout_y ?? (nodeWithPosition.y - 60),
             },
         }
     })
@@ -233,6 +233,20 @@ export default function IssueFlowchart({ issueId }) {
         setIsLoading(true)
         const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
 
+        const parentNode = nodes.find(n => n.id === parentId)
+        let newX = parentNode ? parentNode.position.x : 0
+        let newY = parentNode ? parentNode.position.y : 0
+
+        if (direction === 'left') {
+            newX -= 320;
+        } else if (direction === 'right') {
+            newX += 320;
+        } else if (direction === 'bottom') {
+            newY += 160;
+        } else if (direction === 'top') {
+            newY -= 160;
+        }
+
         try {
             await api.createIssue({
                 type: "existing",
@@ -242,7 +256,9 @@ export default function IssueFlowchart({ issueId }) {
                 description: "Auto-generated flowchart node",
                 created_by: authorName,
                 emp_id: user?.emp_id || "SYS",
-                dept_id: user?.dept_id || "SYS"
+                dept_id: user?.dept_id || "SYS",
+                layout_x: newX,
+                layout_y: newY
             })
             toast.success("Node Added Successfully")
             setRefreshKey(prev => prev + 1)
@@ -250,7 +266,7 @@ export default function IssueFlowchart({ issueId }) {
             toast.error("Failed to add node", { description: err.message })
             setIsLoading(false)
         }
-    }, [user])
+    }, [user, nodes])
 
     const loadGraph = useCallback(async () => {
         if (!issueId) return
