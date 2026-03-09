@@ -16,13 +16,13 @@ CORTEX is a high-performance data ingestion and visualization platform built for
 
 ## 🏗 System Architecture
 
-### 1. **Frontend: "The Illusionist"** (React + Vite)
+### 1. **Frontend:** (React + Vite)
 - **State**: `Zustand` — `analysisStore` (job/status/payload) + `workspaceStore` (view mode, cluster selection)
 - **Visuals**: `Framer Motion` for transitions, `Recharts` for all charts
 - **Loader**: Full-screen pulsing orb (`CortexLoader`) during processing — cyan for active, red on error
 - **Resilience**: Network status monitoring via `useNetworkStatus`
 
-### 2. **Backend: "The Shadow"** (FastAPI + Python)
+### 2. **Backend:** (FastAPI + Python)
 - **Ingestion**: Files uploaded to `/ingest`, job enqueued immediately via PGMQ
 - **Processing**: `analysis.py` runs classification aggregation, sentiment, clustering, temporal detection
 - **Smart Layout**: Auto-detects whether to render **Temporal** (time-series) or **Snapshot** (pivot/stacked bar) based on data shape
