@@ -2,7 +2,7 @@
 
 > **Intelligence Dashboard & Data Ingestion Engine**
 
-CORTEX is a high-performance data ingestion and visualization platform built for structured NLP pipeline outputs (classification, clustering, sentiment). It prioritizes **perceived performance** above all else — the UI never freezes or stalls, even during heavy backend processing.
+CORTEX is a high-performance visualization and issue tracking platform built for structured NLP pipeline outputs (classification, clustering, sentiment). It prioritizes **perceived performance** above all else — the UI never freezes or stalls, even during heavy backend processing.
 
 ---
 
