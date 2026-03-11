@@ -7,6 +7,8 @@ import { FADE_IN } from "@/lib/animations"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { useAuth } from "@/context/AuthContext"
+import DatePicker from "@/components/ui/date-picker"
+import { TeamMultiSelect } from "@/components/ui/team-multi-select"
 
 // ─── Priority config ───────────────────────────────────────────────
 const PRIORITIES = [
@@ -72,7 +74,7 @@ function StyledTextarea({ maxLength, value, onChange, placeholder }) {
                 className="w-full bg-surface-custom border border-subtle-custom text-primary-custom
                     placeholder:text-secondary-custom/40 fluid-rounded px-4 pt-3 pb-8 font-mono text-sm
                     focus:border-[var(--accent-blue-bright)] focus:outline-none
-                    focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] transition-all duration-300 resize-none"
+                    focus:shadow-[0_0_0_3px_rgba(0,191,255,0.2)] soft-glow-hover transition-all duration-300 resize-none"
             />
             <span
                 className="absolute bottom-4 right-4 px-1.5 py-0.5
@@ -110,7 +112,7 @@ function PriorityDropdown({ value, onChange, allowed = null }) {
                 onClick={() => setOpen(o => !o)}
                 className="w-full h-11 px-4 bg-surface-custom border border-subtle-custom fluid-rounded
                     flex items-center justify-between font-mono text-sm
-                    hover:border-[var(--accent-blue-bright)] transition-all duration-300 group"
+                    soft-glow-hover transition-all duration-300 group"
             >
                 <div className="flex items-center gap-2">
                     {selected ? (
@@ -208,11 +210,12 @@ const Icons = {
 function NewIssueForm({ onSubmit, isLoading, user }) {
     const [form, setForm] = useState({
         issueHeader: "",
-        assignedTeam: "",
+        assignedTeams: [],
         priority: "",
         description: "",
         parentTicket: "",
         chainedTo: "",
+        deadline: null,
     })
     const [error, setError] = useState(null)
 
@@ -234,7 +237,7 @@ function NewIssueForm({ onSubmit, isLoading, user }) {
             type: "new",
             issue_header: form.issueHeader.trim(),
             date: new Date().toISOString().split("T")[0],
-            assigned_team: form.assignedTeam.trim() || null,
+            assigned_teams: form.assignedTeams,
             priority: form.priority,
             description: form.description.trim(),
             created_by: user?.full_name || "System",
@@ -242,6 +245,7 @@ function NewIssueForm({ onSubmit, isLoading, user }) {
             dept_id: user?.dept_id || null,
             parent_ticket: form.parentTicket.trim() || null,
             chained_to: form.chainedTo.trim() || null,
+            deadline: form.deadline ? form.deadline.toISOString().split("T")[0] : null,
         }
         await onSubmit(payload)
     }
@@ -280,21 +284,27 @@ function NewIssueForm({ onSubmit, isLoading, user }) {
                 />
             </div>
 
-            {/* Date — read-only live */}
-            <div>
-                <FieldLabel>Date</FieldLabel>
-                <LiveDateDisplay />
+            {/* Date & Deadline */}
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <FieldLabel>Date</FieldLabel>
+                    <LiveDateDisplay />
+                </div>
+                <div>
+                    <FieldLabel optional>Deadline</FieldLabel>
+                    <DatePicker
+                        value={form.deadline}
+                        onChange={(d) => setForm(f => ({ ...f, deadline: d }))}
+                    />
+                </div>
             </div>
 
             {/* Assigned Team */}
             <div>
-                <FieldLabel optional>Assigned Team</FieldLabel>
-                <StyledInput
-                    type="text"
-                    placeholder="e.g. ENG-01"
-                    value={form.assignedTeam}
-                    onChange={set("assignedTeam")}
-                    icon={Icons.dept}
+                <FieldLabel optional>Additional Teams</FieldLabel>
+                <TeamMultiSelect
+                    selected={form.assignedTeams}
+                    onChange={(val) => setForm(f => ({ ...f, assignedTeams: val }))}
                 />
             </div>
 
@@ -360,6 +370,8 @@ function ExistingIssueForm({ onSubmit, isLoading, user }) {
         parentIssueId: "",
         issueSubHeader: "",
         description: "",
+        additionalTeams: [],
+        deadline: null,
     })
     const [error, setError] = useState(null)
 
@@ -383,9 +395,11 @@ function ExistingIssueForm({ onSubmit, isLoading, user }) {
             issue_subheader: form.issueSubHeader.trim(),
             date: new Date().toISOString().split("T")[0],
             description: form.description.trim(),
+            additional_teams: form.additionalTeams,
             created_by: user?.full_name || "System",
             emp_id: user?.emp_id || "unknown",
             dept_id: user?.dept_id || null,
+            deadline: form.deadline ? form.deadline.toISOString().split("T")[0] : null,
         }
         await onSubmit(payload)
     }
@@ -436,10 +450,28 @@ function ExistingIssueForm({ onSubmit, isLoading, user }) {
                 />
             </div>
 
-            {/* Date */}
+            {/* Date & Deadline */}
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <FieldLabel>Date</FieldLabel>
+                    <LiveDateDisplay />
+                </div>
+                <div>
+                    <FieldLabel optional>Deadline</FieldLabel>
+                    <DatePicker
+                        value={form.deadline}
+                        onChange={(d) => setForm(f => ({ ...f, deadline: d }))}
+                    />
+                </div>
+            </div>
+
+            {/* Additional Teams */}
             <div>
-                <FieldLabel>Date</FieldLabel>
-                <LiveDateDisplay />
+                <FieldLabel optional>Additional Teams</FieldLabel>
+                <TeamMultiSelect
+                    selected={form.additionalTeams}
+                    onChange={(val) => setForm(f => ({ ...f, additionalTeams: val }))}
+                />
             </div>
 
             {/* Description */}

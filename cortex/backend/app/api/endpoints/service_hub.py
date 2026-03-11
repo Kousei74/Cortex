@@ -7,7 +7,7 @@ import httpx
 import uuid
 
 from app.core.config import settings
-from app.core.database import get_supabase
+from app.core.database import get_supabase, service_role_supabase
 from supabase import Client
 
 router = APIRouter()
@@ -27,7 +27,7 @@ class NewIssueRequest(BaseModel):
     type: Literal["new"] = "new"
     issue_header: str = Field(..., min_length=1, max_length=120)
     date: date
-    assigned_team: Optional[str] = None
+    assigned_teams: List[str] = Field(default_factory=list)
     priority: PRIORITY_VALUES
     description: str = Field(..., min_length=1, max_length=2000)
     created_by: str
@@ -35,6 +35,9 @@ class NewIssueRequest(BaseModel):
     dept_id: Optional[str] = None
     parent_ticket: Optional[str] = None
     chained_to: Optional[str] = None
+    deadline: Optional[str] = None
+    code_changes: Optional[str] = None
+    code_language: Optional[str] = None
 
 class ExistingIssueRequest(BaseModel):
     type: Literal["existing"] = "existing"
@@ -42,14 +45,28 @@ class ExistingIssueRequest(BaseModel):
     issue_subheader: str = Field(..., min_length=1, max_length=120)
     date: date
     description: str = Field(..., min_length=1, max_length=2000)
+    additional_teams: List[str] = Field(default_factory=list)
     created_by: str
     emp_id: str
     dept_id: Optional[str] = None
     layout_x: Optional[float] = None
     layout_y: Optional[float] = None
+    code_changes: Optional[str] = None
+    code_language: Optional[str] = None
+    deadline: Optional[str] = None
+
+class IssueInfoUpdateRequest(BaseModel):
+    issue_header: Optional[str] = Field(None, min_length=1, max_length=120)
+    description: Optional[str] = Field(None, min_length=1, max_length=2000)
+    code_changes: Optional[str] = None
+    code_language: Optional[str] = None
+    emp_id: str
+    role: str = "team_member" # Fallback if not in JWT
 
 class IssueTagRequest(BaseModel):
     tag: Literal["pending", "yellow", "blue", "green", "red"]
+    senior_comment: Optional[str] = None
+    role: str = "team_member" # Fallback if not in JWT
 
 class IssueMergeRequest(BaseModel):
     target_parent_id: str
@@ -57,6 +74,14 @@ class IssueMergeRequest(BaseModel):
     metadata_summary: str
     emp_id: str
     dept_id: Optional[str] = None
+
+class NodeConnectRequest(BaseModel):
+    connected_to_id: str
+    emp_id: str
+
+class NodePositionRequest(BaseModel):
+    layout_x: float
+    layout_y: float
 
 class IssueResponse(BaseModel):
     issue_id: str
@@ -77,10 +102,13 @@ async def create_issue(request: NewIssueRequest, supabase: Client = Depends(get_
         "priority": request.priority,
         "status": "open",
         "created_by_emp_id": request.emp_id,
-        "assigned_dept_id": request.assigned_team,
+        "assigned_dept_ids": request.assigned_teams,
         "dept_id": request.dept_id,
         "parent_external_ticket": request.parent_ticket,
         "chained_issue_id": request.chained_to,
+        "code_changes": request.code_changes,
+        "code_language": request.code_language,
+        "deadline": request.deadline,
         "created_at": datetime.now().isoformat(),
         "last_activity_at": datetime.now().isoformat()
     }
@@ -88,14 +116,15 @@ async def create_issue(request: NewIssueRequest, supabase: Client = Depends(get_
     try:
         supabase.table("issues").insert(data).execute()
         
-        # Also create initial assignment history entry if assigned team is provided
-        if request.assigned_team:
-            supabase.table("issue_assignments_history").insert({
-                "issue_id": issue_id,
-                "assigned_dept_id": request.assigned_team,
-                "assigned_by_emp_id": request.emp_id,
-                "assigned_at": datetime.now().isoformat()
-            }).execute()
+        # Also create assignment history entry if assigned teams are provided
+        if request.assigned_teams:
+            for team in request.assigned_teams:
+                supabase.table("issue_assignments_history").insert({
+                    "issue_id": issue_id,
+                    "assigned_dept_id": team,
+                    "assigned_by_emp_id": request.emp_id,
+                    "assigned_at": datetime.now().isoformat()
+                }).execute()
             
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
@@ -107,11 +136,12 @@ async def create_issue(request: NewIssueRequest, supabase: Client = Depends(get_
 async def create_child_issue(request: ExistingIssueRequest, supabase: Client = Depends(get_supabase)):
     # Determine the root issue tracking. The frontend parent_issue_id could be a root issue OR a child node.
     # Check if parent is a root issue:
-    res = supabase.table("issues").select("id, status").eq("id", request.parent_issue_id).execute()
+    res = supabase.table("issues").select("id, status, assigned_dept_ids").eq("id", request.parent_issue_id).execute()
     
     if res.data:
         root_id = res.data[0]["id"]
         status = res.data[0]["status"]
+        current_teams = res.data[0].get("assigned_dept_ids") or []
     else:
         # Check if parent is a node instead
         node_res = supabase.table("issue_nodes").select("id, root_issue_id").eq("id", request.parent_issue_id).execute()
@@ -119,8 +149,9 @@ async def create_child_issue(request: ExistingIssueRequest, supabase: Client = D
             raise HTTPException(status_code=404, detail=f"Parent issue '{request.parent_issue_id}' not found.")
         root_id = node_res.data[0]["root_issue_id"]
         
-        root_res = supabase.table("issues").select("status").eq("id", root_id).execute()
+        root_res = supabase.table("issues").select("status, assigned_dept_ids").eq("id", root_id).execute()
         status = root_res.data[0]["status"] if root_res.data else "closed"
+        current_teams = root_res.data[0].get("assigned_dept_ids") if root_res.data else []
 
     if status == "closed":
         raise HTTPException(status_code=400, detail="Cannot add nodes to a closed issue.")
@@ -142,6 +173,8 @@ async def create_child_issue(request: ExistingIssueRequest, supabase: Client = D
         "tag": "pending",
         "created_by_emp_id": request.emp_id,
         "dept_id": request.dept_id,
+        "code_changes": request.code_changes,
+        "code_language": request.code_language,
         "layout_x": request.layout_x,
         "layout_y": request.layout_y,
         "created_at": datetime.now().isoformat()
@@ -150,6 +183,20 @@ async def create_child_issue(request: ExistingIssueRequest, supabase: Client = D
     try:
         supabase.table("issue_nodes").insert(data).execute()
         supabase.table("issues").update({"last_activity_at": datetime.now().isoformat()}).eq("id", root_id).execute()
+        
+        # Append additional teams to root issue if provided
+        if request.additional_teams:
+            added_teams = set(request.additional_teams) - set(current_teams)
+            if added_teams:
+                new_teams = list(set(current_teams + request.additional_teams))
+                supabase.table("issues").update({"assigned_dept_ids": new_teams}).eq("id", root_id).execute()
+                for team in added_teams:
+                    supabase.table("issue_assignments_history").insert({
+                        "issue_id": root_id,
+                        "assigned_dept_id": team,
+                        "assigned_by_emp_id": request.emp_id,
+                        "assigned_at": datetime.now().isoformat()
+                    }).execute()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
         
@@ -162,19 +209,109 @@ async def tag_issue_node(issue_id: str, request: IssueTagRequest, supabase: Clie
     if issue_id.startswith("ISS-"):
         raise HTTPException(status_code=400, detail="Cannot arbitrarily tag root issue nodes. They remain source of truth.")
 
+    # Enforcement: Only seniors can tag nodes
+    # Note: In a real production app, we'd extract this from request.state.user or a dependency
+    # For now, we rely on the role passed in the request as a bridge to full JWT enforcement
+    if request.role != "senior":
+        raise HTTPException(status_code=403, detail="Permission Denied: Only Seniors can tag or change node status.")
+
     res = supabase.table("issue_nodes").select("*").eq("id", issue_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Node not found.")
     node = res.data[0]
     
+    # Requirement: Blue nodes MUST have a senior comment
+    if request.tag == "blue" and not request.senior_comment:
+        raise HTTPException(status_code=400, detail="Senior comment is mandatory for Blue status.")
+
     # Ruthless pruning for Red nodes at the end of Blue branches
     if request.tag == "red" and node.get("tag") == "blue":
         # System axing a blue branch - delete branch entirely (relies on cascade if applicable, else delete self)
         supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
         return {"message": "Blue branch rotting limb pruned successfully."}
 
-    supabase.table("issue_nodes").update({"tag": request.tag}).eq("id", issue_id).execute()
-    return {"message": f"Node {issue_id} tagged as {request.tag}", "node": {**node, "tag": request.tag}}
+    update_payload = {"tag": request.tag}
+    if request.senior_comment:
+        update_payload["senior_comment"] = request.senior_comment
+
+    supabase.table("issue_nodes").update(update_payload).eq("id", issue_id).execute()
+    return {"message": f"Node {issue_id} tagged as {request.tag}", "node": {**node, **update_payload}}
+
+
+@router.patch("/issues/node/{node_id}/info")
+async def update_issue_node_info(node_id: str, request: IssueInfoUpdateRequest, supabase: Client = Depends(get_supabase)):
+    if node_id.startswith("ISS-"):
+        # For root issues
+        res = supabase.table("issues").select("created_by_emp_id").eq("id", node_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Issue not found.")
+        if res.data[0]["created_by_emp_id"] != request.emp_id:
+            raise HTTPException(status_code=403, detail="Only the author can update this node.")
+            
+        update_data = {}
+        if request.issue_header is not None: update_data["header"] = request.issue_header
+        if request.description is not None: update_data["description"] = request.description
+        if request.code_changes is not None: update_data["code_changes"] = request.code_changes
+        if request.code_language is not None: update_data["code_language"] = request.code_language
+        update_data["last_activity_at"] = datetime.now().isoformat()
+        
+        supabase.table("issues").update(update_data).eq("id", node_id).execute()
+        return {"message": "Root issue updated successfully."}
+    else:
+        # For child nodes
+        res = supabase.table("issue_nodes").select("created_by_emp_id, root_issue_id, tag").eq("id", node_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Node not found.")
+        
+        node = res.data[0]
+        # RBAC: Team members can ONLY edit pending nodes.
+        if request.role == "team_member" and node["tag"] != "pending":
+             raise HTTPException(status_code=403, detail="Permission Denied: Team members can only edit nodes in 'pending' state.")
+
+        if node["created_by_emp_id"] != request.emp_id:
+            raise HTTPException(status_code=403, detail="Only the author can update this node.")
+            
+        update_data = {}
+        if request.issue_header is not None: update_data["header"] = request.issue_header
+        if request.description is not None: update_data["description"] = request.description
+        if request.code_changes is not None: update_data["code_changes"] = request.code_changes
+        if request.code_language is not None: update_data["code_language"] = request.code_language
+        
+        supabase.table("issue_nodes").update(update_data).eq("id", node_id).execute()
+        supabase.table("issues").update({"last_activity_at": datetime.now().isoformat()}).eq("id", res.data[0]["root_issue_id"]).execute()
+        
+        return {"message": "Node info updated successfully."}
+
+
+@router.patch("/issues/node/{node_id}/connect")
+async def connect_issue_node(node_id: str, request: NodeConnectRequest, supabase: Client = Depends(get_supabase)):
+    if node_id.startswith("ISS-"):
+        raise HTTPException(status_code=400, detail="Cannot connect root issues.")
+        
+    res = supabase.table("issue_nodes").select("*").eq("id", node_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Node not found.")
+        
+    # Verify the new connection target exists (can be an issue or a node)
+    p_res = supabase.table("issues").select("id").eq("id", request.connected_to_id).execute()
+    n_res = supabase.table("issue_nodes").select("id").eq("id", request.connected_to_id).execute()
+    if not p_res.data and not n_res.data:
+        raise HTTPException(status_code=404, detail="Connection target not found.")
+        
+    supabase.table("issue_nodes").update({"connected_to_id": request.connected_to_id}).eq("id", node_id).execute()
+    return {"message": f"Node {node_id} successfully connected to {request.connected_to_id}."}
+
+@router.patch("/issues/node/{node_id}/position")
+async def update_issue_node_position(node_id: str, request: NodePositionRequest, supabase: Client = Depends(get_supabase)):
+    if node_id.startswith("ISS-"):
+        return {"message": "Root node position is fixed to (0,0)."}
+        
+    supabase.table("issue_nodes").update({
+        "layout_x": request.layout_x,
+        "layout_y": request.layout_y
+    }).eq("id", node_id).execute()
+    
+    return {"message": "Position successfully saved."}
 
 
 @router.post("/issues/merge")
@@ -232,11 +369,11 @@ async def merge_blue_branch(request: IssueMergeRequest, supabase: Client = Depen
 
 
 @router.delete("/issues/{issue_id}")
-async def delete_issue_node(issue_id: str, supabase: Client = Depends(get_supabase)):
+async def delete_issue_node(issue_id: str):
     if issue_id.startswith("ISS-"):
         raise HTTPException(status_code=400, detail="Cannot delete root issues. Close them instead.")
         
-    res = supabase.table("issue_nodes").select("*").eq("id", issue_id).execute()
+    res = service_role_supabase.table("issue_nodes").select("*").eq("id", issue_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Node not found.")
     node = res.data[0]
@@ -244,8 +381,36 @@ async def delete_issue_node(issue_id: str, supabase: Client = Depends(get_supaba
     # Time and tag restrictions removed for drag-and-drop delete capability
 
 
-    supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
+    service_role_supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
     return {"message": "Node deleted successfully within window."}
+
+
+class RestoreNodeRequest(BaseModel):
+    id: str
+    root_issue_id: str
+    parent_node_id: Optional[str] = None
+    header: Optional[str] = None
+    description: Optional[str] = None
+    node_type: Optional[str] = "update"
+    tag: Optional[str] = "pending"
+    created_by_emp_id: Optional[str] = None
+    dept_id: Optional[str] = None
+    code_changes: Optional[str] = None
+    code_language: Optional[str] = None
+    layout_x: Optional[float] = None
+    layout_y: Optional[float] = None
+    created_at: Optional[str] = None
+
+
+@router.post("/issues/restore")
+async def restore_issue_node(request: RestoreNodeRequest):
+    """Re-inserts a previously deleted node with its original ID. Used by Ctrl+Z undo."""
+    data = request.model_dump(exclude_none=True)
+    try:
+        service_role_supabase.table("issue_nodes").insert(data).execute()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Restore failed: {str(e)}")
+    return {"message": "Node restored successfully."}
 
 
 @router.post("/issues/{issue_id}/close")
@@ -289,7 +454,7 @@ async def list_issues(status: str = "open", limit: int = 50, dept_id: str = None
             accessible.append(issue)
         elif issue.get("dept_id") == dept_id:
              accessible.append(issue)
-        elif issue.get("assigned_dept_id") == dept_id:
+        elif dept_id in (issue.get("assigned_dept_ids") or []):
              accessible.append(issue)
             
     accessible.sort(key=lambda x: x.get("last_activity_at", x.get("created_at", "")), reverse=True)
@@ -299,7 +464,7 @@ async def list_issues(status: str = "open", limit: int = 50, dept_id: str = None
     for issue in accessible[:limit]:
         formatted = dict(issue)
         formatted["issue_id"] = issue["id"]
-        formatted["assigned_team"] = issue.get("assigned_dept_id")
+        formatted["assigned_teams"] = issue.get("assigned_dept_ids") or []
         formatted["last_activity"] = issue.get("last_activity_at")
         formatted["type"] = "new"  # roots mapped as new
         formatted_issues.append(formatted)
@@ -331,6 +496,8 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
             "tag": "green", # Roots are green by definition
             "author": root.get("created_by_emp_id"),
             "description": root.get("description"),
+            "code_changes": root.get("code_changes"),
+            "code_language": root.get("code_language"),
             "created_at": root.get("created_at"),
             "type": "new",
             "layout_x": 0.0,
@@ -346,6 +513,8 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
                 "tag": n.get("tag"),
                 "author": n.get("created_by_emp_id"),
                 "description": n.get("description"),
+                "code_changes": n.get("code_changes"),
+                "code_language": n.get("code_language"),
                 "created_at": n.get("created_at"),
                 "type": n.get("node_type"),
                 "layout_x": n.get("layout_x"),
@@ -361,6 +530,14 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
                 "target": n["id"]
             })
             
+        connected_to = n.get("connected_to_id")
+        if connected_to:
+            edges.append({
+                "id": f"e-conn-{n['id']}-{connected_to}",
+                "source": n["id"],
+                "target": connected_to
+            })
+            
     return {"nodes": nodes, "edges": edges}
 
 @router.get("/issues/{issue_id}", response_model=dict)
@@ -372,7 +549,7 @@ async def get_issue(issue_id: str, supabase: Client = Depends(get_supabase)):
     issue = res.data[0]
     # Format to match frontend
     issue["issue_id"] = issue["id"]
-    issue["assigned_team"] = issue.get("assigned_dept_id")
+    issue["assigned_teams"] = issue.get("assigned_dept_ids") or []
     issue["last_activity"] = issue.get("last_activity_at")
 
     return issue

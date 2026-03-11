@@ -41,10 +41,13 @@ CREATE TABLE issues (
     priority issue_priority NOT NULL,
     status issue_status DEFAULT 'open' NOT NULL,
     created_by_emp_id TEXT NOT NULL,
-    assigned_dept_id TEXT,
+    assigned_dept_ids TEXT[] DEFAULT '{}',
     dept_id TEXT, -- Added to track origin department of the issue creator
     parent_external_ticket TEXT,
     chained_issue_id TEXT REFERENCES issues(id) ON DELETE SET NULL,
+    code_changes TEXT,
+    code_language TEXT,
+    deadline DATE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     last_activity_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -54,14 +57,18 @@ CREATE TABLE issue_nodes (
     id TEXT PRIMARY KEY, -- e.g., 'NODE-XXXX' or 'MERGE-XXXX'
     root_issue_id TEXT NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
     parent_node_id TEXT REFERENCES issue_nodes(id) ON DELETE CASCADE,
+    connected_to_id TEXT REFERENCES issue_nodes(id) ON DELETE SET NULL,
     header TEXT NOT NULL,
     description TEXT NOT NULL,
     node_type issue_node_type NOT NULL,
     tag issue_tag NOT NULL DEFAULT 'pending',
     created_by_emp_id TEXT NOT NULL,
     dept_id TEXT,
+    code_changes TEXT,
+    code_language TEXT,
     layout_x NUMERIC,
     layout_y NUMERIC,
+    senior_comment TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -98,7 +105,7 @@ USING (
    OR 
    dept_id = current_setting('request.jwt.claims', true)::json->>'dept_id'
    OR
-   assigned_dept_id = current_setting('request.jwt.claims', true)::json->>'dept_id'
+   current_setting('request.jwt.claims', true)::json->>'dept_id' = ANY(assigned_dept_ids)
 );
 
 -- Policy: Delete own within 30m or Senior
@@ -125,7 +132,7 @@ USING (
    OR 
    dept_id = current_setting('request.jwt.claims', true)::json->>'dept_id'
    OR
-   assigned_dept_id = current_setting('request.jwt.claims', true)::json->>'dept_id'
+   current_setting('request.jwt.claims', true)::json->>'dept_id' = ANY(assigned_dept_ids)
 );
 
 -- 6. RLS Policies for 'issue_nodes'

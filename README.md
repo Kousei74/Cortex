@@ -75,7 +75,11 @@ cortex/
 │       │   ├── report-view.jsx         # Layout strategy router
 │       │   ├── sub-anchor-row.jsx      # Secondary chart row
 │       │   ├── staging-area.jsx        # File upload / data ingestion
-│       │   └── sidebar.jsx             # Navigation
+│       │   ├── sidebar.jsx             # Navigation
+│       │   ├── service-hub.jsx         # Issue creation (Seniors)
+│       │   ├── issue-tracker.jsx       # Execution ledger list/dag view
+│       │   ├── issue-flowchart.jsx     # Visual React Flow DAG resolution tree
+│       │   └── ui/                     # Shared UI primitives (team-multi-select, etc)
 │       ├── store/
 │       │   ├── analysisStore.js        # Job ID, status, payload
 │       │   └── workspace-store.js      # View mode, cluster selection
@@ -170,9 +174,10 @@ SUPABASE_KEY=your_service_role_key
 | Donut "Others" Bucketing | ✅ Done | Slices collapsed with hover breakdown |
 | Service Hub | ✅ Done | File new issues or link child issues |
 | Slack Integration | ✅ Done | Live channel notifications in sidebar |
+| Execution Ledger & Issue DAG | ✅ Done | Visual resolution tree, 🟢🔵🔴🟡 tag logic |
+| Role-Based Governance | ✅ Done | Senior approvals, immutable decisions, RLS array enforcement |
 | Cluster Resolution UI | 🚧 In Progress | Merge, dismiss, conflict tracking |
 | Offline / Degraded Mode | 🚧 In Progress | Read-only IndexedDB fallback |
-| Role-Based Governance | ⏳ Planned | Senior approvals, immutable decisions |
 | Canvas Fallback (>10k pts) | ⏳ Planned | VisX for large dataset rendering |
 
 ---

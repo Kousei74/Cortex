@@ -116,7 +116,7 @@ export default function IssueTracker() {
                                         transition={{ duration: 0.2 }}
                                         key={issue.issue_id}
                                         onClick={() => setActiveIssueId(issue.issue_id)}
-                                        className="w-full text-left p-6 fluid-rounded border transition-all duration-300 relative overflow-hidden group bg-surface-custom/50 border-subtle-custom hover:border-[var(--accent-blue-bright)] hover:bg-surface-custom hover:shadow-[0_0_15px_rgba(0,191,255,0.1)] min-h-[160px]"
+                                        className="w-full text-left p-6 fluid-rounded border transition-all duration-300 relative overflow-hidden group bg-surface-custom/50 border-subtle-custom soft-glow-hover min-h-[160px]"
                                     >
                                         <div className="grid grid-cols-[1fr_auto] grid-rows-[auto_1fr_auto] gap-x-4 h-full">
                                             {/* Header Row */}
@@ -151,11 +151,14 @@ export default function IssueTracker() {
                                             <div className="flex items-end min-w-0 mt-auto pt-2">
                                                 <div className="font-mono text-xs text-secondary-custom/60 uppercase tracking-widest italic truncate">
                                                     {formatDate(issue.last_activity || issue.created_at)}
+                                                    {issue.deadline && (
+                                                        <span className="text-secondary-custom/40">{" "}-{" "}{formatDate(issue.deadline)}</span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="flex items-end justify-end mt-auto pt-2 pl-4">
-                                                <span className="text-secondary-custom/80 uppercase tracking-widest text-[11px] font-mono text-right break-words max-w-[150px] line-clamp-1">
-                                                    {issue.assigned_team || "UNASSIGNED"}
+                                                <span className="text-secondary-custom/80 uppercase tracking-widest text-[11px] font-mono text-right break-words max-w-[150px] line-clamp-1 truncate">
+                                                    {issue.assigned_teams?.length > 0 ? issue.assigned_teams.join(", ") : "UNASSIGNED"}
                                                 </span>
                                             </div>
                                         </div>
@@ -175,12 +178,12 @@ export default function IssueTracker() {
             {/* Floating Back Button */}
             <button
                 onClick={() => setActiveIssueId(null)}
-                className="absolute top-6 left-6 z-50 flex items-center gap-2 bg-[var(--bg-panel)] border border-subtle-custom rounded-full px-5 py-2.5 text-secondary-custom hover:text-[var(--accent-blue-bright)] hover:border-[var(--accent-blue-bright)] hover:shadow-[0_0_15px_rgba(0,191,255,0.2)] transition-all font-mono text-xs font-bold uppercase tracking-widest group shadow-lg"
+                className="absolute top-6 left-6 z-50 flex items-center gap-2 bg-[var(--bg-panel)] border border-subtle-custom rounded-full px-5 py-2.5 text-secondary-custom hover:text-[var(--accent-blue-bright)] soft-glow-hover transition-all duration-300 font-mono text-xs font-bold uppercase tracking-widest group shadow-lg"
             >
                 <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back to Ledger
+                Back
             </button>
 
             {/* Flowchart Area */}

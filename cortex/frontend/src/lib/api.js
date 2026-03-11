@@ -223,6 +223,53 @@ export const api = {
         return response.json();
     },
 
+    connectNode: async (nodeId, connectedToId, empId) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/node/${nodeId}/connect`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({ connected_to_id: connectedToId, emp_id: empId })
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to connect node.");
+        }
+        return response.json();
+    },
+
+    updateNodePosition: async (nodeId, x, y) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/node/${nodeId}/position`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({ layout_x: x, layout_y: y })
+        });
+        if (!response.ok) {
+            throw new Error("Failed to save node position");
+        }
+        return response.json();
+    },
+
+    updateNodeInfo: async (nodeId, payload) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/node/${nodeId}/info`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to update node info");
+        }
+        return response.json();
+    },
+
     mergeBlueBranch: async (targetParentId, branchNodes, metadataSummary, empId, deptId) => {
         const response = await fetch(`${API_BASE_URL}/service/issues/merge`, {
             method: "POST",
@@ -250,6 +297,19 @@ export const api = {
         if (!response.ok) {
             const err = await response.json().catch(() => ({ detail: "Failed to delete" }));
             throw new Error(err.detail || "Failed to delete node");
+        }
+        return response.json();
+    },
+
+    restoreNode: async (nodeData) => {
+        const response = await fetch(`${API_BASE_URL}/service/issues/restore`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+            body: JSON.stringify(nodeData)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ detail: "Failed to restore" }));
+            throw new Error(err.detail || "Failed to restore node");
         }
         return response.json();
     },

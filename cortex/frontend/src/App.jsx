@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom"
 import { AnimatePresence, motion } from "framer-motion"
-import { AuthProvider, useAuth } from "@/context/AuthContext"
+import { useAuth } from "@/context/AuthContext"
 import AuthFlow from "@/components/auth-flow"
 import { PAGE_TRANSITION } from "@/lib/animations"
 
@@ -104,16 +104,14 @@ import { BackgroundPoller } from "@/components/background-poller"
 
 function App() {
     return (
-        <AuthProvider>
-            <Router>
-                <div className="min-h-screen bg-primary-custom text-foreground font-sans">
-                    <SingleInstanceLock />
-                    <BackgroundPoller />
-                    <AnimatedRoutes />
-                    <Toaster />
-                </div>
-            </Router>
-        </AuthProvider>
+        <Router>
+            <div className="min-h-screen bg-primary-custom text-foreground font-sans">
+                <SingleInstanceLock />
+                <BackgroundPoller />
+                <AnimatedRoutes />
+                <Toaster />
+            </div>
+        </Router>
     )
 }
 
