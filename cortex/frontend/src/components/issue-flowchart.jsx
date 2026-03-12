@@ -1299,7 +1299,7 @@ function IssueFlowchartInner({ issueId }) {
 
                 /* ── Node Drag Handle ── */
                 .cortex-node {
-                    transition: transform 0.2s ease;
+                    transition: transform 0.2s ease, border-radius 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), corner-shape 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
                     overflow: visible;
                 }
                 .cortex-node:hover {
@@ -1307,6 +1307,9 @@ function IssueFlowchartInner({ issueId }) {
                 }
                 /* Progressive enhancement: scoop corner when browser supports it */
                 @supports (corner-shape: scoop) {
+                    .cortex-node {
+                        corner-shape: round;
+                    }
                     .cortex-node:hover {
                         corner-shape: scoop round round round;
                         border-radius: 28px 12px 12px 12px;

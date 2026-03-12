@@ -11,3 +11,6 @@ supabase
 pydantic-settings
 easyocr
 httpx
+pandas
+numpy
+requests

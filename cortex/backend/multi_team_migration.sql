@@ -1,3 +1,4 @@
+ALTER TABLE issues ADD COLUMN IF NOT EXISTS deadline DATE;
 -- Migration Script for Multi-Team Support
 -- Run this in your Supabase SQL Editor
 

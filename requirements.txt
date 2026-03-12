@@ -9,3 +9,8 @@ bcrypt==4.0.1
 email-validator
 supabase
 pydantic-settings
+easyocr
+httpx
+pandas
+numpy
+requests
