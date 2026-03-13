@@ -78,15 +78,7 @@ const CustomNode = ({ data, id }) => {
     const displayLabel = label?.length > 15 ? label.substring(0, 15) + "..." : label
 
     return (
-        <div
-            className="cortex-node rounded-xl border backdrop-blur-md px-4 py-3 min-w-[200px] max-w-[280px] shadow-lg relative cursor-pointer"
-            style={{
-                backgroundColor: styling.bg,
-                borderColor: styling.border,
-                boxShadow: `0 4px 20px ${styling.bg}`,
-                '--node-accent': styling.border,
-            }}
-        >
+        <div className="node-wrapper relative cursor-pointer min-w-[200px] max-w-[280px]">
             {/* ── Drag Handle ── Corner-shape scoop circle */}
             <div
                 className="drag-handle cortex-node-drag"
@@ -105,7 +97,8 @@ const CustomNode = ({ data, id }) => {
                     <circle cx="8" cy="8" r="1.2" fill="currentColor" opacity="0.6" />
                 </svg>
             </div>
-            {/* Centered hidden handles for precision routing. Make them large enough to hit when dragging manual edges but keep them physically centered. */}
+
+            {/* Centered hidden handles for precision routing. */}
             <Handle id="top-target" type="target" position={Position.Top} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mt-2 transition-opacity z-10" style={{ left: '50%' }} />
             <Handle id="top-source" type="source" position={Position.Top} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--semantic-success)] border-none -mt-2 transition-opacity z-10" style={{ left: '50%' }} />
 
@@ -127,34 +120,45 @@ const CustomNode = ({ data, id }) => {
                 </>
             )}
 
-            <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-start">
-                    <div className="text-xs font-mono font-bold uppercase tracking-widest leading-snug break-words pr-2 text-primary-custom" style={{ wordBreak: 'break-word' }}>
-                        {displayLabel}
+            {/* Visible Node Box - This is the part that clips */}
+            <div
+                className="cortex-node rounded-xl border backdrop-blur-md px-4 py-3 shadow-lg relative overflow-hidden h-full"
+                style={{
+                    backgroundColor: styling.bg,
+                    borderColor: styling.border,
+                    boxShadow: `0 4px 20px ${styling.bg}`,
+                    '--node-accent': styling.border,
+                }}
+            >
+                <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center min-h-[24px]">
+                        <div className="text-xs font-mono font-bold uppercase tracking-widest leading-snug break-words pr-2 text-primary-custom" style={{ wordBreak: 'break-word' }}>
+                            {displayLabel}
+                        </div>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isSenior) onTagClick?.(id, tag);
+                            }}
+                            className={`flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border transition-all ${isSenior ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-default'}`}
+                            style={{ color: styling.text, borderColor: styling.text, backgroundColor: styling.bg }}
+                            title={isSenior ? "Change status" : "Status (Senior only)"}
+                        >
+                            {tag}
+                        </button>
                     </div>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (isSenior) onTagClick?.(id, tag);
-                        }}
-                        className={`flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border mt-0.5 transition-all ${isSenior ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-default'}`}
-                        style={{ color: styling.text, borderColor: styling.text, backgroundColor: styling.bg }}
-                        title={isSenior ? "Change status" : "Status (Senior only)"}
-                    >
-                        {tag}
-                    </button>
-                </div>
 
-                {tag === 'blue' && isSenior && senior_comment && (
-                    <div className="bg-white/10 border-l-2 border-[var(--accent-blue-bright)] p-2 rounded-md shadow-inner mb-1">
-                        <div className="text-[8px] text-[var(--accent-blue-bright)] font-bold uppercase tracking-tighter mb-1 select-none">Senior Note</div>
-                        <div className="text-[10px] text-primary-custom italic font-serif leading-tight">"{senior_comment}"</div>
+                    {tag === 'blue' && isSenior && senior_comment && (
+                        <div className="bg-white/10 border-l-2 border-[var(--accent-blue-bright)] p-2 rounded-md shadow-inner mb-1">
+                            <div className="text-[8px] text-[var(--accent-blue-bright)] font-bold uppercase tracking-tighter mb-1 select-none">Senior Note</div>
+                            <div className="text-[10px] text-primary-custom italic font-serif leading-tight">"{senior_comment}"</div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-between items-center text-[10px] font-mono border-t border-subtle-custom pt-2 mt-1">
+                        <span className="text-secondary-custom/60 uppercase tracking-widest">{date || "UNKNOWN DATE"}</span>
+                        <span className="text-primary-custom/80 uppercase tracking-widest truncate max-w-[100px] text-right">{author}</span>
                     </div>
-                )}
-
-                <div className="flex justify-between items-center text-[10px] font-mono border-t border-subtle-custom pt-2 mt-1">
-                    <span className="text-secondary-custom/60 uppercase tracking-widest">{date || "UNKNOWN DATE"}</span>
-                    <span className="text-primary-custom/80 uppercase tracking-widest truncate max-w-[100px] text-right">{author}</span>
                 </div>
             </div>
 
@@ -377,6 +381,8 @@ function IssueFlowchartInner({ issueId }) {
     const [confirmText, setConfirmText] = useState("")
     const [refreshKey, setRefreshKey] = useState(0)
 
+    const [deleteConfirm, setDeleteConfirm] = useState(null)
+
     const [isDraggingNode, setIsDraggingNode] = useState(false)
     const [isHoveringTrash, setIsHoveringTrash] = useState(false)
     const isHoveringTrashRef = useRef(false)
@@ -504,39 +510,26 @@ function IssueFlowchartInner({ issueId }) {
             }
 
             try {
-                // Snapshot node data for undo BEFORE deleting
-                const fullNode = getNode(node.id)
-                const connectedEdges = edges.filter(e => e.source === node.id || e.target === node.id)
-                const parentEdge = connectedEdges.find(e => e.target === node.id)
-                const undoSnapshot = {
-                    id: node.id,
-                    root_issue_id: issueId,
-                    parent_node_id: parentEdge ? parentEdge.source : null,
-                    header: fullNode?.data?.label,
-                    description: fullNode?.data?.description,
-                    node_type: fullNode?.data?.type || 'update',
-                    tag: fullNode?.data?.tag || 'pending',
-                    created_by_emp_id: fullNode?.data?.author,
-                    code_changes: fullNode?.data?.code_changes,
-                    code_language: fullNode?.data?.code_language,
-                    created_at: fullNode?.data?.created_at,
-                    layout_x: fullNode?.position?.x,
-                    layout_y: fullNode?.position?.y
+                // Permission check using shared logic
+                const nodeData = getNode(node.id)?.data
+
+                const authorEmpId = nodeData?.author
+                const isPending = nodeData?.tag === 'pending'
+                const isSenior = user?.role === 'senior'
+                const isAuthor = authorEmpId === user?.emp_id
+
+                if (!isSenior && !(isAuthor && isPending)) {
+                    toast.error("You don't have permission to perform this action", {
+                        description: !isAuthor ? "Only the author can delete this node." :
+                            "Only pending nodes can be deleted by team members."
+                    })
+                    setRefreshKey(prev => prev + 1)
+                    return
                 }
 
-                await api.deleteIssueNode(node.id)
-                // Immediately remove from local state for instant feedback
-                setNodes(nds => nds.filter(n => n.id !== node.id))
-                setEdges(eds => eds.filter(e => e.source !== node.id && e.target !== node.id))
-                toast.success("Node Terminated Successfully")
-
-                // Push undo entry
-                undoStackRef.current.push({ type: 'UNDO_DELETE_NODE', payload: undoSnapshot, description: 'node deletion' })
-
-                // Re-fetch graph to sync with server
-                setRefreshKey(prev => prev + 1)
+                setDeleteConfirm({ nodeId: node.id, label: nodeData?.label })
             } catch (err) {
-                toast.error("Failed to delete node", { description: err.message })
+                toast.error("Failed to initiate deletion", { description: err.message })
                 setRefreshKey(prev => prev + 1)
             }
         } else {
@@ -654,6 +647,59 @@ function IssueFlowchartInner({ issueId }) {
         }
     }
 
+    const executeDeleteNode = async () => {
+        if (confirmText !== "Confirm") {
+            toast.error("Validation Failed", { description: "You must type exactly 'Confirm'." })
+            return
+        }
+
+        try {
+            setIsLoading(true)
+            const nodeId = deleteConfirm.nodeId
+
+            // Snapshot node data for undo BEFORE deleting
+            const fullNode = getNode(nodeId)
+            const connectedEdges = edges.filter(e => e.source === nodeId || e.target === nodeId)
+            const parentEdge = connectedEdges.find(e => e.target === nodeId)
+            const undoSnapshot = {
+                id: nodeId,
+                root_issue_id: issueId,
+                parent_node_id: parentEdge ? parentEdge.source : null,
+                header: fullNode?.data?.label,
+                description: fullNode?.data?.description,
+                node_type: fullNode?.data?.type || 'update',
+                tag: fullNode?.data?.tag || 'pending',
+                created_by_emp_id: fullNode?.data?.author,
+                code_changes: fullNode?.data?.code_changes,
+                code_language: fullNode?.data?.code_language,
+                created_at: fullNode?.data?.created_at,
+                layout_x: fullNode?.position?.x,
+                layout_y: fullNode?.position?.y
+            }
+
+            await api.deleteIssueNode(nodeId)
+
+            // Immediately update local state
+            setNodes(nds => nds.filter(n => n.id !== nodeId))
+            setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId))
+
+            toast.success("Node Terminated Successfully")
+
+            // Push undo entry
+            undoStackRef.current.push({ type: 'UNDO_DELETE_NODE', payload: undoSnapshot, description: 'node deletion' })
+
+            // Cleanup state
+            setDeleteConfirm(null)
+            setActiveNodeModal(null)
+            setConfirmText("")
+            setRefreshKey(prev => prev + 1)
+        } catch (err) {
+            toast.error("Termination failed", { description: err.message })
+            setRefreshKey(prev => prev + 1)
+            setIsLoading(false)
+        }
+    }
+
     const handleNodeClick = useCallback((event, node) => {
         // Open node modal. Root node or child.
         // User identity check logic
@@ -671,11 +717,11 @@ function IssueFlowchartInner({ issueId }) {
         setModalCode(node.data.code_changes || "")
         setModalLang(node.data.code_language || "Python")
 
-        // If author, open in view mode but show update button. Else just view mode.
+        // If author OR senior, open in view mode but show footer actions. Else just view mode.
         setActiveNodeModal({
             mode: "view",
             nodeParams: node,
-            isAuthor: isAuthor && !isGraphClosed,
+            canEdit: (isAuthor || user?.role === 'senior') && !isGraphClosed,
             isGraphClosed
         })
     }, [user, getNodes])
@@ -687,6 +733,20 @@ function IssueFlowchartInner({ issueId }) {
             toast.error("Graph is closed. No modifications allowed.")
             return
         }
+
+        // Restriction check for team members: only one pending node allowed
+        if (user?.role === 'team_member') {
+            const hasPendingNode = allNodes.some(n =>
+                n.data?.author === user?.emp_id && n.data?.tag === 'pending'
+            )
+            if (hasPendingNode) {
+                toast.error("Creation Blocked", {
+                    description: "You already have a pending node. Please wait for senior review or remove your existing pending node before adding another."
+                })
+                return
+            }
+        }
+
         setIsLoading(true)
         const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
 
@@ -878,7 +938,7 @@ function IssueFlowchartInner({ issueId }) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] backdrop-blur-xl bg-black/40 flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[300] backdrop-blur-xl bg-black/40 flex items-center justify-center p-4"
                         onClick={() => setActiveTagEdit(null)}
                     >
                         <motion.div
@@ -919,7 +979,7 @@ function IssueFlowchartInner({ issueId }) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[110] backdrop-blur-xl bg-black/50 flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[400] backdrop-blur-xl bg-black/50 flex items-center justify-center p-4"
                         onClick={() => setTagConfirm(null)}
                     >
                         <motion.div
@@ -987,7 +1047,7 @@ function IssueFlowchartInner({ issueId }) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[110] backdrop-blur-xl bg-black/50 flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[400] backdrop-blur-xl bg-black/50 flex items-center justify-center p-4"
                         onClick={() => setConnectConfirm(null)}
                     >
                         <motion.div
@@ -1030,13 +1090,63 @@ function IssueFlowchartInner({ issueId }) {
                     </motion.div>
                 )}
 
+                {deleteConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[400] backdrop-blur-xl bg-black/50 flex items-center justify-center p-4"
+                        onClick={() => setDeleteConfirm(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="bg-surface-custom border border-subtle-custom p-8 rounded-2xl shadow-2xl flex flex-col gap-6 max-w-sm w-full"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h3 className="text-white font-mono text-lg font-bold text-center uppercase text-red-500">REMOVE NODE</h3>
+                            <p className="text-secondary-custom text-sm font-mono text-center">
+                                Are you sure you want to terminate <span className="text-white font-bold">"{deleteConfirm.label}"</span>? This action cannot be easily undone. To confirm, type <span className="text-white font-bold">"Confirm"</span> and press Proceed.
+                            </p>
+
+                            <Input
+                                value={confirmText}
+                                onChange={e => setConfirmText(e.target.value)}
+                                placeholder="Type Confirm"
+                                className="text-center font-mono border-subtle-custom bg-[var(--bg-root)] focus:border-red-500 soft-glow-hover"
+                                onKeyDown={e => {
+                                    if (e.key === "Enter" && confirmText === "Confirm") executeDeleteNode()
+                                }}
+                            />
+                            {/* Note: In the above input, I accidentally used setDeleteConfirm to set confirmText but confirmText is a root state. Let me fix that. */}
+
+                            <div className="flex gap-4 mt-2">
+                                <Button
+                                    onClick={() => { setDeleteConfirm(null); setConfirmText(""); }}
+                                    className="flex-1 bg-transparent border border-subtle-custom text-secondary-custom hover:text-white hover:bg-white/5 transition-all"
+                                >
+                                    CANCEL
+                                </Button>
+                                <Button
+                                    onClick={executeDeleteNode}
+                                    disabled={confirmText !== "Confirm"}
+                                    className="flex-1 bg-red-600/80 text-white font-bold soft-shadow hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    PROCEED
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
                 {/* --- NODE INFO MODAL --- */}
                 {activeNodeModal && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[120] backdrop-blur-3xl bg-black/40 flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[200] backdrop-blur-3xl bg-black/40 flex items-center justify-center p-4"
                         onClick={() => {
                             if (activeNodeModal.mode === "view") setActiveNodeModal(null);
                         }}
@@ -1128,14 +1238,40 @@ function IssueFlowchartInner({ issueId }) {
                                                 </div>
                                             )}
 
-                                            {/* Action footer for Author to flip to edit mode */}
-                                            {activeNodeModal.isAuthor && !activeNodeModal.nodeParams.id.startsWith("ISS-") && (
-                                                <div className="pt-4 mt-2 flex justify-end border-t border-subtle-custom">
+                                            {/* Action footer for Author/Senior to flip to edit mode or delete */}
+                                            {activeNodeModal.canEdit && !activeNodeModal.nodeParams.id.startsWith("ISS-") && (
+                                                <div className="pt-4 mt-2 flex justify-between items-center border-t border-subtle-custom gap-4">
+                                                    {(() => {
+                                                        const nodeData = activeNodeModal.nodeParams.data
+                                                        const authorEmpId = nodeData.author
+                                                        const isPending = nodeData.tag === 'pending'
+                                                        const isSenior = user?.role === 'senior'
+                                                        const isAuthor = authorEmpId === user?.emp_id
+
+                                                        if (isSenior || (isAuthor && isPending)) {
+                                                            return (
+                                                                <Button
+                                                                    onClick={() => {
+                                                                        setDeleteConfirm({
+                                                                            nodeId: activeNodeModal.nodeParams.id,
+                                                                            label: nodeData.label
+                                                                        });
+                                                                        setConfirmText("");
+                                                                    }}
+                                                                    className="bg-transparent border border-red-500/50 text-red-500 hover:bg-red-500/10 font-mono text-xs uppercase tracking-widest px-6"
+                                                                >
+                                                                    [ REMOVE NODE ]
+                                                                </Button>
+                                                            )
+                                                        }
+                                                        return <div />;
+                                                    })()}
+
                                                     <Button
                                                         onClick={() => {
                                                             setActiveNodeModal({ ...activeNodeModal, mode: "edit" });
                                                         }}
-                                                        className="bg-transparent border border-accent-blue-bright/50 text-accent-blue-bright hover:bg-accent-blue-bright/10 font-mono text-xs uppercase tracking-widest px-6"
+                                                        className="bg-transparent border border-accent-blue-bright/50 text-accent-blue-bright hover:bg-accent-blue-bright/10 font-mono text-xs uppercase tracking-widest px-6 ml-auto"
                                                     >
                                                         [ EDIT INFO ]
                                                     </Button>
@@ -1300,7 +1436,7 @@ function IssueFlowchartInner({ issueId }) {
                 /* ── Node Drag Handle ── */
                 .cortex-node {
                     transition: transform 0.2s ease, border-radius 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), corner-shape 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-                    overflow: visible;
+                    overflow: hidden;
                 }
                 .cortex-node:hover {
                     transform: scale(1.03);
@@ -1335,7 +1471,7 @@ function IssueFlowchartInner({ issueId }) {
                 .cortex-node-drag:active {
                     cursor: grabbing;
                 }
-                .cortex-node:hover .cortex-node-drag {
+                .node-wrapper:hover .cortex-node-drag {
                     scale: 1;
                 }
             `}</style>
