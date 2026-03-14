@@ -13,6 +13,7 @@ origins = [
     "http://localhost:5173",  # Vite Dev Server
     "http://localhost:5174",  # Vite Dev Server Alternate
     "http://localhost:5175",  # Vite Dev Server Alternate 2
+    "http://localhost:5176",  # Vite Dev Server Alternate 3
     "http://localhost:3000",
 ]
 

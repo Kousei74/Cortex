@@ -46,6 +46,29 @@ const NODE_COLORS = {
     red: { bg: "rgba(255, 59, 48, 0.15)", border: "#ff3b30", text: "#ff3b30" },
 }
 
+/**
+ * Centralized RBAC logic for nodes.
+ * @returns { canEdit: bool, canTag: bool, canDelete: bool, canAddNode: bool }
+ */
+const getNodePermissions = (nodeData, user) => {
+    if (!user) return { canEdit: false, canTag: false, canDelete: false, canAddNode: false }
+
+    const isSenior = user.role?.toLowerCase() === "senior"
+    const isAuthor = nodeData?.author === user.emp_id
+    const isPending = nodeData?.tag === "pending"
+    const isBlue = nodeData?.tag === "blue"
+
+    return {
+        isSenior,
+        isAuthor,
+        isPending,
+        canEdit: isSenior || (isAuthor && isPending),
+        canTag: isSenior,
+        canDelete: isSenior || isAuthor, // AUTHORSHIP check is handled in handleDelete with 30m rule
+        canAddNode: !isBlue || isSenior // Seniors can always add; Blue blocks others
+    }
+}
+
 const PlusButton = ({ position, onClick }) => {
     let posClass = ""
     if (position === Position.Top) posClass = "-top-2 left-1/2 -translate-x-1/2"
@@ -67,9 +90,12 @@ const PlusButton = ({ position, onClick }) => {
 }
 
 const CustomNode = ({ data, id }) => {
-    const { label, tag, author, date, type, onAddNode, onTagClick, senior_comment, userRole } = data
+    const { label, tag, author, date, type, onAddNode, onTagClick, senior_comment } = data
+    const { user } = useAuth()
     const styling = NODE_COLORS[tag] || NODE_COLORS.pending
-    const isSenior = userRole === "senior"
+
+    const permissions = getNodePermissions(data, user)
+    const isSenior = permissions.isSenior
 
     const isRoot = type === "new"
     const isEnd = tag === "red"
@@ -148,10 +174,10 @@ const CustomNode = ({ data, id }) => {
                         </button>
                     </div>
 
-                    {tag === 'blue' && isSenior && senior_comment && (
+                    {tag === 'blue' && senior_comment && (
                         <div className="bg-white/10 border-l-2 border-[var(--accent-blue-bright)] p-2 rounded-md shadow-inner mb-1">
                             <div className="text-[8px] text-[var(--accent-blue-bright)] font-bold uppercase tracking-tighter mb-1 select-none">Senior Note</div>
-                            <div className="text-[10px] text-primary-custom italic font-serif leading-tight">"{senior_comment}"</div>
+                            <div className="text-[9px] text-primary-custom font-mono leading-tight">"{senior_comment}"</div>
                         </div>
                     )}
 
@@ -162,7 +188,10 @@ const CustomNode = ({ data, id }) => {
                 </div>
             </div>
 
-            {!isEnd && <PlusButton position={Position.Bottom} onClick={() => onAddNode?.(id, 'bottom')} />}
+            {/* Bottom button is blocked if node is Blue and has no validated side branch */}
+            {permissions.canAddNode && !isEnd && (
+                <PlusButton position={Position.Bottom} onClick={() => onAddNode?.(id, Position.Bottom)} />
+            )}
         </div>
     )
 }
@@ -426,8 +455,7 @@ function IssueFlowchartInner({ issueId }) {
                         issue_header: action.payload.previousHeader,
                         description: action.payload.previousDescription,
                         code_changes: action.payload.previousCode,
-                        code_language: action.payload.previousLang,
-                        emp_id: user?.emp_id || "SYS"
+                        code_language: action.payload.previousLang
                     })
                     toast.success("Undo: Node info reverted")
                     setRefreshKey(prev => prev + 1)
@@ -463,6 +491,31 @@ function IssueFlowchartInner({ issueId }) {
     const [modalCode, setModalCode] = useState("")
     const [modalLang, setModalLang] = useState("Python")
 
+    // Merge State: { originBlueNodeId, branchTrail, sourceNodeId, targetNodeId }
+    const [pendingMerge, setPendingMerge] = useState(null)
+
+    // Helper to finalize merge and connection
+    const handleFinalizeMerge = useCallback(async (originNodeId, documentation = {}) => {
+        if (!pendingMerge || pendingMerge.originBlueNodeId !== originNodeId) return;
+
+        try {
+            await api.mergeBlueBranch(
+                pendingMerge.originBlueNodeId,
+                pendingMerge.branchTrail,
+                "Branch merged via trail validation after documentation.",
+                user?.emp_id || "SYS",
+                user?.dept_id || "SYS",
+                documentation
+            )
+            await api.connectNode(pendingMerge.sourceNodeId, pendingMerge.targetNodeId, user?.emp_id || "SYS")
+            toast.success("Branch Merged & Trail Validated")
+            setPendingMerge(null)
+        } catch (err) {
+            console.error("Finalize merge failed:", err);
+            throw new Error(`Merge finalization failed: ${err.message}`);
+        }
+    }, [pendingMerge, user]);
+
     // Handlers
     const onNodeDragStart = useCallback((event, node) => {
         setIsDraggingNode(true)
@@ -492,9 +545,11 @@ function IssueFlowchartInner({ issueId }) {
                 return
             }
 
-            // Permission check: team members can only delete their own nodes
+            // Permission check using centralized helper
             const nodeData = getNode(node.id)?.data
-            if (user?.role === 'team_member' && nodeData?.author !== user?.emp_id) {
+            const permissions = getNodePermissions(nodeData, user)
+
+            if (!permissions.isSenior && nodeData?.author !== user?.emp_id) {
                 toast.error("You don't have permission to perform this action")
                 setRefreshKey(prev => prev + 1)
                 return
@@ -515,7 +570,7 @@ function IssueFlowchartInner({ issueId }) {
 
                 const authorEmpId = nodeData?.author
                 const isPending = nodeData?.tag === 'pending'
-                const isSenior = user?.role === 'senior'
+                const isSenior = user?.role?.toLowerCase() === 'senior'
                 const isAuthor = authorEmpId === user?.emp_id
 
                 if (!isSenior && !(isAuthor && isPending)) {
@@ -576,10 +631,21 @@ function IssueFlowchartInner({ issueId }) {
                         description: payload.description,
                         code_changes: payload.code,
                         code_language: payload.lang,
-                        emp_id: user?.emp_id || "SYS"
+                        emp_id: user?.emp_id || "SYS",
+                        role: user?.role?.toLowerCase() || "team_member"
                     })
-                    toast.success("Node Information Updated")
 
+                    // If this update was part of a merge flow, complete the merge now
+                    if (pendingMerge && pendingMerge.originBlueNodeId === activeNodeModal.nodeParams.id) {
+                        await handleFinalizeMerge(activeNodeModal.nodeParams.id, {
+                            header: payload.header,
+                            description: payload.description,
+                            code_changes: payload.code,
+                            code_language: payload.lang
+                        });
+                    } else {
+                        toast.success("Node Information Updated")
+                    }
                     // Push undo entry
                     undoStackRef.current.push({ type: 'UNDO_NODE_UPDATE', payload: undoPayload, description: 'node info update' })
                 }
@@ -589,15 +655,15 @@ function IssueFlowchartInner({ issueId }) {
                 setConfirmText("")
                 setRefreshKey(prev => prev + 1)
             } else {
-                // Handling standard tag updating (Yellow, Blue, Green, Red)
-                const previousTag = tagConfirm.previousTag || 'pending'
-                const commentToSubmit = tagConfirm.newTag === 'blue' ? seniorCommentText : tagConfirm.seniorComment
                 // Optimistic Update
                 setNodes(nds => nds.map(n => n.id === tagConfirm.nodeId ? { ...n, data: { ...n.data, tag: tagConfirm.newTag, senior_comment: commentToSubmit } } : n))
+
+                // Silent Knight: Pass the last_updated_at for OCC verification
+                const nodeToTag = nodes.find(n => n.id === tagConfirm.nodeId)
                 await api.tagIssueNode(tagConfirm.nodeId, tagConfirm.newTag, {
-                    senior_comment: commentToSubmit,
-                    role: user?.role || "team_member"
-                })
+                    senior_comment: commentToSubmit
+                }, nodeToTag?.data?.updated_at)
+
                 toast.success("Tag Updated Successfully")
 
                 // Push undo entry
@@ -605,6 +671,7 @@ function IssueFlowchartInner({ issueId }) {
 
                 setTagConfirm(null)
                 setConfirmText("")
+                setRefreshKey(prev => prev + 1)
             }
         } catch (err) {
             toast.error("Update failed", { description: err.message })
@@ -634,13 +701,75 @@ function IssueFlowchartInner({ issueId }) {
 
         try {
             setIsLoading(true)
-            await api.connectNode(connectConfirm.source, connectConfirm.target, user?.emp_id || "SYS")
-            toast.success("Branch Merged Successfully")
+            const sourceNodeId = connectConfirm.source
+            const targetNodeId = connectConfirm.target
+
+            // ─── DIRECTION-INDEPENDENT GATEKEEPER SEARCH ───
+            const traceGatekeeper = (startId) => {
+                let currId = startId;
+                const trail = [];
+                while (currId) {
+                    const node = nodes.find(n => n.id === currId);
+                    if (!node || node.data?.tag !== 'blue') break;
+
+                    const parentEdge = edges.find(e => e.target === currId);
+                    if (!parentEdge) break;
+
+                    const parentNode = nodes.find(n => n.id === parentEdge.source);
+                    if (parentNode && parentNode.data?.tag === 'green') {
+                        return { gatekeeperId: currId, trail };
+                    }
+
+                    trail.push(currId);
+                    currId = parentEdge.source;
+                }
+                return null;
+            };
+
+            const sourceTrace = traceGatekeeper(sourceNodeId);
+            const targetTrace = traceGatekeeper(targetNodeId);
+
+            // Prioritize the trace that actually found a gatekeeper
+            const activeTrace = sourceTrace || targetTrace;
+
+            if (activeTrace) {
+                const { gatekeeperId, trail } = activeTrace;
+                const originNode = nodes.find(n => n.id === gatekeeperId);
+
+                if (originNode) {
+                    setPendingMerge({
+                        originBlueNodeId: gatekeeperId,
+                        branchTrail: trail,
+                        sourceNodeId,
+                        targetNodeId
+                    })
+
+                    setModalHeader(originNode.data.label || "")
+                    setModalDescription(originNode.data.description || "")
+                    setModalCode(originNode.data.code_changes || "")
+                    setModalLang(originNode.data.code_language || "Python")
+
+                    setActiveNodeModal({
+                        mode: "edit",
+                        nodeParams: originNode,
+                        canEdit: true,
+                        isGraphClosed: false
+                    })
+
+                    toast.info("Merge Documentation Required", {
+                        description: "Finalize the documentation for the branch entry node to proceed with merge."
+                    })
+                }
+            } else {
+                await api.connectNode(sourceNodeId, targetNodeId, user?.emp_id || "SYS")
+                toast.success("Nodes Connected Successfully")
+            }
+
             setConnectConfirm(null)
             setConfirmText("")
             setRefreshKey(prev => prev + 1)
         } catch (err) {
-            toast.error("Merge failed", { description: err.message })
+            toast.error("Operation failed", { description: err.message })
             setConnectConfirm(null)
             setConfirmText("")
             setIsLoading(false)
@@ -718,10 +847,11 @@ function IssueFlowchartInner({ issueId }) {
         setModalLang(node.data.code_language || "Python")
 
         // If author OR senior, open in view mode but show footer actions. Else just view mode.
+        const permissions = getNodePermissions(node.data, user)
         setActiveNodeModal({
             mode: "view",
             nodeParams: node,
-            canEdit: (isAuthor || user?.role === 'senior') && !isGraphClosed,
+            canEdit: permissions.canEdit && !isGraphClosed,
             isGraphClosed
         })
     }, [user, getNodes])
@@ -735,7 +865,8 @@ function IssueFlowchartInner({ issueId }) {
         }
 
         // Restriction check for team members: only one pending node allowed
-        if (user?.role === 'team_member') {
+        const permissions = getNodePermissions(null, user)
+        if (!permissions.isSenior) {
             const hasPendingNode = allNodes.some(n =>
                 n.data?.author === user?.emp_id && n.data?.tag === 'pending'
             )
@@ -812,7 +943,8 @@ function IssueFlowchartInner({ issueId }) {
                 type: 'custom',
                 data: {
                     ...n.data,
-                    userRole: user?.role,
+                    userRole: user?.role?.toLowerCase(),
+                    ...getNodePermissions(n.data, user),
                     senior_comment: n.data.senior_comment,
                     date: n.data.created_at ? new Date(n.data.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
                     onAddNode: handleAddNode,
@@ -835,7 +967,36 @@ function IssueFlowchartInner({ issueId }) {
                 initialEdges
             )
 
-            setNodes(layoutedNodes)
+            // Inject graph context but avoid circular recursion
+            const contextNodes = layoutedNodes.map(n => {
+                // Calculate "Blue Barrier" blocking status pre-rendering
+                let isBlocked = false;
+                if (n.data?.tag === 'blue') {
+                    const children = layoutedEdges.filter(e => e.source === n.id);
+                    const sideChildren = children.filter(e => {
+                        const targetNode = layoutedNodes.find(ln => ln.id === e.target);
+                        if (!targetNode) return false;
+                        const dx = targetNode.position.x - n.position.x;
+                        const dy = targetNode.position.y - n.position.y;
+                        return Math.abs(dx) > Math.abs(dy); // Horizontal connection
+                    });
+                    const hasValidatedSide = sideChildren.some(e => {
+                        const targetNode = layoutedNodes.find(ln => ln.id === e.target);
+                        return targetNode?.data?.tag === 'blue' || targetNode?.data?.tag === 'green';
+                    });
+                    isBlocked = !hasValidatedSide;
+                }
+
+                return {
+                    ...n,
+                    data: {
+                        ...n.data,
+                        isBlocked
+                    }
+                };
+            });
+
+            setNodes(contextNodes)
             setEdges(layoutedEdges)
         } catch (err) {
             toast.error("Failed to load graph", { description: err.message })
@@ -1216,6 +1377,15 @@ function IssueFlowchartInner({ issueId }) {
                                                 </div>
                                             )}
 
+                                            {activeNodeModal.mode === "view" && activeNodeModal.nodeParams.data.senior_comment && (
+                                                <div className="bg-accent-blue-bright/10 p-4 rounded-lg border border-accent-blue-bright/30">
+                                                    <div className="text-[10px] text-accent-blue-bright font-mono uppercase tracking-widest mb-2 font-bold">Senior Note</div>
+                                                    <p className="text-sm text-primary-custom font-mono leading-tight">
+                                                        "{activeNodeModal.nodeParams.data.senior_comment}"
+                                                    </p>
+                                                </div>
+                                            )}
+
                                             {activeNodeModal.nodeParams.data.code_changes && (
                                                 <div className="bg-black/40 rounded-lg border border-subtle-custom/50 overflow-hidden flex flex-col">
                                                     <div className="flex justify-between items-center bg-surface-custom px-4 py-2 border-b border-subtle-custom/50">
@@ -1242,19 +1412,15 @@ function IssueFlowchartInner({ issueId }) {
                                             {activeNodeModal.canEdit && !activeNodeModal.nodeParams.id.startsWith("ISS-") && (
                                                 <div className="pt-4 mt-2 flex justify-between items-center border-t border-subtle-custom gap-4">
                                                     {(() => {
-                                                        const nodeData = activeNodeModal.nodeParams.data
-                                                        const authorEmpId = nodeData.author
-                                                        const isPending = nodeData.tag === 'pending'
-                                                        const isSenior = user?.role === 'senior'
-                                                        const isAuthor = authorEmpId === user?.emp_id
+                                                        const permissions = getNodePermissions(activeNodeModal.nodeParams.data, user)
 
-                                                        if (isSenior || (isAuthor && isPending)) {
+                                                        if (permissions.canEdit) {
                                                             return (
                                                                 <Button
                                                                     onClick={() => {
                                                                         setDeleteConfirm({
                                                                             nodeId: activeNodeModal.nodeParams.id,
-                                                                            label: nodeData.label
+                                                                            label: activeNodeModal.nodeParams.data.label
                                                                         });
                                                                         setConfirmText("");
                                                                     }}
@@ -1379,14 +1545,29 @@ function IssueFlowchartInner({ issueId }) {
 
                                                         setIsLoading(true)
                                                         try {
+                                                            const docData = {
+                                                                header: modalHeader,
+                                                                description: modalDescription,
+                                                                code_changes: modalCode,
+                                                                code_language: modalLang,
+                                                                emp_id: user?.emp_id || "SYS"
+                                                            };
+
                                                             await api.updateNodeInfo(activeNodeModal.nodeParams.id, {
                                                                 issue_header: modalHeader,
                                                                 description: modalDescription,
                                                                 code_changes: modalCode,
                                                                 code_language: modalLang,
                                                                 emp_id: user?.emp_id || "SYS"
-                                                            })
-                                                            toast.success("Node Information Updated")
+                                                            }, activeNodeModal.nodeParams.data?.updated_at)
+
+                                                            // Check if this update completes a pending merge
+                                                            if (pendingMerge && pendingMerge.originBlueNodeId === activeNodeModal.nodeParams.id) {
+                                                                await handleFinalizeMerge(activeNodeModal.nodeParams.id, docData);
+                                                            } else {
+                                                                toast.success("Node Information Updated")
+                                                            }
+
                                                             setActiveNodeModal(null)
                                                             setRefreshKey(prev => prev + 1)
                                                         } catch (err) {

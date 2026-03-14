@@ -149,13 +149,12 @@ export const api = {
         return response.json();
     },
 
-    getIssues: async (status = "open", limit = 50, deptId = "", empId = "", role = "team_member") => {
+    getIssues: async (status = "open", limit = 50, deptId = "", empId = "") => {
         const params = new URLSearchParams({
             status,
             limit: limit.toString(),
             ...(deptId && { dept_id: deptId }),
-            ...(empId && { emp_id: empId }),
-            ...(role && { role })
+            ...(empId && { emp_id: empId })
         });
         const response = await fetch(`${API_BASE_URL}/service/issues?${params.toString()}`, {
             method: "GET",
@@ -210,16 +209,23 @@ export const api = {
         return response.json();
     },
 
-    tagIssueNode: async (issueId, tag) => {
+    tagIssueNode: async (issueId, tag, options = {}, lastUpdatedAt = null) => {
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/tag`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
                 ...getAuthHeaders()
             },
-            body: JSON.stringify({ tag })
+            body: JSON.stringify({
+                tag,
+                ...options,
+                last_updated_at: lastUpdatedAt
+            })
         });
-        if (!response.ok) throw new Error("Failed to tag node");
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to tag node");
+        }
         return response.json();
     },
 
@@ -254,14 +260,17 @@ export const api = {
         return response.json();
     },
 
-    updateNodeInfo: async (nodeId, payload) => {
+    updateNodeInfo: async (nodeId, payload, lastUpdatedAt = null) => {
         const response = await fetch(`${API_BASE_URL}/service/issues/node/${nodeId}/info`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
                 ...getAuthHeaders()
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                ...payload,
+                last_updated_at: lastUpdatedAt
+            })
         });
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
@@ -270,7 +279,7 @@ export const api = {
         return response.json();
     },
 
-    mergeBlueBranch: async (targetParentId, branchNodes, metadataSummary, empId, deptId) => {
+    mergeBlueBranch: async (targetParentId, branchNodes, metadataSummary, empId, deptId, documentation = {}) => {
         const response = await fetch(`${API_BASE_URL}/service/issues/merge`, {
             method: "POST",
             headers: {
@@ -282,7 +291,8 @@ export const api = {
                 branch_nodes: branchNodes,
                 metadata_summary: metadataSummary,
                 emp_id: empId,
-                dept_id: deptId
+                dept_id: deptId,
+                ...documentation
             })
         });
         if (!response.ok) throw new Error("Failed to merge branch");
