@@ -198,6 +198,8 @@ async def create_issue(
     
     data = {
         "id": issue_id,
+        "issue_id": issue_id,
+        "type": request.type, # Populate type column
         "header": request.issue_header,
         "date": request.date.isoformat(),
         "description": request.description,
@@ -221,7 +223,7 @@ async def create_issue(
         # Also create assignment history entry if assigned teams are provided
         if request.assigned_teams:
             for team in request.assigned_teams:
-                supabase.table("issue_assignments_history").insert({
+                service_role_supabase.table("issue_assignments_history").insert({
                     "issue_id": issue_id,
                     "assigned_dept_id": team,
                     "assigned_by_emp_id": emp_id,
@@ -265,11 +267,17 @@ async def create_child_issue(
     if status == "closed":
         raise HTTPException(status_code=400, detail="Cannot add nodes to a closed issue.")
 
-    # Apply Ruthless Cleanliness Rule: If ANY sibling node has tag "yellow" or "red", they instantly vanish
-    sibs_res = supabase.table("issue_nodes").select("id, tag").eq("parent_node_id", request.parent_issue_id).execute()
-    for sib in sibs_res.data:
-        if sib.get("tag") in ["yellow", "red"]:
-            supabase.table("issue_nodes").delete().eq("id", sib["id"]).execute()
+    # ─── Terminal Enforcement: Children ONLY on Validated Nodes ───
+    if request.parent_issue_id != root_id:
+        parent_node_res = supabase.table("issue_nodes").select("tag").eq("id", request.parent_issue_id).execute()
+        if parent_node_res.data:
+            parent_tag = parent_node_res.data[0].get("tag")
+            if parent_tag in ["pending", "yellow"]:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Terminal Enforcement: Children can only be added to validated nodes (Green, Blue, Red). Parent tag is '{parent_tag}'."
+                )
+
 
     node_id = f"NODE-{str(uuid.uuid4())[:8].upper()}"
     data = {
@@ -300,7 +308,7 @@ async def create_child_issue(
                 new_teams = list(set(current_teams + request.additional_teams))
                 supabase.table("issues").update({"assigned_dept_ids": new_teams}).eq("id", root_id).execute()
                 for team in added_teams:
-                    supabase.table("issue_assignments_history").insert({
+                    service_role_supabase.table("issue_assignments_history").insert({
                         "issue_id": root_id,
                         "assigned_dept_id": team,
                         "assigned_by_emp_id": emp_id,
@@ -345,13 +353,22 @@ async def tag_issue_node(
         # ─── Optimistic Concurrency Control (OCC) Check ───
         if request.last_updated_at:
             db_updated_at = node.get("updated_at")
-            # Handle potential string/isoformat mismatches by comparing as objects if possible, 
-            # or simply as strings if normalized.
             if db_updated_at and request.last_updated_at != db_updated_at:
                 raise HTTPException(
                     status_code=409, 
                     detail="Conflict: Node has been modified by another user. Please refresh."
                 )
+
+        # ─── Yellow Stacking & Promotion Logic ───
+        if request.tag in ["green", "blue"]:
+            # Delete sibling yellow nodes
+            parent_id = node.get("parent_node_id")
+            del_query = supabase.table("issue_nodes").delete().eq("root_issue_id", node.get("root_issue_id")).eq("tag", "yellow")
+            if parent_id:
+                del_query = del_query.eq("parent_node_id", parent_id)
+            else:
+                del_query = del_query.is_("parent_node_id", "null")
+            del_query.execute()
 
         update_payload = {"tag": request.tag}
         if request.senior_comment:
@@ -526,6 +543,7 @@ async def merge_blue_branch(
 @router.delete("/issues/{issue_id}")
 async def delete_issue_node(
     issue_id: str,
+    last_updated_at: Optional[str] = None, # OCC Query Param
     session_user: Dict[str, Any] = Depends(get_session_user)
 ):
     if issue_id.startswith("ISS-"):
@@ -537,6 +555,15 @@ async def delete_issue_node(
     node = res.data[0]
         
     NodePermissions.can_edit_node(node, session_user)
+
+    # ─── Optimistic Concurrency Control (OCC) Check ───
+    if last_updated_at:
+        db_updated_at = node.get("updated_at")
+        if db_updated_at and last_updated_at != db_updated_at:
+            raise HTTPException(
+                status_code=409, 
+                detail="Conflict: Node has been modified by another user. Please refresh."
+            )
 
 
     service_role_supabase.table("issue_nodes").delete().eq("id", issue_id).execute()

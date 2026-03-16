@@ -176,7 +176,8 @@ SUPABASE_KEY=your_service_role_key
 | Slack Integration | ✅ Done | Live channel notifications in sidebar |
 | Execution Ledger & Issue DAG | ✅ Done | Visual resolution tree, 🟢🔵🔴🟡 tag logic |
 | Role-Based Governance | ✅ Done | Senior approvals, immutable decisions, RLS array enforcement |
-| Cluster Resolution UI | 🚧 In Progress | Merge, dismiss, conflict tracking |
+| Cluster Resolution UI | ✅ Done | Phase 1: Merge, dismiss, conflict tracking |
+| Phase 1 Resolution Logic | ✅ Done | Terminal enforcement, OCC, Yellow stacking |
 | Offline / Degraded Mode | 🚧 In Progress | Read-only IndexedDB fallback |
 | Canvas Fallback (>10k pts) | ⏳ Planned | VisX for large dataset rendering |
 

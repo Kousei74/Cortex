@@ -14,6 +14,7 @@ const COLOR_PALETTE = [
 
 const R = 5; // outer corner radius
 
+
 // ── Tooltip ───────────────────────────────────────────────────────────────────
 const StackedTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
@@ -55,7 +56,6 @@ export const SnapshotWidget = memo(function SnapshotWidget({ widget, onSelect })
         seriesList.forEach(s => { row[s.name] = s.data[i]; });
         return row;
     });
-
     return (
         <AnchorContainer>
             <div className="w-full h-[320px] pt-4 px-2 pb-2">

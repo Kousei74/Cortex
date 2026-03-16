@@ -655,6 +655,9 @@ function IssueFlowchartInner({ issueId }) {
                 setConfirmText("")
                 setRefreshKey(prev => prev + 1)
             } else {
+                const commentToSubmit = seniorCommentText;
+                const previousTag = tagConfirm.previousTag;
+
                 // Optimistic Update
                 setNodes(nds => nds.map(n => n.id === tagConfirm.nodeId ? { ...n, data: { ...n.data, tag: tagConfirm.newTag, senior_comment: commentToSubmit } } : n))
 
