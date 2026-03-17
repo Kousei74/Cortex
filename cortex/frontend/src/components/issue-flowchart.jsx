@@ -885,11 +885,13 @@ function IssueFlowchartInner({ issueId }) {
         const authorName = user?.emp_id || user?.email?.split('@')[0] || 'USER'
 
         const parentNode = getNode(parentId)
-        let newX = parentNode ? parentNode.position.x : 0
-        let newY = parentNode ? parentNode.position.y : 0
+        // CRITICAL BUG FIX: Use logical coordinates (layout_x) from the backend data, 
+        // NOT the visual coordinates (position.x) which are dagre-generated and offset.
+        let newX = parentNode?.data?.layout_x !== undefined ? parseFloat(parentNode.data.layout_x) : 0
+        let newY = parentNode?.data?.layout_y !== undefined ? parseFloat(parentNode.data.layout_y) : 0
 
-        const dx = direction === 'left' ? -320 : direction === 'right' ? 320 : 0
-        const dy = direction === 'top' ? -160 : direction === 'bottom' ? 160 : 0
+        const dx = (direction === 'left' || direction === Position.Left) ? -320 : (direction === 'right' || direction === Position.Right) ? 320 : 0
+        const dy = (direction === 'top' || direction === Position.Top) ? -160 : (direction === 'bottom' || direction === Position.Bottom) ? 160 : 0
 
         newX += dx
         newY += dy

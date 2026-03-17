@@ -178,6 +178,7 @@ SUPABASE_KEY=your_service_role_key
 | Role-Based Governance | ✅ Done | Senior approvals, immutable decisions, RLS array enforcement |
 | Cluster Resolution UI | ✅ Done | Phase 1: Merge, dismiss, conflict tracking |
 | Phase 1 Resolution Logic | ✅ Done | Terminal enforcement, OCC, Yellow stacking |
+| Connection-Aware Tree Arch | ✅ Done | Backtracking-first logic for branching & gating |
 | Offline / Degraded Mode | 🚧 In Progress | Read-only IndexedDB fallback |
 | Canvas Fallback (>10k pts) | ⏳ Planned | VisX for large dataset rendering |
 
