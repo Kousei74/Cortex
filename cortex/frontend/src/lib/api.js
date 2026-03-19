@@ -149,12 +149,13 @@ export const api = {
         return response.json();
     },
 
-    getIssues: async (status = "open", limit = 50, deptId = "", empId = "") => {
+    getIssues: async (status = "open", limit = 50, deptId = "", empId = "", role = "") => {
         const params = new URLSearchParams({
             status,
             limit: limit.toString(),
             ...(deptId && { dept_id: deptId }),
-            ...(empId && { emp_id: empId })
+            ...(empId && { emp_id: empId }),
+            ...(role && { role: role })
         });
         const response = await fetch(`${API_BASE_URL}/service/issues?${params.toString()}`, {
             method: "GET",

@@ -1,24 +1,39 @@
-_bmad/
+# Markdown
+*.md
+!README.md
+_legacy_next/**/*.md
+
+# Dependencies
 node_modules/
+**/node_modules/
 __pycache__/
 *.pyc
+
+# Environment
 .env
 .venv/
 venv/
+
+# IDE/OS
 .idea/
 .vscode/
+.DS_Store
+
+# Build/Output
 dist/
 build/
 *.log
-.DS_Store
 coverage/
 temp/
+
+# Project Specific
+_bmad/
 _legacy_next/
 _bmad-output/
 .agent/
 .claude/commands/bmad/core/tasks/
 cortex/backend/uploads/
-test_data/
+cortex/test_data/
 tests/
 verify_api.py
 verify_internal.py

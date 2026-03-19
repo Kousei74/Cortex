@@ -363,24 +363,46 @@ function NewIssueForm({ onSubmit, isLoading, user }) {
     )
 }
 
-// ─── Existing Issue Form ───────────────────────────────────────────
+// ─── Update Issue Form ─────────────────────────────────────────────
 
-function ExistingIssueForm({ onSubmit, isLoading, user }) {
+function UpdateIssueForm({ onSubmit, isLoading, user }) {
+    const [issueId, setIssueId] = useState("")
+    const [fetchedIssue, setFetchedIssue] = useState(null)
+    const [isFetching, setIsFetching] = useState(false)
+    
+    // Form fields
     const [form, setForm] = useState({
-        parentIssueId: "",
-        issueSubHeader: "",
-        description: "",
-        additionalTeams: [],
+        priority: "",
+        assignedTeams: [],
         deadline: null,
     })
     const [error, setError] = useState(null)
 
-    const set = (k) => (e) => setForm(f => ({ ...f, [k]: typeof e === "string" ? e : e.target.value }))
+    const handleFetch = async () => {
+        if (!issueId.trim().startsWith("ISS-")) {
+            setError("Must provide a valid root Issue ID (e.g. ISS-1234).")
+            return
+        }
+        setIsFetching(true)
+        setError(null)
+        try {
+            const data = await api.getIssue(issueId.trim())
+            setFetchedIssue(data)
+            setForm({
+                priority: data.priority || "",
+                assignedTeams: data.assigned_dept_ids || [],
+                deadline: data.deadline ? new Date(data.deadline) : null
+            })
+        } catch (err) {
+            setError("Issue not found or unauthorized.")
+            setFetchedIssue(null)
+        } finally {
+            setIsFetching(false)
+        }
+    }
 
     const validate = () => {
-        if (!form.parentIssueId.trim()) return "Parent Issue ID is required."
-        if (!form.issueSubHeader.trim()) return "Issue Sub-Header is required."
-        if (!form.description.trim()) return "Issue Description is required."
+        if (!form.priority) return "Priority is required."
         return null
     }
 
@@ -390,23 +412,15 @@ function ExistingIssueForm({ onSubmit, isLoading, user }) {
         setError(null)
 
         const payload = {
-            type: "existing",
-            parent_issue_id: form.parentIssueId.trim(),
-            issue_subheader: form.issueSubHeader.trim(),
-            date: new Date().toISOString().split("T")[0],
-            description: form.description.trim(),
-            additional_teams: form.additionalTeams,
-            created_by: user?.full_name || "System",
-            emp_id: user?.emp_id || "unknown",
-            dept_id: user?.dept_id || null,
+            priority: form.priority,
+            assigned_dept_ids: form.assignedTeams,
             deadline: form.deadline ? form.deadline.toISOString().split("T")[0] : null,
         }
-        await onSubmit(payload)
+        await onSubmit(issueId.trim(), payload)
     }
 
     return (
         <motion.div {...FADE_IN} className="space-y-5">
-
             {/* Error Banner */}
             <AnimatePresence>
                 {error && (
@@ -418,83 +432,77 @@ function ExistingIssueForm({ onSubmit, isLoading, user }) {
                     >
                         <div className="p-3 bg-[var(--semantic-error)]/10 border border-[var(--semantic-error)]
                             rounded-xl text-[var(--semantic-error)] text-sm text-center font-mono
-                            shadow-[0_0_10px_rgba(255,59,48,0.2)]">
+                            shadow-[0_0_10px_rgba(255,59,48,0.2)] mb-4">
                             {error}
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Parent Issue ID */}
-            <div>
-                <FieldLabel>Parent Issue ID</FieldLabel>
-                <StyledInput
-                    type="text"
-                    placeholder="e.g. ISS-XXXX"
-                    value={form.parentIssueId}
-                    onChange={set("parentIssueId")}
-                    icon={Icons.link}
-                />
-            </div>
-
-            {/* Sub-header */}
-            <div>
-                <FieldLabel>Node Header / Summary</FieldLabel>
-                <StyledInput
-                    type="text"
-                    placeholder="Brief headline for this update node"
-                    value={form.issueSubHeader}
-                    onChange={set("issueSubHeader")}
-                    icon={Icons.header}
-                    maxLength={120}
-                />
-            </div>
-
-            {/* Date & Deadline */}
-            <div className="grid grid-cols-2 gap-3">
-                <div>
-                    <FieldLabel>Date</FieldLabel>
-                    <LiveDateDisplay />
-                </div>
-                <div>
-                    <FieldLabel optional>Deadline</FieldLabel>
-                    <DatePicker
-                        value={form.deadline}
-                        onChange={(d) => setForm(f => ({ ...f, deadline: d }))}
+            {/* Fetch controls */}
+            <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                    <FieldLabel>Root Issue ID</FieldLabel>
+                    <StyledInput
+                        type="text"
+                        placeholder="e.g. ISS-XXXX"
+                        value={issueId}
+                        onChange={(e) => setIssueId(e.target.value)}
+                        icon={Icons.link}
                     />
                 </div>
-            </div>
-
-            {/* Additional Teams */}
-            <div>
-                <FieldLabel optional>Additional Teams</FieldLabel>
-                <TeamMultiSelect
-                    selected={form.additionalTeams}
-                    onChange={(val) => setForm(f => ({ ...f, additionalTeams: val }))}
-                />
-            </div>
-
-            {/* Description */}
-            <div>
-                <FieldLabel>Issue Description</FieldLabel>
-                <StyledTextarea
-                    value={form.description}
-                    onChange={set("description")}
-                    placeholder="Describe the child issue… (max 500 characters)"
-                    maxLength={500}
-                />
-            </div>
-
-            {/* Submit */}
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="w-full gradient-button text-white font-mono uppercase tracking-wider py-6 fluid-rounded soft-shadow text-base"
+                <Button 
+                    onClick={handleFetch}
+                    disabled={isFetching || !issueId.trim()}
+                    variant="outline"
+                    className="h-11 font-mono uppercase tracking-wider px-6 border border-subtle-custom text-secondary-custom hover:text-primary-custom hover:border-[var(--accent-blue-bright)] transition-colors bg-transparent"
                 >
-                    {isLoading ? "LINKING ISSUE..." : "LINK CHILD ISSUE"}
+                    {isFetching ? "..." : "LOAD"}
                 </Button>
-            </motion.div>
+            </div>
+
+            {fetchedIssue && (
+                <motion.div {...FADE_IN} className="space-y-5 mt-6 pt-6 border-t border-subtle-custom">
+                    {/* Read Only Context */}
+                    <div className="bg-surface-custom/50 p-4 fluid-rounded border border-subtle-custom">
+                        <div className="font-mono text-[10px] text-secondary-custom/60 uppercase tracking-widest mb-2">Current Context (Immutable)</div>
+                        <div className="font-mono text-primary-custom font-bold text-lg uppercase tracking-wide">{fetchedIssue.header}</div>
+                        <div className="font-mono text-secondary-custom text-sm mt-3 line-clamp-3 leading-relaxed break-words">{fetchedIssue.description}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <FieldLabel>Priority</FieldLabel>
+                            <PriorityDropdown value={form.priority} onChange={(v) => setForm(f => ({ ...f, priority: v }))} />
+                        </div>
+                        <div>
+                            <FieldLabel optional>Deadline</FieldLabel>
+                            <DatePicker
+                                value={form.deadline}
+                                onChange={(d) => setForm(f => ({ ...f, deadline: d }))}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <FieldLabel optional>Assigned Teams</FieldLabel>
+                        <TeamMultiSelect
+                            selected={form.assignedTeams}
+                            onChange={(val) => setForm(f => ({ ...f, assignedTeams: val }))}
+                        />
+                    </div>
+
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="pt-2">
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={isLoading}
+                            className="w-full gradient-button text-white font-mono uppercase tracking-wider py-6 fluid-rounded soft-shadow text-base"
+                        >
+                            {isLoading ? "UPDATING METADATA..." : "UPDATE ISSUE METADATA"}
+                        </Button>
+                    </motion.div>
+                </motion.div>
+            )}
         </motion.div>
     )
 }
@@ -504,21 +512,48 @@ function ExistingIssueForm({ onSubmit, isLoading, user }) {
 export default function ServiceHub() {
     const { user } = useAuth()
     const isSenior = user?.role === "senior"
-    const [activeTab, setActiveTab] = useState(isSenior ? "new" : "existing")
+    const [activeTab, setActiveTab] = useState("new")
     const [isLoading, setIsLoading] = useState(false)
 
-    const handleSubmit = async (payload) => {
+    // Option 3 is exclusively for Seniors.
+    if (!isSenior) {
+        return (
+            <div className="flex items-center justify-center w-full h-full p-8 text-center bg-[var(--bg-card)]">
+                <div className="space-y-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--semantic-error)]/10 text-[var(--semantic-error)] mb-4">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-mono font-bold text-[var(--semantic-error)] tracking-widest uppercase">Access Restricted</h2>
+                    <p className="font-mono text-sm text-secondary-custom max-w-sm mx-auto">
+                        Option 3 Governance interface is strictly reserved for Senior roles. Standard members must propose branches through Option 4 (Execution Ledger).
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
+    const handleCreate = async (payload) => {
         setIsLoading(true)
         try {
             await api.createIssue(payload)
-            toast.success(
-                payload.type === "new"
-                    ? "Issue filed successfully."
-                    : "Child issue linked successfully.",
-                { description: `ID will be returned by the server.` }
-            )
+            toast.success("Issue filed successfully.", { description: `ID will be returned by the server.` })
+            // Reset state could go here
         } catch (err) {
             toast.error("Failed to submit issue.", { description: err.message })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleUpdate = async (issueId, payload) => {
+        setIsLoading(true)
+        try {
+            await api.updateNodeInfo(issueId, payload)
+            toast.success("Metadata updated successfully.")
+        } catch (err) {
+            toast.error("Failed to update issue.", { description: err.message })
         } finally {
             setIsLoading(false)
         }
@@ -533,11 +568,9 @@ export default function ServiceHub() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 >
-                    <h1 className="text-3xl font-mono font-bold text-primary-custom tracking-wider uppercase text-left">
-                        Service Hub
-                    </h1>
+                    <h1 className="text-3xl font-mono font-bold text-primary-custom tracking-wider uppercase text-left">SERVICE HUB</h1>
                     <p className="text-secondary-custom text-sm font-mono mt-2 text-left">
-                        File a new issue or link a child to an existing one.
+                        Define root truth and govern issue assignments.
                     </p>
                 </motion.div>
             </div>
@@ -555,27 +588,9 @@ export default function ServiceHub() {
                     onValueChange={setActiveTab}
                     className="w-full"
                 >
-                    {/* Tab Switcher — mirrors auth-flow */}
                     <TabsList className="flex w-full bg-transparent p-0 mb-8 border-b border-subtle-custom/20 gap-8 h-auto">
-                        {isSenior && (
-                            <TabsTrigger
-                                value="new"
-                                className="
-                                        flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
-                                        font-mono text-base font-bold uppercase tracking-widest
-                                        text-secondary-custom transition-all duration-300
-                                        data-[state=active]:bg-transparent data-[state=active]:shadow-none
-                                        data-[state=active]:text-[var(--accent-blue-bright)]
-                                        data-[state=active]:border-[var(--accent-blue-bright)]
-                                        data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
-                                        hover:text-primary-custom
-                                    "
-                            >
-                                New Issue
-                            </TabsTrigger>
-                        )}
                         <TabsTrigger
-                            value="existing"
+                            value="new"
                             className="
                                     flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
                                     font-mono text-base font-bold uppercase tracking-widest
@@ -587,18 +602,31 @@ export default function ServiceHub() {
                                     hover:text-primary-custom
                                 "
                         >
-                            Existing Issue
+                            Create Issue
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="update"
+                            className="
+                                    flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
+                                    font-mono text-base font-bold uppercase tracking-widest
+                                    text-secondary-custom transition-all duration-300
+                                    data-[state=active]:bg-transparent data-[state=active]:shadow-none
+                                    data-[state=active]:text-[var(--accent-blue-bright)]
+                                    data-[state=active]:border-[var(--accent-blue-bright)]
+                                    data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
+                                    hover:text-primary-custom
+                                "
+                        >
+                            Update Metadata
                         </TabsTrigger>
                     </TabsList>
 
-                    {isSenior && (
-                        <TabsContent value="new" className="mt-0 focus-visible:ring-0 outline-none">
-                            <NewIssueForm onSubmit={handleSubmit} isLoading={isLoading} user={user} />
-                        </TabsContent>
-                    )}
+                    <TabsContent value="new" className="mt-0 focus-visible:ring-0 outline-none">
+                        <NewIssueForm onSubmit={handleCreate} isLoading={isLoading} user={user} />
+                    </TabsContent>
 
-                    <TabsContent value="existing" className="mt-0 focus-visible:ring-0 outline-none">
-                        <ExistingIssueForm onSubmit={handleSubmit} isLoading={isLoading} user={user} />
+                    <TabsContent value="update" className="mt-0 focus-visible:ring-0 outline-none">
+                        <UpdateIssueForm onSubmit={handleUpdate} isLoading={isLoading} user={user} />
                     </TabsContent>
                 </Tabs>
             </motion.div>

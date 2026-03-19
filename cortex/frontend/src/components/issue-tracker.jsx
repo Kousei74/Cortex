@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { api } from "@/lib/api"
 import { FADE_IN } from "@/lib/animations"
@@ -6,13 +8,46 @@ import { toast } from "sonner"
 import IssueFlowchart from "./issue-flowchart"
 import { CortexLoader } from "./cortex-loader"
 import { useAuth } from "@/context/AuthContext"
+import { Copy } from "lucide-react"
 
 export default function IssueTracker() {
     const { user } = useAuth()
     const [statusFilter, setStatusFilter] = useState("open") // "open" or "closed"
     const [issues, setIssues] = useState([])
     const [isLoading, setIsLoading] = useState(true)
-    const [activeIssueId, setActiveIssueId] = useState(null)
+    const location = useLocation()
+    const [activeIssueId, setActiveIssueId] = useState(location.state?.selectedIssueId || null)
+
+    // Context Menu State
+    const [contextMenu, setContextMenu] = useState(null)
+
+    const handleContextMenu = (e, issueId) => {
+        e.preventDefault()
+        setContextMenu({ mouseX: e.clientX, mouseY: e.clientY, issueId })
+    }
+
+    const handleCopy = () => {
+        if (contextMenu?.issueId) {
+            navigator.clipboard.writeText(contextMenu.issueId)
+            toast.success(`Copied to clipboard: ${contextMenu.issueId}`)
+        }
+        setContextMenu(null)
+    }
+
+    useEffect(() => {
+        const handleClickOutside = () => setContextMenu(null)
+        document.addEventListener("click", handleClickOutside)
+        return () => document.removeEventListener("click", handleClickOutside)
+    }, [])
+
+    // Clear state on load so refreshing the page doesn't keep you locked in
+    useEffect(() => {
+        if (location.state?.selectedIssueId) {
+            setActiveIssueId(location.state.selectedIssueId)
+            // Replace the browser history state to clear the selectedIssueId so refresh works naturally
+            window.history.replaceState({}, document.title)
+        }
+    }, [location.state?.selectedIssueId])
 
     useEffect(() => {
         fetchIssues()
@@ -116,6 +151,7 @@ export default function IssueTracker() {
                                         transition={{ duration: 0.2 }}
                                         key={issue.issue_id}
                                         onClick={() => setActiveIssueId(issue.issue_id)}
+                                        onContextMenu={(e) => handleContextMenu(e, issue.issue_id)}
                                         className="w-full text-left p-6 fluid-rounded border transition-all duration-300 relative overflow-hidden group bg-surface-custom/50 border-subtle-custom soft-glow-hover min-h-[160px]"
                                     >
                                         <div className="grid grid-cols-[1fr_auto] grid-rows-[auto_1fr_auto] gap-x-4 h-full">
@@ -168,6 +204,29 @@ export default function IssueTracker() {
                         )}
                     </AnimatePresence>
                 </div>
+
+                {contextMenu && createPortal(
+                    <AnimatePresence>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="fixed z-[100] bg-[#1a1a1a]/90 backdrop-blur-md border border-subtle-custom rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden min-w-[160px] p-1.5"
+                            style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={handleCopy}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[13px] font-mono font-bold text-primary-custom hover:bg-white/10 transition-colors duration-200 group"
+                            >
+                                <Copy className="w-4 h-4 text-secondary-custom group-hover:text-primary-custom transition-colors" />
+                                Copy ID
+                            </button>
+                        </motion.div>
+                    </AnimatePresence>,
+                    document.body
+                )}
             </div>
         )
     }

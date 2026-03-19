@@ -50,22 +50,44 @@ const NODE_COLORS = {
  * Centralized RBAC logic for nodes.
  * @returns { canEdit: bool, canTag: bool, canDelete: bool, canAddNode: bool }
  */
-const getNodePermissions = (nodeData, user) => {
+const getNodePermissions = (nodeData, user, isGraphClosed = false) => {
     if (!user) return { canEdit: false, canTag: false, canDelete: false, canAddNode: false }
 
     const isSenior = user.role?.toLowerCase() === "senior"
     const isAuthor = nodeData?.author === user.emp_id
     const isPending = nodeData?.tag === "pending"
-    const isBlue = nodeData?.tag === "blue"
+    const isYellow = nodeData?.tag === "yellow"
+
+    // 30 MINUTE WINDOW LOCK
+    let isWithinWindow = true;
+    if (nodeData?.created_at || nodeData?.date) {
+        // Fallback to nodeData.date if created_at is missing, although date is just YYYY-MM-DD
+        const createdStr = nodeData.created_at || nodeData.date;
+        const createdTime = new Date(createdStr).getTime();
+        const now = Date.now();
+        if (now - createdTime > 30 * 60 * 1000) {
+            isWithinWindow = false;
+        }
+    }
+
+    // If graph is closed, NO ONE can add, edit, tag, or delete
+    if (isGraphClosed) {
+        return {
+            isSenior, isAuthor, isPending, isWithinWindow,
+            canEdit: false, canTag: false, canDelete: false, canAddNode: false
+        }
+    }
 
     return {
         isSenior,
         isAuthor,
         isPending,
-        canEdit: isSenior || (isAuthor && isPending),
+        isWithinWindow,
+        canEdit: isSenior || (isAuthor && isPending && isWithinWindow),
         canTag: isSenior,
-        canDelete: isSenior || isAuthor, // AUTHORSHIP check is handled in handleDelete with 30m rule
-        canAddNode: !isBlue || isSenior // Seniors can always add; Blue blocks others
+        canDelete: isSenior || (isAuthor && isWithinWindow),
+        // Terminal limit: Nobody can add child to pending or yellow nodes
+        canAddNode: !isPending && !isYellow
     }
 }
 
@@ -90,11 +112,11 @@ const PlusButton = ({ position, onClick }) => {
 }
 
 const CustomNode = ({ data, id }) => {
-    const { label, tag, author, date, type, onAddNode, onTagClick, senior_comment } = data
+    const { label, tag, author, date, type, onAddNode, onTagClick, senior_comment, isGraphClosed, isBlocked } = data
     const { user } = useAuth()
     const styling = NODE_COLORS[tag] || NODE_COLORS.pending
 
-    const permissions = getNodePermissions(data, user)
+    const permissions = getNodePermissions(data, user, isGraphClosed)
     const isSenior = permissions.isSenior
 
     const isRoot = type === "new"
@@ -137,9 +159,9 @@ const CustomNode = ({ data, id }) => {
             <Handle id="right-target" type="target" position={Position.Right} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--accent-blue-bright)] border-none -mr-2 transition-opacity z-10" style={{ top: '50%' }} />
             <Handle id="right-source" type="source" position={Position.Right} className="opacity-0 w-4 h-4 hover:opacity-100 bg-[var(--semantic-success)] border-none -mr-2 transition-opacity z-10" style={{ top: '50%' }} />
 
-            {!isRoot && <PlusButton position={Position.Top} onClick={() => onAddNode?.(id, 'top')} />}
+            {!isRoot && permissions.canAddNode && !isEnd && <PlusButton position={Position.Top} onClick={() => onAddNode?.(id, 'top')} />}
 
-            {!isRoot && !isEnd && (
+            {!isRoot && !isEnd && permissions.canAddNode && (
                 <>
                     <PlusButton position={Position.Left} onClick={() => onAddNode?.(id, 'left')} />
                     <PlusButton position={Position.Right} onClick={() => onAddNode?.(id, 'right')} />
@@ -164,11 +186,11 @@ const CustomNode = ({ data, id }) => {
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                if (isSenior) onTagClick?.(id, tag);
+                                if (isSenior && !isGraphClosed) onTagClick?.(id, tag);
                             }}
-                            className={`flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border transition-all ${isSenior ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-default'}`}
+                            className={`flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase border transition-all ${(isSenior && !isGraphClosed) ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-default'}`}
                             style={{ color: styling.text, borderColor: styling.text, backgroundColor: styling.bg }}
-                            title={isSenior ? "Change status" : "Status (Senior only)"}
+                            title={(isSenior && !isGraphClosed) ? "Change status" : "Status locked"}
                         >
                             {tag}
                         </button>
@@ -188,8 +210,8 @@ const CustomNode = ({ data, id }) => {
                 </div>
             </div>
 
-            {/* Bottom button is blocked if node is Blue and has no validated side branch */}
-            {permissions.canAddNode && !isEnd && (
+            {/* Bottom button is blocked if node is Blue and has no validated side branch (isBlocked == true) */}
+            {permissions.canAddNode && !isEnd && !isBlocked && (
                 <PlusButton position={Position.Bottom} onClick={() => onAddNode?.(id, Position.Bottom)} />
             )}
         </div>
@@ -318,12 +340,8 @@ const getLayoutedElements = (nodes, edges) => {
             const targetNode = layoutedNodes.find(n => n.id === edge.target);
 
             if (sourceNode && targetNode) {
-                const dx = targetNode.position.x - sourceNode.position.x;
-                const dy = targetNode.position.y - sourceNode.position.y;
-                const isHorizontal = Math.abs(dx) > Math.abs(dy);
-
-                // Target is part of the main branch ONLY IF parent is main branch AND connection is vertical
-                if (currIsMain && !isHorizontal) {
+                // Target is part of the main branch ONLY IF parent is main branch AND connection is MAIN
+                if (currIsMain && targetNode.data.connection_type === 'MAIN') {
                     mainNodes.add(edge.target);
                 }
             }
@@ -337,44 +355,21 @@ const getLayoutedElements = (nodes, edges) => {
 
         if (!sourceNode || !targetNode) return edge;
 
-        const dx = targetNode.position.x - sourceNode.position.x;
-        const dy = targetNode.position.y - sourceNode.position.y;
-
-        let sourceHandle = 'bottom-source';
-        let targetHandle = 'top-target';
-
-        // Target is Above or Below physically?
-        const isHorizontal = Math.abs(dx) > Math.abs(dy);
+        const cType = targetNode.data.connection_type || 'MAIN';
 
         // Is this edge connecting a main node to another main node vertically?
         const sourceIsMain = mainNodes.has(edge.source);
         const targetIsMain = mainNodes.has(edge.target);
-        const isMainBranch = sourceIsMain && targetIsMain && !isHorizontal;
-
-        if (isHorizontal) {
-            if (dx > 0) {
-                // Target is to the Right
-                sourceHandle = 'right-source';
-                targetHandle = 'left-target';
-            } else {
-                // Target is to the Left
-                sourceHandle = 'left-source';
-                targetHandle = 'right-target';
-            }
-        } else {
-            // Target is Above or Below
-            if (dy < 0) {
-                // Reverse edge (Target is Above)
-                sourceHandle = 'top-source';
-                targetHandle = 'bottom-target';
-            }
-        }
+        
+        // Solid cyan for the trunk, dashed gray for all side branches and merges
+        const isMainBranch = sourceIsMain && targetIsMain && cType === 'MAIN' && edge.connection_type !== 'SIDE';
 
         return {
             ...edge,
             type: 'smoothstep',
-            sourceHandle,
-            targetHandle,
+            // Respect the handles that were tightly mathematically mapped during loadGraph
+            sourceHandle: edge.sourceHandle,
+            targetHandle: edge.targetHandle,
             style: {
                 stroke: isMainBranch ? 'var(--accent-blue-bright)' : 'var(--text-secondary)',
                 strokeWidth: isMainBranch ? 3 : 2,
@@ -547,7 +542,17 @@ function IssueFlowchartInner({ issueId }) {
 
             // Permission check using centralized helper
             const nodeData = getNode(node.id)?.data
-            const permissions = getNodePermissions(nodeData, user)
+            
+            // Check if graph is closed (any red node = closed)
+            const allNodes = getNodes()
+            const isGraphClosed = allNodes.some(n => n.data?.tag === 'red')
+            if (isGraphClosed) {
+                toast.error("Graph is closed. No modifications allowed.")
+                setRefreshKey(prev => prev + 1)
+                return
+            }
+            
+            const permissions = getNodePermissions(nodeData, user, isGraphClosed)
 
             if (!permissions.isSenior && nodeData?.author !== user?.emp_id) {
                 toast.error("You don't have permission to perform this action")
@@ -555,27 +560,13 @@ function IssueFlowchartInner({ issueId }) {
                 return
             }
 
-            // Red-node read-only: check if main branch is closed
-            const allNodes = getNodes()
-            const hasRedNode = allNodes.some(n => n.data?.tag === 'red')
-            if (hasRedNode) {
-                toast.error("Graph is closed. No modifications allowed.")
-                setRefreshKey(prev => prev + 1)
-                return
-            }
+
 
             try {
                 // Permission check using shared logic
-                const nodeData = getNode(node.id)?.data
-
-                const authorEmpId = nodeData?.author
-                const isPending = nodeData?.tag === 'pending'
-                const isSenior = user?.role?.toLowerCase() === 'senior'
-                const isAuthor = authorEmpId === user?.emp_id
-
-                if (!isSenior && !(isAuthor && isPending)) {
+                if (!permissions.canDelete) {
                     toast.error("You don't have permission to perform this action", {
-                        description: !isAuthor ? "Only the author can delete this node." :
+                        description: !permissions.isAuthor ? "Only the author can delete this node." :
                             "Only pending nodes can be deleted by team members."
                     })
                     setRefreshKey(prev => prev + 1)
@@ -713,15 +704,14 @@ function IssueFlowchartInner({ issueId }) {
                 const trail = [];
                 while (currId) {
                     const node = nodes.find(n => n.id === currId);
-                    if (!node || node.data?.tag !== 'blue') break;
+                    if (!node) break;
+
+                    if (node.data?.tag === 'blue') {
+                        return { gatekeeperId: currId, trail };
+                    }
 
                     const parentEdge = edges.find(e => e.target === currId);
                     if (!parentEdge) break;
-
-                    const parentNode = nodes.find(n => n.id === parentEdge.source);
-                    if (parentNode && parentNode.data?.tag === 'green') {
-                        return { gatekeeperId: currId, trail };
-                    }
 
                     trail.push(currId);
                     currId = parentEdge.source;
@@ -755,8 +745,8 @@ function IssueFlowchartInner({ issueId }) {
                     setActiveNodeModal({
                         mode: "edit",
                         nodeParams: originNode,
-                        canEdit: true,
-                        isGraphClosed: false
+                        isGraphClosed: false,
+                        ...getNodePermissions(originNode.data, user, false)
                     })
 
                     toast.info("Merge Documentation Required", {
@@ -850,12 +840,12 @@ function IssueFlowchartInner({ issueId }) {
         setModalLang(node.data.code_language || "Python")
 
         // If author OR senior, open in view mode but show footer actions. Else just view mode.
-        const permissions = getNodePermissions(node.data, user)
+        const permissions = getNodePermissions(node.data, user, isGraphClosed)
         setActiveNodeModal({
             mode: "view",
             nodeParams: node,
-            canEdit: permissions.canEdit && !isGraphClosed,
-            isGraphClosed
+            isGraphClosed,
+            ...permissions
         })
     }, [user, getNodes])
 
@@ -868,7 +858,7 @@ function IssueFlowchartInner({ issueId }) {
         }
 
         // Restriction check for team members: only one pending node allowed
-        const permissions = getNodePermissions(null, user)
+        const permissions = getNodePermissions(null, user, false)
         if (!permissions.isSenior) {
             const hasPendingNode = allNodes.some(n =>
                 n.data?.author === user?.emp_id && n.data?.tag === 'pending'
@@ -893,16 +883,26 @@ function IssueFlowchartInner({ issueId }) {
         const dx = (direction === 'left' || direction === Position.Left) ? -320 : (direction === 'right' || direction === Position.Right) ? 320 : 0
         const dy = (direction === 'top' || direction === Position.Top) ? -160 : (direction === 'bottom' || direction === Position.Bottom) ? 160 : 0
 
+        const connectionTypeMap = {
+            'left': 'LEFT', [Position.Left]: 'LEFT',
+            'right': 'RIGHT', [Position.Right]: 'RIGHT',
+            'bottom': 'MAIN', [Position.Bottom]: 'MAIN',
+            'top': 'MAIN', [Position.Top]: 'MAIN'
+        };
+        const cType = connectionTypeMap[direction] || 'MAIN';
+
         newX += dx
         newY += dy
 
-        // Grid Snapping Collision Resolver
+        // Grid Snapping Collision Resolver using semantic placement (layout_x/y)
         const currentNodes = getNodes()
         let isOccupied = true
         while (isOccupied) {
-            isOccupied = currentNodes.some(n =>
-                Math.abs(n.position.x - newX) < 10 && Math.abs(n.position.y - newY) < 10
-            )
+            isOccupied = currentNodes.some(n => {
+                const nx = parseFloat(n.data?.layout_x) || 0;
+                const ny = parseFloat(n.data?.layout_y) || 0;
+                return Math.abs(nx - newX) < 10 && Math.abs(ny - newY) < 10;
+            })
             if (isOccupied) {
                 if (dy !== 0) newY += dy // cascade downwards or upwards
                 if (dx !== 0) newX += dx // cascade laterally
@@ -920,7 +920,8 @@ function IssueFlowchartInner({ issueId }) {
                 emp_id: user?.emp_id || "SYS",
                 dept_id: user?.dept_id || "SYS",
                 layout_x: newX,
-                layout_y: newY
+                layout_y: newY,
+                connection_type: cType
             })
             toast.success("Node Added Successfully")
 
@@ -958,14 +959,43 @@ function IssueFlowchartInner({ issueId }) {
                 position: { x: 0, y: 0 }, // Handled by dagre layout generator
             }))
 
-            const initialEdges = data.edges.map(e => ({
-                id: e.id,
-                source: e.source,
-                target: e.target,
-                type: 'smoothstep',
-                animated: true,
-                style: { stroke: 'var(--accent-blue-bright)', strokeWidth: 3 },
-            }))
+            const initialEdges = data.edges.map(e => {
+                const sourceNode = data.nodes.find(n => n.id === e.source) || {};
+                const targetNode = data.nodes.find(n => n.id === e.target) || {};
+                
+                let sHandle = 'bottom-source';
+                let tHandle = 'top-target';
+
+                if (e.connection_type === 'LEFT') {
+                    sHandle = 'left-source';
+                    tHandle = 'top-target';
+                } else if (e.connection_type === 'RIGHT') {
+                    sHandle = 'right-source';
+                    tHandle = 'top-target';
+                } else if (e.connection_type === 'SIDE') {
+                    // For side merges, dynamically establish connecting sockets using logical layout coordinates
+                    const sx = sourceNode.data?.layout_x !== undefined ? parseFloat(sourceNode.data.layout_x) : 0;
+                    const tx = targetNode.data?.layout_x !== undefined ? parseFloat(targetNode.data.layout_x) : 0;
+                    if (sx < tx) {
+                        sHandle = 'right-source';
+                        tHandle = 'left-target';
+                    } else {
+                        sHandle = 'left-source';
+                        tHandle = 'right-target';
+                    }
+                }
+
+                return {
+                    id: e.id,
+                    source: e.source,
+                    target: e.target,
+                    type: 'smoothstep',
+                    animated: true,
+                    style: { stroke: 'var(--accent-blue-bright)', strokeWidth: 3 },
+                    sourceHandle: sHandle,
+                    targetHandle: tHandle
+                }
+            })
 
             const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
                 initialNodes,
@@ -987,7 +1017,7 @@ function IssueFlowchartInner({ issueId }) {
                     });
                     const hasValidatedSide = sideChildren.some(e => {
                         const targetNode = layoutedNodes.find(ln => ln.id === e.target);
-                        return targetNode?.data?.tag === 'blue' || targetNode?.data?.tag === 'green';
+                        return targetNode?.data?.tag === 'blue' || targetNode?.data?.tag === 'green' || targetNode?.data?.tag === 'red';
                     });
                     isBlocked = !hasValidatedSide;
                 }
@@ -996,6 +1026,7 @@ function IssueFlowchartInner({ issueId }) {
                     ...n,
                     data: {
                         ...n.data,
+                        isGraphClosed: data.nodes.some(inode => inode.data?.tag === 'red'),
                         isBlocked
                     }
                 };
@@ -1448,17 +1479,28 @@ function IssueFlowchartInner({ issueId }) {
                                                     </Button>
                                                 </div>
                                             )}
-                                            {/* Author check for root issue - we can allow roots to be edited too if they are the author, but typically you update the nodes */}
-                                            {activeNodeModal.isAuthor && activeNodeModal.nodeParams.id.startsWith("ISS-") && (
-                                                <div className="pt-4 mt-2 flex justify-end border-t border-subtle-custom">
-                                                    <Button
-                                                        onClick={() => {
-                                                            setActiveNodeModal({ ...activeNodeModal, mode: "edit" });
-                                                        }}
-                                                        className="bg-transparent border border-accent-blue-bright/50 text-accent-blue-bright hover:bg-accent-blue-bright/10 font-mono text-xs uppercase tracking-widest px-6"
-                                                    >
-                                                        [ EDIT ROOT ]
-                                                    </Button>
+                                            {/* Author check for root issue */}
+                                            {activeNodeModal.isAuthor && !activeNodeModal.isGraphClosed && activeNodeModal.nodeParams.id.startsWith("ISS-") && (
+                                                <div className="pt-4 mt-2 flex flex-col gap-2 border-t border-subtle-custom">
+                                                    {!activeNodeModal.isWithinWindow && (
+                                                        <div className="text-[10px] text-[var(--semantic-error)] font-mono uppercase tracking-widest text-right">
+                                                            [ 30-Min Mutability Window Expired ]
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-end">
+                                                        <Button
+                                                            onClick={() => setActiveNodeModal({ ...activeNodeModal, mode: "edit" })}
+                                                            disabled={!activeNodeModal.isWithinWindow && !activeNodeModal.isSenior}
+                                                            className={`bg-transparent border font-mono text-xs uppercase tracking-widest px-6 ${
+                                                                !activeNodeModal.isWithinWindow && !activeNodeModal.isSenior 
+                                                                ? 'border-subtle-custom text-secondary-custom/50 cursor-not-allowed' 
+                                                                : 'border-accent-blue-bright/50 text-accent-blue-bright hover:bg-accent-blue-bright/10'
+                                                            }`}
+                                                            title={!activeNodeModal.isWithinWindow && !activeNodeModal.isSenior ? "Immutable: 30 minutes have passed since creation." : ""}
+                                                        >
+                                                            [ EDIT ROOT ]
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

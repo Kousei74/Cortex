@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { CortexLoader } from "./cortex-loader"
 import { Card } from "@/components/ui/card"
 import { ShieldCheck } from "lucide-react"
@@ -23,38 +24,67 @@ const SLACK_SIGNIN_TS = "cortex_slack_signin_ts"
 const SLACK_MESSAGES_KEY = "cortex_slack_messages"
 const API_BASE = "http://localhost:8000"
 
+import { useAuth } from "@/context/AuthContext"
+import { api } from "@/lib/api"
+import { useNavigate } from "react-router-dom"
+import { Copy } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
+
 // ─── Review Explorer Card ─────────────────────────────────────────────────────
 function ReviewExplorer() {
+    const { user } = useAuth()
+    const navigate = useNavigate()
     const [issues, setIssues] = useState([])
     const [loading, setLoading] = useState(true)
 
+    // Context Menu State
+    const [contextMenu, setContextMenu] = useState(null)
+
+    const handleContextMenu = (e, issueId) => {
+        e.preventDefault()
+        setContextMenu({ mouseX: e.clientX, mouseY: e.clientY, issueId })
+    }
+
+    const handleCopy = () => {
+        if (contextMenu?.issueId) {
+            navigator.clipboard.writeText(contextMenu.issueId)
+            toast.success(`Copied to clipboard: ${contextMenu.issueId}`)
+        }
+        setContextMenu(null)
+    }
+
+    useEffect(() => {
+        const handleClickOutside = () => setContextMenu(null)
+        document.addEventListener("click", handleClickOutside)
+        return () => document.removeEventListener("click", handleClickOutside)
+    }, [])
+
     const fetchIssues = useCallback(async () => {
+        if (!user) return;
         try {
-            const token = localStorage.getItem("cortex_token")
-            const headers = token ? { Authorization: `Bearer ${token}` } : {}
-            const r = await fetch(`${API_BASE}/service/issues?limit=10`, { headers })
-            if (r.ok) {
-                const data = await r.json()
-                setIssues(data)
-            } else if (r.status === 401 || r.status === 500) {
-                const text = await r.clone().text().catch(() => "");
-                if (text.includes("JWT expired")) {
-                    localStorage.removeItem("cortex_token");
-                    window.location.href = "/login";
-                }
-            }
+            const data = await api.getIssues("open", 10, user.dept_id, user.emp_id, user.user_role || user.role);
+            setIssues(data);
         } catch (_) {
-            // silently fail — sidebar is non-critical
+            // silently fail
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [user])
 
     // initial fetch + poll every 30s
     useEffect(() => {
         fetchIssues()
         const t = setInterval(fetchIssues, 30_000)
-        return () => clearInterval(t)
+        
+        // Immediate fetch on tab focus for fast feedback
+        const handleFocus = () => fetchIssues()
+        window.addEventListener("focus", handleFocus)
+
+        return () => {
+            clearInterval(t)
+            window.removeEventListener("focus", handleFocus)
+        }
     }, [fetchIssues])
 
     return (
@@ -95,48 +125,90 @@ function ReviewExplorer() {
                 {issues.map((issue) => {
                     const meta = getPriorityMeta(issue.priority)
                     const header = issue.header || issue.subheader || "—"
-                    const relDate = issue.date
-                        ? new Date(issue.date).toLocaleDateString("en-GB", {
+                    const relDate = issue.date || issue.created_at
+                        ? new Date(issue.date || issue.created_at).toLocaleDateString("en-GB", {
                             day: "2-digit", month: "short"
                         })
                         : "—"
+                        
+                    const deadlineDate = issue.deadline
+                        ? new Date(issue.deadline).toLocaleDateString("en-GB", {
+                            day: "2-digit", month: "short"
+                        })
+                        : null;
 
                     return (
-                        <div key={issue.issue_id} className="space-y-1.5">
-                            <div className="flex items-center space-x-2">
-                                {/* Priority dot with initial */}
-                                <div
-                                    className="w-6 h-6 fluid-rounded flex items-center justify-center flex-shrink-0"
-                                    style={{
-                                        background: meta.color,
-                                        boxShadow: `0 0 8px ${meta.color}80`,
-                                    }}
-                                >
-                                    <span className="text-white text-[8px] font-bold font-mono">
-                                        {meta.initial}
+                        <div
+                            key={issue.issue_id}
+                            onClick={() => navigate('/issue-tracker', { state: { selectedIssueId: issue.issue_id } })}
+                            onContextMenu={(e) => handleContextMenu(e, issue.issue_id)}
+                            className="flex flex-col cursor-pointer p-3 -mx-2 fluid-rounded-lg transition-all duration-300 border border-transparent 
+                                hover:bg-white/5 hover:border-subtle-custom hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)] group"
+                        >
+                            {/* Line 1: Tag + ID (Left) | Creation Date (Right) */}
+                            <div className="flex items-center justify-between w-full mb-1">
+                                <div className="flex items-center space-x-2">
+                                    <div
+                                        className="w-5 h-5 fluid-rounded flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+                                        style={{
+                                            background: meta.color,
+                                            boxShadow: `0 0 10px ${meta.color}60`,
+                                        }}
+                                    >
+                                        <span className="text-white text-[8px] font-bold font-mono">
+                                            {meta.initial}
+                                        </span>
+                                    </div>
+                                    <span
+                                        className="font-mono text-xs font-bold uppercase tracking-wider"
+                                        style={{ color: meta.color }}
+                                    >
+                                        {issue.issue_id}
                                     </span>
                                 </div>
-
-                                <span
-                                    className="font-mono text-xs font-bold uppercase tracking-wider"
-                                    style={{ color: meta.color }}
-                                >
-                                    {issue.priority?.toUpperCase() ?? "—"}
-                                </span>
-
-                                <span className="text-secondary-custom text-xs font-mono ml-auto">
+                                <span className="text-secondary-custom text-[10px] font-mono tracking-wide">
                                     {relDate}
                                 </span>
                             </div>
 
-                            {/* Full issue header visible */}
-                            <p className="text-primary-custom text-sm leading-snug break-words">
-                                {header}
-                            </p>
+                            {/* Line 2: Header (Left) | Deadline (Right) */}
+                            <div className="flex items-center justify-between w-full gap-4">
+                                <p className="text-primary-custom text-sm font-bold leading-tight truncate flex-1">
+                                    {header}
+                                </p>
+                                {deadlineDate && (
+                                    <span className="text-[#ff3b30] text-[10px] font-mono font-bold uppercase tracking-widest flex-shrink-0">
+                                        {deadlineDate}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     )
                 })}
             </div>
+
+            {contextMenu && createPortal(
+                <AnimatePresence>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="fixed z-[100] bg-[#1a1a1a]/90 backdrop-blur-md border border-subtle-custom rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden min-w-[160px] p-1.5"
+                        style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={handleCopy}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[13px] font-mono font-bold text-primary-custom hover:bg-white/10 transition-colors duration-200 group"
+                        >
+                            <Copy className="w-4 h-4 text-secondary-custom group-hover:text-primary-custom transition-colors" />
+                            Copy ID
+                        </button>
+                    </motion.div>
+                </AnimatePresence>,
+                document.body
+            )}
         </Card>
     )
 }

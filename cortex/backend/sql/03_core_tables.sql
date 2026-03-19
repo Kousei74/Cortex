@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS issue_nodes (
     code_language TEXT,
     layout_x NUMERIC,
     layout_y NUMERIC,
+    connection_type TEXT DEFAULT 'MAIN' CHECK (connection_type IN ('MAIN', 'LEFT', 'RIGHT')),
+    layout_locked BOOLEAN DEFAULT TRUE,
     senior_comment TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

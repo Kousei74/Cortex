@@ -9,7 +9,8 @@ DROP POLICY IF EXISTS "View team or own issues" ON issues;
 CREATE POLICY "View team or own issues" ON issues
 FOR SELECT
 USING (
-    created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id')
+    (current_setting('request.jwt.claims', true)::json->>'user_role') = 'senior'
+    OR created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id')
     OR dept_id = (current_setting('request.jwt.claims', true)::json->>'dept_id')
     OR (current_setting('request.jwt.claims', true)::json->>'dept_id') = ANY(assigned_dept_ids)
 );
@@ -18,14 +19,16 @@ DROP POLICY IF EXISTS "Insert own issues" ON issues;
 CREATE POLICY "Insert own issues" ON issues
 FOR INSERT
 WITH CHECK (
-    created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id')
+    (current_setting('request.jwt.claims', true)::json->>'user_role') = 'senior'
+    OR created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id')
 );
 
 DROP POLICY IF EXISTS "Update own or team issues" ON issues;
 CREATE POLICY "Update own or team issues" ON issues
 FOR UPDATE
 USING (
-    created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id')
+    (current_setting('request.jwt.claims', true)::json->>'user_role') = 'senior'
+    OR created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id')
     OR dept_id = (current_setting('request.jwt.claims', true)::json->>'dept_id')
     OR (current_setting('request.jwt.claims', true)::json->>'dept_id') = ANY(assigned_dept_ids)
 );
@@ -34,7 +37,7 @@ DROP POLICY IF EXISTS "Delete own within 30m or Senior" ON issues;
 CREATE POLICY "Delete own within 30m or Senior" ON issues
 FOR DELETE
 USING (
-    (current_setting('request.jwt.claims', true)::json->>'role') = 'senior'
+    (current_setting('request.jwt.claims', true)::json->>'user_role') = 'senior'
     OR (
         created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id') 
         AND (NOW() - created_at) < INTERVAL '30 minutes'
@@ -60,7 +63,7 @@ DROP POLICY IF EXISTS "Update own nodes or Senior" ON issue_nodes;
 CREATE POLICY "Update own nodes or Senior" ON issue_nodes
 FOR UPDATE
 USING (
-    (current_setting('request.jwt.claims', true)::json->>'role') = 'senior'
+    (current_setting('request.jwt.claims', true)::json->>'user_role') = 'senior'
     OR created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id')
 );
 
@@ -68,7 +71,7 @@ DROP POLICY IF EXISTS "Delete own node within 30m or Senior" ON issue_nodes;
 CREATE POLICY "Delete own node within 30m or Senior" ON issue_nodes
 FOR DELETE
 USING (
-    (current_setting('request.jwt.claims', true)::json->>'role') = 'senior'
+    (current_setting('request.jwt.claims', true)::json->>'user_role') = 'senior'
     OR (
         created_by_emp_id = (current_setting('request.jwt.claims', true)::json->>'emp_id') 
         AND (NOW() - created_at) < INTERVAL '30 minutes'

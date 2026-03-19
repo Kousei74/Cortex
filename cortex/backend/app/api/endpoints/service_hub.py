@@ -9,6 +9,7 @@ import uuid
 from app.core.config import settings
 from app.core.database import get_supabase, service_role_supabase
 from app.core.security import decode_access_token, oauth2_scheme
+from app.services.tree_logic import TreeLogicService
 from supabase import Client
 
 router = APIRouter()
@@ -52,6 +53,7 @@ class ExistingIssueRequest(BaseModel):
     dept_id: Optional[str] = None
     layout_x: Optional[float] = None
     layout_y: Optional[float] = None
+    connection_type: Optional[Literal["MAIN", "LEFT", "RIGHT"]] = "MAIN"
     code_changes: Optional[str] = None
     code_language: Optional[str] = None
     deadline: Optional[str] = None
@@ -61,6 +63,9 @@ class IssueInfoUpdateRequest(BaseModel):
     description: Optional[str] = Field(None, min_length=1, max_length=2000)
     code_changes: Optional[str] = None
     code_language: Optional[str] = None
+    priority: Optional[str] = None
+    assigned_dept_ids: Optional[List[str]] = None
+    deadline: Optional[str] = None
     emp_id: Optional[str] = None
     role: Optional[str] = "team_member" 
     last_updated_at: Optional[str] = None # For Optimistic Concurrency Control
@@ -267,16 +272,9 @@ async def create_child_issue(
     if status == "closed":
         raise HTTPException(status_code=400, detail="Cannot add nodes to a closed issue.")
 
-    # ─── Terminal Enforcement: Children ONLY on Validated Nodes ───
+    # ─── Terminal Enforcement, Slot Gating, and Blue Lock ───
     if request.parent_issue_id != root_id:
-        parent_node_res = supabase.table("issue_nodes").select("tag").eq("id", request.parent_issue_id).execute()
-        if parent_node_res.data:
-            parent_tag = parent_node_res.data[0].get("tag")
-            if parent_tag in ["pending", "yellow"]:
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Terminal Enforcement: Children can only be added to validated nodes (Green, Blue, Red). Parent tag is '{parent_tag}'."
-                )
+        TreeLogicService.validate_node_creation(supabase, request.parent_issue_id, request.connection_type)
 
 
     node_id = f"NODE-{str(uuid.uuid4())[:8].upper()}"
@@ -294,6 +292,7 @@ async def create_child_issue(
         "code_language": request.code_language,
         "layout_x": request.layout_x,
         "layout_y": request.layout_y,
+        "connection_type": request.connection_type,
         "created_at": datetime.now().isoformat()
     }
     
@@ -344,11 +343,12 @@ async def tag_issue_node(
         if request.tag == "blue" and not request.senior_comment:
             raise HTTPException(status_code=400, detail="Senior comment is mandatory for Blue status.")
 
-        # Ruthless pruning for Red nodes at the end of Blue branches
-        if request.tag == "red" and node.get("tag") == "blue":
-            # System axing a blue branch - delete branch entirely
-            supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
-            return {"message": "Blue branch rotting limb pruned successfully."}
+        # Ruthless pruning for Red nodes
+        if request.tag == "red":
+            result = TreeLogicService.execute_red_axe(supabase, issue_id)
+            if result.get("action") == "truncated":
+                return {"message": result.get("message")}
+            # If closed_issue, we continue so the tag itself gets updated to red visually.
 
         # ─── Optimistic Concurrency Control (OCC) Check ───
         if request.last_updated_at:
@@ -361,14 +361,12 @@ async def tag_issue_node(
 
         # ─── Yellow Stacking & Promotion Logic ───
         if request.tag in ["green", "blue"]:
-            # Delete sibling yellow nodes
-            parent_id = node.get("parent_node_id")
-            del_query = supabase.table("issue_nodes").delete().eq("root_issue_id", node.get("root_issue_id")).eq("tag", "yellow")
-            if parent_id:
-                del_query = del_query.eq("parent_node_id", parent_id)
-            else:
-                del_query = del_query.is_("parent_node_id", "null")
-            del_query.execute()
+            TreeLogicService.cleanup_yellow_siblings(
+                supabase, 
+                node.get("parent_node_id"), 
+                node.get("root_issue_id"), 
+                node.get("connection_type")
+            )
 
         update_payload = {"tag": request.tag}
         if request.senior_comment:
@@ -402,6 +400,9 @@ async def update_issue_node_info(
         if request.description is not None: update_data["description"] = request.description
         if request.code_changes is not None: update_data["code_changes"] = request.code_changes
         if request.code_language is not None: update_data["code_language"] = request.code_language
+        if request.priority is not None: update_data["priority"] = request.priority
+        if request.assigned_dept_ids is not None: update_data["assigned_dept_ids"] = request.assigned_dept_ids
+        if request.deadline is not None: update_data["deadline"] = request.deadline
         update_data["last_activity_at"] = datetime.now().isoformat()
         
         supabase.table("issues").update(update_data).eq("id", node_id).execute()
@@ -508,10 +509,24 @@ async def merge_blue_branch(
         raise HTTPException(status_code=404, detail="Target parent not found.")
         
     try:
+        # ─── Verification: Ensure Branch is Fully Resolved (No Blue Nodes downstream) ───
+        if request.branch_nodes:
+            # We can pick any node in the branch to find its side.
+            sample_node = supabase.table("issue_nodes").select("connection_type, parent_node_id").eq("id", request.branch_nodes[0]).execute()
+            if sample_node.data:
+                # Find the root connection type of this branch by tracking up
+                side = "LEFT" # Fallback
+                for n_id in request.branch_nodes:
+                    check_res = supabase.table("issue_nodes").select("connection_type, parent_node_id").eq("id", n_id).execute()
+                    if check_res.data and check_res.data[0].get("parent_node_id") == request.target_parent_id:
+                        side = check_res.data[0].get("connection_type")
+                        break
+                        
+                TreeLogicService.verify_branch_resolved(supabase, request.target_parent_id, side)
+
         # ─── ATOMIC GREEN TRAIL LOGIC ───
         
         # 1. Turn all branch nodes Green in a SINGLE DB call
-        # This is more efficient and provides database-level atomicity for this specific update
         if request.branch_nodes:
             supabase.table("issue_nodes").update({
                 "tag": "green",
@@ -566,6 +581,14 @@ async def delete_issue_node(
             )
 
 
+    # ─── Verification: No Validated Children ───
+    if not NodePermissions.is_senior(session_user.get("role")):
+        children_res = service_role_supabase.table("issue_nodes").select("tag").eq("parent_node_id", issue_id).execute()
+        if children_res.data:
+            has_tagged = any(c.get("tag") in ["blue", "green", "red"] for c in children_res.data)
+            if has_tagged:
+                raise HTTPException(status_code=400, detail="Cannot delete node: It has verified (tagged) children.")
+
     service_role_supabase.table("issue_nodes").delete().eq("id", issue_id).execute()
     return {"message": "Node deleted successfully within window."}
 
@@ -584,6 +607,7 @@ class RestoreNodeRequest(BaseModel):
     code_language: Optional[str] = None
     layout_x: Optional[float] = None
     layout_y: Optional[float] = None
+    connection_type: Optional[str] = "MAIN"
     created_at: Optional[str] = None
 
 
@@ -713,6 +737,8 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
                 "type": n.get("node_type"),
                 "layout_x": n.get("layout_x"),
                 "layout_y": n.get("layout_y"),
+                "connection_type": n.get("connection_type", "MAIN"),
+                "layout_locked": n.get("layout_locked", True),
                 "senior_comment": n.get("senior_comment")
             }
         })
@@ -722,7 +748,8 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
             edges.append({
                 "id": f"e-{parent_id}-{n['id']}",
                 "source": parent_id,
-                "target": n["id"]
+                "target": n["id"],
+                "connection_type": n.get("connection_type", "MAIN")
             })
             
         connected_to = n.get("connected_to_id")
@@ -730,7 +757,8 @@ async def get_issue_graph(issue_id: str, supabase: Client = Depends(get_supabase
             edges.append({
                 "id": f"e-conn-{n['id']}-{connected_to}",
                 "source": n["id"],
-                "target": connected_to
+                "target": connected_to,
+                "connection_type": "SIDE" # Merge connections are always lateral
             })
             
     return {"nodes": nodes, "edges": edges}
