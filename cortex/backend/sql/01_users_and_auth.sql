@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS users (
     dept_id TEXT REFERENCES departments(dept_id),
     role TEXT DEFAULT 'team_member' CHECK (role IN ('senior', 'team_member')),
     is_approved BOOLEAN DEFAULT FALSE,
+    slack_access_token TEXT,
+    slack_connected_at TIMESTAMPTZ,
+    slack_user_id TEXT,
+    slack_team_id TEXT,
+    slack_team_name TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

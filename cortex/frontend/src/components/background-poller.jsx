@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAnalysisStore } from '@/store/analysisStore';
+import { api } from '@/lib/api';
 
 const POLL_INTERVAL_MS = 2000;
 const TIMEOUT_MS = 60000;
@@ -27,17 +28,7 @@ export function BackgroundPoller() {
 
             intervalRef.current = setInterval(async () => {
                 try {
-                    const response = await fetch(`http://localhost:8000/reports/jobs/${jobId}`);
-
-                    if (response.status === 404) {
-                        // Stale Job (Backend Restarted)
-                        setError("Connection Lost: Job not found on server.");
-                        throw new Error("Job 404");
-                    }
-
-                    if (!response.ok) throw new Error("Poll Failed");
-
-                    const data = await response.json();
+                    const data = await api.getReportJob(jobId);
 
                     // Normalize Status to Uppercase for Frontend Consistency
                     const normalizedStatus = (data.status || 'PENDING').toUpperCase();
@@ -51,7 +42,8 @@ export function BackgroundPoller() {
                     }
                 } catch (err) {
                     console.error("Poll Error:", err);
-                    if (err.message === "Job 404") {
+                    if (err.message.includes("Job not found")) {
+                        setError("Connection Lost: Job not found on server.");
                         // Optional: Auto-clear job ID?
                         // setJobId(null); 
                     }

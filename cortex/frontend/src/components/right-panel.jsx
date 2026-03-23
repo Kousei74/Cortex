@@ -18,11 +18,10 @@ function getPriorityMeta(priority) {
     return PRIORITY_META[priority?.toLowerCase()] ?? { color: "#888", initial: "?" }
 }
 
-// ─── Slack storage keys ───────────────────────────────────────────────────────
-const SLACK_TOKEN_KEY = "cortex_slack_token"
-const SLACK_SIGNIN_TS = "cortex_slack_signin_ts"
-const SLACK_MESSAGES_KEY = "cortex_slack_messages"
-const API_BASE = "http://localhost:8000"
+// ─── Legacy Slack storage keys (cleanup only) ────────────────────────────────
+const LEGACY_SLACK_TOKEN_KEY = "cortex_slack_token"
+const LEGACY_SLACK_SIGNIN_TS = "cortex_slack_signin_ts"
+const LEGACY_SLACK_MESSAGES_KEY = "cortex_slack_messages"
 
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
@@ -217,86 +216,119 @@ function ReviewExplorer() {
 const MAX_SLACK_MESSAGES = 10
 
 function SlackPanel() {
-    const [token, setToken] = useState(() => localStorage.getItem(SLACK_TOKEN_KEY) || null)
-    const [messages, setMessages] = useState(() => {
-        try { return JSON.parse(localStorage.getItem(SLACK_MESSAGES_KEY) || "[]") } catch { return [] }
-    })
+    const { user } = useAuth()
+    const [isConnected, setIsConnected] = useState(false)
+    const [messages, setMessages] = useState([])
     const [connecting, setConnecting] = useState(false)
-    const signinTs = useRef(parseFloat(localStorage.getItem(SLACK_SIGNIN_TS) || "0"))
+    const [statusLoading, setStatusLoading] = useState(true)
+    const connectedAtRef = useRef(0)
 
-    // ── Check URL for token handoff from OAuth callback ──────────────────────
+    const resetSlackState = useCallback(() => {
+        setIsConnected(false)
+        setMessages([])
+        setConnecting(false)
+        connectedAtRef.current = 0
+    }, [])
+
+    const refreshSlackStatus = useCallback(async () => {
+        if (!user) {
+            resetSlackState()
+            setStatusLoading(false)
+            return
+        }
+
+        try {
+            const status = await api.getSlackStatus()
+            const connected = Boolean(status.connected)
+            setIsConnected(connected)
+            connectedAtRef.current = status.connected_at ? (Date.parse(status.connected_at) / 1000) : 0
+            if (!connected) {
+                setMessages([])
+            }
+        } catch (_) {
+            resetSlackState()
+        } finally {
+            setStatusLoading(false)
+            setConnecting(false)
+        }
+    }, [resetSlackState, user])
+
+    useEffect(() => {
+        localStorage.removeItem(LEGACY_SLACK_TOKEN_KEY)
+        localStorage.removeItem(LEGACY_SLACK_SIGNIN_TS)
+        localStorage.removeItem(LEGACY_SLACK_MESSAGES_KEY)
+    }, [])
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        const t = params.get("slack_token")
-        const err = params.get("slack_error")
-
-        if (t) {
-            const now = Date.now() / 1000
-            localStorage.setItem(SLACK_TOKEN_KEY, t)
-            localStorage.setItem(SLACK_SIGNIN_TS, String(now))
-            signinTs.current = now
-            setToken(t)
-
-            // Clean the URL
-            const url = new URL(window.location.href)
-            url.searchParams.delete("slack_token")
-            window.history.replaceState({}, "", url.toString())
-        } else if (err) {
-            const url = new URL(window.location.href)
-            url.searchParams.delete("slack_error")
-            window.history.replaceState({}, "", url.toString())
+        const slackStatus = params.get("slack")
+        const slackError = params.get("slack_error")
+        if (!slackStatus && !slackError) {
+            return
         }
-    }, [])
 
-    // ── Fetch new messages (since sign-in timestamp) ─────────────────────────
-    const fetchMessages = useCallback(async (currentToken) => {
-        if (!currentToken) return
-        try {
-            const oldest = signinTs.current || 0
-            const r = await fetch(
-                `${API_BASE}/service/slack/messages?token=${encodeURIComponent(currentToken)}&oldest=${oldest}&limit=${MAX_SLACK_MESSAGES}`
-            )
-            if (!r.ok) {
-                if (r.status === 401) {
-                    // Token expired / revoked
-                    localStorage.removeItem(SLACK_TOKEN_KEY)
-                    setToken(null)
-                }
-                return
-            }
-            const data = await r.json()
-            setMessages(prev => {
-                // Merge keeping FIFO order, de-duplicate by ts
-                const existingTs = new Set(prev.map(m => m.ts))
-                const incoming = data.filter(m => !existingTs.has(m.ts))
-                const merged = [...prev, ...incoming]
-                const capped = merged.slice(-MAX_SLACK_MESSAGES) // FIFO cap
-                localStorage.setItem(SLACK_MESSAGES_KEY, JSON.stringify(capped))
-                return capped
+        if (slackStatus === "connected") {
+            toast.success("Slack connected successfully.")
+        } else if (slackError) {
+            toast.error("Slack connection failed", {
+                description: slackError.replace(/_/g, " "),
             })
-        } catch (_) { /* non-critical */ }
+        }
+
+        const url = new URL(window.location.href)
+        url.searchParams.delete("slack")
+        url.searchParams.delete("slack_error")
+        window.history.replaceState({}, "", url.toString())
     }, [])
 
-    // Poll every 15s when authenticated
     useEffect(() => {
-        if (!token) return
-        fetchMessages(token)
-        const t = setInterval(() => fetchMessages(token), 15_000)
-        return () => clearInterval(t)
-    }, [token, fetchMessages])
+        refreshSlackStatus()
+    }, [refreshSlackStatus])
 
-    const handleSignIn = () => {
-        setConnecting(true)
-        window.location.href = `${API_BASE}/service/slack/authorize`
+    const fetchMessages = useCallback(async () => {
+        if (!isConnected) return
+        try {
+            const oldest = connectedAtRef.current || 0
+            const data = await api.getSlackMessages(oldest, MAX_SLACK_MESSAGES)
+            setMessages(data)
+        } catch (error) {
+            const detail = String(error?.message || "").toLowerCase()
+            if (
+                detail.includes("slack session expired") ||
+                detail.includes("slack is not connected") ||
+                detail.includes("failed to fetch slack messages")
+            ) {
+                resetSlackState()
+            }
+        }
+    }, [isConnected, resetSlackState])
+
+    useEffect(() => {
+        if (!isConnected) return
+        fetchMessages()
+        const intervalId = setInterval(fetchMessages, 15_000)
+        return () => clearInterval(intervalId)
+    }, [isConnected, fetchMessages])
+
+    const handleSignIn = async () => {
+        try {
+            setConnecting(true)
+            const data = await api.getSlackAuthorizeUrl()
+            window.location.href = data.authorize_url
+        } catch (error) {
+            setConnecting(false)
+            toast.error("Slack connection failed", { description: error.message })
+        }
     }
 
-    const handleSignOut = () => {
-        localStorage.removeItem(SLACK_TOKEN_KEY)
-        localStorage.removeItem(SLACK_SIGNIN_TS)
-        localStorage.removeItem(SLACK_MESSAGES_KEY)
-        signinTs.current = 0
-        setToken(null)
-        setMessages([])
+    const handleSignOut = async () => {
+        try {
+            await api.disconnectSlack()
+        } catch (error) {
+            toast.error("Slack disconnect failed", { description: error.message })
+            return
+        }
+        resetSlackState()
     }
 
     return (
@@ -309,7 +341,7 @@ function SlackPanel() {
                     />
                     Slack
                 </h3>
-                {token && (
+                {isConnected && (
                     <button
                         onClick={handleSignOut}
                         className="text-[10px] font-mono text-secondary-custom/50 hover:text-[var(--semantic-error)] transition-colors uppercase tracking-wider"
@@ -320,7 +352,7 @@ function SlackPanel() {
             </div>
 
             {/* ── Not signed in ── */}
-            {!token && (
+            {!isConnected && (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 gap-5">
                     {/* Icon container — frosted circle matching auth-flow icon style */}
                     <div className="w-16 h-16 frosted-glass border border-subtle-custom fluid-rounded-xl
@@ -343,7 +375,7 @@ function SlackPanel() {
 
                     <button
                         onClick={handleSignIn}
-                        disabled={connecting}
+                        disabled={connecting || statusLoading || !user}
                         className="flex items-center gap-2.5 px-5 py-2.5
                             frosted-glass border border-subtle-custom fluid-rounded
                             text-primary-custom font-mono text-sm font-bold uppercase tracking-wider
@@ -355,13 +387,13 @@ function SlackPanel() {
                             className="flex-shrink-0"
                             style={{ width: 14, height: 14, fill: "currentColor" }}
                         />
-                        {connecting ? "Connecting…" : "Sign in with Slack"}
+                        {statusLoading ? "Checking…" : connecting ? "Connecting…" : "Sign in with Slack"}
                     </button>
                 </div>
             )}
 
             {/* ── Signed in ── */}
-            {token && (
+            {isConnected && (
                 <div className="flex-1 overflow-auto p-4 space-y-3 custom-scrollbar">
                     {messages.length === 0 && (
                         <p className="text-secondary-custom text-xs font-mono text-center py-2">

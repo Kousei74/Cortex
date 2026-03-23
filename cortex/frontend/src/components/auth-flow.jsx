@@ -13,6 +13,11 @@ export default function AuthFlow() {
     const [activeTab, setActiveTab] = useState("login")
     const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""])
 
+    const handleDemoLogin = () => {
+        localStorage.setItem("cortex_demo_mode", "true");
+        window.location.href = "/";
+    };
+
     // Form State
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -114,14 +119,24 @@ export default function AuthFlow() {
                                 Translate customer chaos into actionable clarity.
                             </p>
                         </div>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button
-                                onClick={() => setStep("form")}
-                                className="gradient-button text-white font-mono uppercase tracking-wider px-12 py-4 rounded-full hover:opacity-90 transition-all duration-300 soft-shadow-lg"
-                            >
-                                INITIATE CONNECTION
-                            </Button>
-                        </motion.div>
+                        <div className="flex flex-col items-center gap-4">
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full max-w-[280px]">
+                                <Button
+                                    onClick={() => setStep("form")}
+                                    className="w-full gradient-button text-white font-mono uppercase tracking-wider px-12 py-4 rounded-full hover:opacity-90 transition-all duration-300 soft-shadow-lg"
+                                >
+                                    INITIATE CONNECTION
+                                </Button>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                    onClick={handleDemoLogin}
+                                    className="bg-surface-custom/50 border border-subtle-custom text-primary-custom font-mono uppercase tracking-wider px-12 py-4 rounded-full hover:bg-[var(--accent-blue-bright)]/10 hover:border-[var(--accent-blue-bright)] hover:shadow-[0_0_15px_rgba(0,191,255,0.4)] transition-all duration-300 soft-shadow-lg"
+                                >
+                                    TRY DEMO
+                                </Button>
+                            </motion.div>
+                        </div>
                     </motion.div>
                 )}
 

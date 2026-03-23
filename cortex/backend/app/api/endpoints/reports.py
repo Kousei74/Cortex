@@ -1,18 +1,22 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.report import ReportRequest, ReportResponse, JobStatus
 from app.services.jobs import JobManager
 from app.core.queue import QueueService
+from app.core.security import SessionUser, get_current_user
 
 router = APIRouter()
 
 @router.post("/jobs", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
-async def create_report_job(request: ReportRequest):
+async def create_report_job(
+    request: ReportRequest,
+    session_user: SessionUser = Depends(get_current_user),
+):
     """
     Step 5: Job Handler
     Accepts file_ids, expects 202/201, returns job_id.
     """
     # 1. Create Job (Idempotent)
-    job_id, is_existing = JobManager.create_job(request.file_ids, request.project_id)
+    job_id, is_existing = JobManager.create_job(request.file_ids, request.project_id, session_user.emp_id)
     
     # 2. Check if new or existing
     job = JobManager.get_job(job_id)
@@ -31,13 +35,18 @@ async def create_report_job(request: ReportRequest):
     )
 
 @router.get("/jobs/{job_id}", response_model=ReportResponse)
-async def get_report_job(job_id: str):
+async def get_report_job(
+    job_id: str,
+    session_user: SessionUser = Depends(get_current_user),
+):
     """
     Step 6: Polling
     """
     job = JobManager.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+    if job.owner_emp_id != session_user.emp_id:
+        raise HTTPException(status_code=403, detail="You do not have access to this job")
         
     return ReportResponse(
         job_id=job.job_id,

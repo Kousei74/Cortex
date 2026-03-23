@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
 from datetime import datetime
 import os
 import json
+from app.core.security import SessionUser, get_current_user
+from app.services.jobs import JobManager
 
 router = APIRouter()
 
@@ -31,7 +33,11 @@ class ResolutionRow(BaseModel):
 # --- Logic ---
 
 @router.post("/bulk", response_model=ResolutionResponse)
-async def bulk_resolve(payload: ResolutionAction, background_tasks: BackgroundTasks):
+async def bulk_resolve(
+    payload: ResolutionAction,
+    background_tasks: BackgroundTasks,
+    session_user: SessionUser = Depends(get_current_user),
+):
     """
     Apply a resolution action to a set of items.
     This is an ATOMIC operation (simulated for V1).
@@ -55,11 +61,20 @@ async def bulk_resolve(payload: ResolutionAction, background_tasks: BackgroundTa
     )
 
 @router.get("/rows/{job_id}", response_model=List[Dict[str, Any]])
-async def get_resolution_rows(job_id: str):
+async def get_resolution_rows(
+    job_id: str,
+    session_user: SessionUser = Depends(get_current_user),
+):
     """
     Fetch the raw rows for the resolution table.
     Reads from the JSON artifact generated during analysis.
     """
+    job = JobManager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Resolution data not found for this job")
+    if job.owner_emp_id != session_user.emp_id:
+        raise HTTPException(status_code=403, detail="You do not have access to this resolution data")
+
     # Sanitize job_id to prevent traversal
     safe_job_id = os.path.basename(job_id)
     file_path = f"uploads/{safe_job_id}_resolution.json"

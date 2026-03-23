@@ -394,6 +394,19 @@ export default function IssueFlowchart({ issueId }) {
 function IssueFlowchartInner({ issueId }) {
     const { user } = useAuth()
     const { getNode, getNodes } = useReactFlow()
+
+    // Format date nicely
+    const formatDate = (isoString) => {
+        if (!isoString) return "UNKNOWN DATE"
+        // Try to handle raw ISO strings and shorter date strings
+        try {
+            return new Date(isoString).toLocaleDateString("en-GB", {
+                day: "2-digit", month: "long", year: "numeric"
+            }).toUpperCase()
+        } catch (e) {
+            return "UNKNOWN DATE"
+        }
+    }
     const [nodes, setNodes, onNodesChange] = useNodesState([])
     const [edges, setEdges, onEdgesChange] = useEdgesState([])
     const [isLoading, setIsLoading] = useState(true)
@@ -401,6 +414,7 @@ function IssueFlowchartInner({ issueId }) {
     const [activeTagEdit, setActiveTagEdit] = useState(null)
     const [tagConfirm, setTagConfirm] = useState(null)
     const [seniorCommentText, setSeniorCommentText] = useState("")
+    const [issueHeaderText, setIssueHeaderText] = useState("")
     const [connectConfirm, setConnectConfirm] = useState(null)
     const [confirmText, setConfirmText] = useState("")
     const [refreshKey, setRefreshKey] = useState(0)
@@ -410,73 +424,6 @@ function IssueFlowchartInner({ issueId }) {
     const [isDraggingNode, setIsDraggingNode] = useState(false)
     const [isHoveringTrash, setIsHoveringTrash] = useState(false)
     const isHoveringTrashRef = useRef(false)
-
-    // ── Ctrl+Z Undo Stack ──
-    // Each entry: { type, payload, description }
-    const undoStackRef = useRef([])
-
-    // Ctrl+Z undo handler
-    const handleUndo = useCallback(async () => {
-        if (undoStackRef.current.length === 0) {
-            toast.info("Nothing to undo")
-            return
-        }
-
-        const action = undoStackRef.current.pop()
-        try {
-            switch (action.type) {
-                case 'UNDO_ADD_NODE':
-                    await api.deleteIssueNode(action.payload.nodeId)
-                    setNodes(nds => nds.filter(n => n.id !== action.payload.nodeId))
-                    setEdges(eds => eds.filter(e => e.source !== action.payload.nodeId && e.target !== action.payload.nodeId))
-                    toast.success("Undo: Node addition reverted")
-                    setRefreshKey(prev => prev + 1)
-                    break
-
-                case 'UNDO_DELETE_NODE':
-                    await api.restoreNode(action.payload)
-                    toast.success("Undo: Node restored")
-                    setRefreshKey(prev => prev + 1)
-                    break
-
-                case 'UNDO_TAG_CHANGE':
-                    setNodes(nds => nds.map(n => n.id === action.payload.nodeId ? { ...n, data: { ...n.data, tag: action.payload.previousTag } } : n))
-                    await api.tagIssueNode(action.payload.nodeId, action.payload.previousTag)
-                    toast.success("Undo: Tag reverted")
-                    break
-
-                case 'UNDO_NODE_UPDATE':
-                    await api.updateNodeInfo(action.payload.nodeId, {
-                        issue_header: action.payload.previousHeader,
-                        description: action.payload.previousDescription,
-                        code_changes: action.payload.previousCode,
-                        code_language: action.payload.previousLang
-                    })
-                    toast.success("Undo: Node info reverted")
-                    setRefreshKey(prev => prev + 1)
-                    break
-
-                default:
-                    toast.error("Unknown undo action")
-            }
-        } catch (err) {
-            // Put the action back if undo failed
-            undoStackRef.current.push(action)
-            toast.error("Undo failed", { description: err.message })
-        }
-    }, [user, setNodes, setEdges])
-
-    // Ctrl+Z keyboard listener
-    useEffect(() => {
-        const handler = (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                e.preventDefault()
-                handleUndo()
-            }
-        }
-        window.addEventListener('keydown', handler)
-        return () => window.removeEventListener('keydown', handler)
-    }, [handleUndo])
 
     // Node info modal state: { mode: "view" | "edit" | "create", nodeParams: {...} }
     const [activeNodeModal, setActiveNodeModal] = useState(null)
@@ -607,16 +554,6 @@ function IssueFlowchartInner({ issueId }) {
                 const payload = tagConfirm.payload
 
                 if (tagConfirm.mode === "edit") {
-                    // Snapshot current values for undo
-                    const prevData = activeNodeModal.nodeParams.data
-                    const undoPayload = {
-                        nodeId: activeNodeModal.nodeParams.id,
-                        previousHeader: prevData.label,
-                        previousDescription: prevData.description,
-                        previousCode: prevData.code_changes,
-                        previousLang: prevData.code_language
-                    }
-
                     await api.updateNodeInfo(activeNodeModal.nodeParams.id, {
                         issue_header: payload.header,
                         description: payload.description,
@@ -637,8 +574,6 @@ function IssueFlowchartInner({ issueId }) {
                     } else {
                         toast.success("Node Information Updated")
                     }
-                    // Push undo entry
-                    undoStackRef.current.push({ type: 'UNDO_NODE_UPDATE', payload: undoPayload, description: 'node info update' })
                 }
 
                 setActiveNodeModal(null)
@@ -646,25 +581,28 @@ function IssueFlowchartInner({ issueId }) {
                 setConfirmText("")
                 setRefreshKey(prev => prev + 1)
             } else {
-                const commentToSubmit = seniorCommentText;
-                const previousTag = tagConfirm.previousTag;
+                if (!issueHeaderText.trim()) {
+                    toast.error("Header Required", { description: "Please provide a meaningful header for this issue." })
+                    return
+                }
 
-                // Optimistic Update
-                setNodes(nds => nds.map(n => n.id === tagConfirm.nodeId ? { ...n, data: { ...n.data, tag: tagConfirm.newTag, senior_comment: commentToSubmit } } : n))
+                const commentToSubmit = seniorCommentText;
+
+                // Optimistic Update: tag AND label (header)
+                setNodes(nds => nds.map(n => n.id === tagConfirm.nodeId ? { ...n, data: { ...n.data, tag: tagConfirm.newTag, senior_comment: commentToSubmit, label: issueHeaderText } } : n))
 
                 // Silent Knight: Pass the last_updated_at for OCC verification
                 const nodeToTag = nodes.find(n => n.id === tagConfirm.nodeId)
                 await api.tagIssueNode(tagConfirm.nodeId, tagConfirm.newTag, {
-                    senior_comment: commentToSubmit
+                    senior_comment: commentToSubmit,
+                    issue_header: issueHeaderText
                 }, nodeToTag?.data?.updated_at)
 
                 toast.success("Tag Updated Successfully")
 
-                // Push undo entry
-                undoStackRef.current.push({ type: 'UNDO_TAG_CHANGE', payload: { nodeId: tagConfirm.nodeId, previousTag }, description: 'tag change' })
-
                 setTagConfirm(null)
                 setConfirmText("")
+                setIssueHeaderText("")
                 setRefreshKey(prev => prev + 1)
             }
         } catch (err) {
@@ -699,33 +637,60 @@ function IssueFlowchartInner({ issueId }) {
             const targetNodeId = connectConfirm.target
 
             // ─── DIRECTION-INDEPENDENT GATEKEEPER SEARCH ───
-            const traceGatekeeper = (startId) => {
-                let currId = startId;
+            // ─── LCA-BASED GATEKEEPER SEARCH ───
+            const findCommonBlueAncestor = (nodeId1, nodeId2) => {
+                const getAncestors = (id) => {
+                    const ancestors = new Set();
+                    let curr = id;
+                    while (curr) {
+                        ancestors.add(curr);
+                        const edge = edges.find(e => e.target === curr);
+                        curr = edge ? edge.source : null;
+                    }
+                    return ancestors;
+                };
+
+                const targetAncestors = getAncestors(nodeId2);
                 const trail = [];
-                while (currId) {
-                    const node = nodes.find(n => n.id === currId);
+                const intermediateBlueNodes = [];
+                let curr = nodeId1;
+
+                while (curr) {
+                    const node = nodes.find(n => n.id === curr);
                     if (!node) break;
 
                     if (node.data?.tag === 'blue') {
-                        return { gatekeeperId: currId, trail };
+                        if (targetAncestors.has(curr)) {
+                            return { 
+                                gatekeeperId: curr, 
+                                trail, 
+                                hasUnmergedSubBranches: intermediateBlueNodes.length > 0 
+                            };
+                        } else {
+                            intermediateBlueNodes.push(curr);
+                        }
                     }
 
-                    const parentEdge = edges.find(e => e.target === currId);
+                    const parentEdge = edges.find(e => e.target === curr);
                     if (!parentEdge) break;
-
-                    trail.push(currId);
-                    currId = parentEdge.source;
+                    trail.push(curr);
+                    curr = parentEdge.source;
                 }
                 return null;
             };
 
-            const sourceTrace = traceGatekeeper(sourceNodeId);
-            const targetTrace = traceGatekeeper(targetNodeId);
-
-            // Prioritize the trace that actually found a gatekeeper
-            const activeTrace = sourceTrace || targetTrace;
+            const activeTrace = findCommonBlueAncestor(sourceNodeId, targetNodeId) || findCommonBlueAncestor(targetNodeId, sourceNodeId);
 
             if (activeTrace) {
+                if (activeTrace.hasUnmergedSubBranches) {
+                    toast.error("Merge Blocked", {
+                        description: "This branch contains unmerged sub-branches. Please resolve nested branches before merging to parent."
+                    });
+                    setConnectConfirm(null);
+                    setConfirmText("");
+                    setIsLoading(false);
+                    return;
+                }
                 const { gatekeeperId, trail } = activeTrace;
                 const originNode = nodes.find(n => n.id === gatekeeperId);
 
@@ -779,26 +744,6 @@ function IssueFlowchartInner({ issueId }) {
             setIsLoading(true)
             const nodeId = deleteConfirm.nodeId
 
-            // Snapshot node data for undo BEFORE deleting
-            const fullNode = getNode(nodeId)
-            const connectedEdges = edges.filter(e => e.source === nodeId || e.target === nodeId)
-            const parentEdge = connectedEdges.find(e => e.target === nodeId)
-            const undoSnapshot = {
-                id: nodeId,
-                root_issue_id: issueId,
-                parent_node_id: parentEdge ? parentEdge.source : null,
-                header: fullNode?.data?.label,
-                description: fullNode?.data?.description,
-                node_type: fullNode?.data?.type || 'update',
-                tag: fullNode?.data?.tag || 'pending',
-                created_by_emp_id: fullNode?.data?.author,
-                code_changes: fullNode?.data?.code_changes,
-                code_language: fullNode?.data?.code_language,
-                created_at: fullNode?.data?.created_at,
-                layout_x: fullNode?.position?.x,
-                layout_y: fullNode?.position?.y
-            }
-
             await api.deleteIssueNode(nodeId)
 
             // Immediately update local state
@@ -806,9 +751,6 @@ function IssueFlowchartInner({ issueId }) {
             setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId))
 
             toast.success("Node Terminated Successfully")
-
-            // Push undo entry
-            undoStackRef.current.push({ type: 'UNDO_DELETE_NODE', payload: undoSnapshot, description: 'node deletion' })
 
             // Cleanup state
             setDeleteConfirm(null)
@@ -924,11 +866,6 @@ function IssueFlowchartInner({ issueId }) {
                 connection_type: cType
             })
             toast.success("Node Added Successfully")
-
-            // Push undo entry — undo = delete the newly created node
-            if (result?.issue_id) {
-                undoStackRef.current.push({ type: 'UNDO_ADD_NODE', payload: { nodeId: result.issue_id }, description: 'node addition' })
-            }
 
             setRefreshKey(prev => prev + 1)
         } catch (err) {
@@ -1152,6 +1089,9 @@ function IssueFlowchartInner({ issueId }) {
                                         key={opt}
                                         onClick={() => {
                                             setActiveTagEdit(null)
+                                            const nodeToTag = nodes.find(n => n.id === activeTagEdit.nodeId)
+                                            const currentHeader = nodeToTag?.data?.label || ""
+                                            setIssueHeaderText(currentHeader === "NEW ISSUE" ? "" : currentHeader)
                                             setTagConfirm({
                                                 nodeId: activeTagEdit.nodeId,
                                                 newTag: opt,
@@ -1191,6 +1131,16 @@ function IssueFlowchartInner({ issueId }) {
                                 To confirm, type <span className="text-white font-bold">"Confirm"</span> and press Proceed
                             </p>
 
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-mono text-secondary-custom uppercase tracking-widest font-bold">Issue Header</label>
+                                <Input
+                                    value={issueHeaderText}
+                                    onChange={e => setIssueHeaderText(e.target.value)}
+                                    placeholder={issueHeaderText === "" ? "Enter meaningful header..." : ""}
+                                    className="font-mono border-subtle-custom bg-[var(--bg-root)] focus:border-[var(--accent-blue-bright)] soft-glow-hover"
+                                />
+                            </div>
+
                             <Input
                                 value={confirmText}
                                 onChange={e => setConfirmText(e.target.value)}
@@ -1216,7 +1166,7 @@ function IssueFlowchartInner({ issueId }) {
 
                             <div className="flex gap-4 mt-2">
                                 <Button
-                                    onClick={() => { setTagConfirm(null); setConfirmText(""); }}
+                                    onClick={() => { setTagConfirm(null); setConfirmText(""); setIssueHeaderText(""); }}
                                     className="flex-1 bg-transparent border border-subtle-custom text-secondary-custom hover:text-white hover:bg-white/5 transition-all"
                                 >
                                     CANCEL
@@ -1304,7 +1254,7 @@ function IssueFlowchartInner({ issueId }) {
                         >
                             <h3 className="text-white font-mono text-lg font-bold text-center uppercase text-red-500">REMOVE NODE</h3>
                             <p className="text-secondary-custom text-sm font-mono text-center">
-                                Are you sure you want to terminate <span className="text-white font-bold">"{deleteConfirm.label}"</span>? This action cannot be easily undone. To confirm, type <span className="text-white font-bold">"Confirm"</span> and press Proceed.
+                                Are you sure you want to terminate <span className="text-white font-bold">"{deleteConfirm.label}"</span>? This action cannot be reversed. To confirm, type <span className="text-white font-bold">"Confirm"</span> and press Proceed.
                             </p>
 
                             <Input
@@ -1391,17 +1341,32 @@ function IssueFlowchartInner({ issueId }) {
                                         /* --- READ-ONLY VIEW MODE --- */
                                         <div className="flex flex-col gap-5">
                                             <div className="flex justify-between items-start">
-                                                <div>
+                                                <div className="w-full">
                                                     <h2 className="text-xl font-mono font-bold text-white uppercase tracking-widest break-words pr-8">
                                                         {activeNodeModal.nodeParams.data.label}
                                                     </h2>
-                                                    <p className="text-xs font-mono text-secondary-custom mt-2 border-l-2 border-subtle-custom pl-2 uppercase tracking-widest">
-                                                        AUTHOR: <span className="text-primary-custom ml-1">{activeNodeModal.nodeParams.data.author}</span>
-                                                    </p>
+                                                    {activeNodeModal.nodeParams.id.startsWith("ISS-") ? (
+                                                        <div className="flex justify-between items-center w-full mt-2 border-l-2 border-subtle-custom pl-2 pr-4">
+                                                            <p className="text-xs font-mono text-secondary-custom uppercase tracking-widest">
+                                                                ISSUE ID: <span className="text-primary-custom ml-1">{activeNodeModal.nodeParams.id}</span>
+                                                            </p>
+                                                            <div className="text-[10px] font-mono uppercase tracking-widest flex items-center gap-2">
+                                                                <span className="text-white">{formatDate(activeNodeModal.nodeParams.data.created_at)}</span>
+                                                                <span className="text-secondary-custom">-</span>
+                                                                <span className="text-red-500 font-bold">{formatDate(activeNodeModal.nodeParams.data.deadline)}</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs font-mono text-secondary-custom mt-2 border-l-2 border-subtle-custom pl-2 uppercase tracking-widest">
+                                                            AUTHOR: <span className="text-primary-custom ml-1">{activeNodeModal.nodeParams.data.author}</span>
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                <div className="text-[10px] uppercase font-mono font-bold px-2 py-1 rounded bg-black/40 border border-subtle-custom text-secondary-custom">
-                                                    {activeNodeModal.nodeParams.data.tag}
-                                                </div>
+                                                {!activeNodeModal.nodeParams.id.startsWith("ISS-") && (
+                                                    <div className="text-[10px] uppercase font-mono font-bold px-2 py-1 rounded bg-black/40 border border-subtle-custom text-secondary-custom flex-shrink-0">
+                                                        {activeNodeModal.nodeParams.data.tag}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {activeNodeModal.nodeParams.data.description && (
@@ -1410,6 +1375,46 @@ function IssueFlowchartInner({ issueId }) {
                                                     <p className="text-sm text-primary-custom whitespace-pre-wrap font-mono leading-relaxed">
                                                         {activeNodeModal.nodeParams.data.description}
                                                     </p>
+                                                </div>
+                                            )}
+
+                                            {/* If Root Node, show extra Service Hub details */}
+                                            {activeNodeModal.nodeParams.id.startsWith("ISS-") && (
+                                                <div className="grid grid-cols-2 gap-4 mt-1">
+                                                    {activeNodeModal.nodeParams.data.priority && (() => {
+                                                        const pC = { critical: "#ff3b30", high: "#ff9500", mid: "#ffbf00", low: "#34c759" }[activeNodeModal.nodeParams.data.priority?.toLowerCase()] || "#8e8e93";
+                                                        return (
+                                                            <div className="bg-black/20 p-3 rounded-lg border border-subtle-custom/50 flex flex-col gap-1.5">
+                                                                <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Priority</div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: pC, boxShadow: `0 0 6px ${pC}` }} />
+                                                                    <span className="text-xs text-primary-custom font-mono truncate font-bold uppercase">{activeNodeModal.nodeParams.data.priority}</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                    <div className="bg-black/20 p-3 rounded-lg border border-subtle-custom/50 flex flex-col gap-1 text-ellipsis overflow-hidden">
+                                                        <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Assigned Teams</div>
+                                                        <div className="text-xs text-primary-custom font-mono truncate uppercase">
+                                                            {activeNodeModal.nodeParams.data.assigned_dept_ids
+                                                                ? (Array.isArray(activeNodeModal.nodeParams.data.assigned_dept_ids)
+                                                                    ? activeNodeModal.nodeParams.data.assigned_dept_ids.join(", ")
+                                                                    : activeNodeModal.nodeParams.data.assigned_dept_ids)
+                                                                : "UNASSIGNED"}
+                                                        </div>
+                                                    </div>
+                                                    {activeNodeModal.nodeParams.data.severity && (
+                                                        <div className="bg-black/20 p-3 rounded-lg border border-subtle-custom/50 flex flex-col gap-1">
+                                                            <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Severity</div>
+                                                            <div className="text-xs text-primary-custom font-mono truncate uppercase">{activeNodeModal.nodeParams.data.severity}</div>
+                                                        </div>
+                                                    )}
+                                                    {activeNodeModal.nodeParams.data.primary_tag && (
+                                                        <div className="bg-black/20 p-3 rounded-lg border border-subtle-custom/50 flex flex-col gap-1">
+                                                            <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Tags</div>
+                                                            <div className="text-xs text-[var(--accent-blue-bright)] font-mono truncate uppercase">{activeNodeModal.nodeParams.data.primary_tag}</div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
@@ -1477,30 +1482,6 @@ function IssueFlowchartInner({ issueId }) {
                                                     >
                                                         [ EDIT INFO ]
                                                     </Button>
-                                                </div>
-                                            )}
-                                            {/* Author check for root issue */}
-                                            {activeNodeModal.isAuthor && !activeNodeModal.isGraphClosed && activeNodeModal.nodeParams.id.startsWith("ISS-") && (
-                                                <div className="pt-4 mt-2 flex flex-col gap-2 border-t border-subtle-custom">
-                                                    {!activeNodeModal.isWithinWindow && (
-                                                        <div className="text-[10px] text-[var(--semantic-error)] font-mono uppercase tracking-widest text-right">
-                                                            [ 30-Min Mutability Window Expired ]
-                                                        </div>
-                                                    )}
-                                                    <div className="flex justify-end">
-                                                        <Button
-                                                            onClick={() => setActiveNodeModal({ ...activeNodeModal, mode: "edit" })}
-                                                            disabled={!activeNodeModal.isWithinWindow && !activeNodeModal.isSenior}
-                                                            className={`bg-transparent border font-mono text-xs uppercase tracking-widest px-6 ${
-                                                                !activeNodeModal.isWithinWindow && !activeNodeModal.isSenior 
-                                                                ? 'border-subtle-custom text-secondary-custom/50 cursor-not-allowed' 
-                                                                : 'border-accent-blue-bright/50 text-accent-blue-bright hover:bg-accent-blue-bright/10'
-                                                            }`}
-                                                            title={!activeNodeModal.isWithinWindow && !activeNodeModal.isSenior ? "Immutable: 30 minutes have passed since creation." : ""}
-                                                        >
-                                                            [ EDIT ROOT ]
-                                                        </Button>
-                                                    </div>
                                                 </div>
                                             )}
                                         </div>

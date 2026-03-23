@@ -9,6 +9,7 @@ import IssueFlowchart from "./issue-flowchart"
 import { CortexLoader } from "./cortex-loader"
 import { useAuth } from "@/context/AuthContext"
 import { Copy } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function IssueTracker() {
     const { user } = useAuth()
@@ -110,21 +111,35 @@ export default function IssueTracker() {
                     <div className="flex p-1 bg-surface-custom border border-subtle-custom fluid-rounded gap-1">
                         <button
                             onClick={() => setStatusFilter("open")}
-                            className={`px-6 py-2 text-xs font-mono font-bold uppercase tracking-widest fluid-rounded transition-all duration-300 ${statusFilter === "open"
-                                ? "bg-[var(--accent-blue-bright)] text-primary-custom shadow-[0_0_15px_rgba(0,191,255,0.3)]"
-                                : "text-secondary-custom hover:text-primary-custom"
-                                }`}
+                            className="relative px-6 py-2 text-xs font-mono font-bold uppercase tracking-widest fluid-rounded transition-all duration-300 text-secondary-custom hover:text-primary-custom group"
                         >
-                            Active
+                            {statusFilter === "open" && (
+                                <motion.div
+                                    layoutId="activeStatusFilter"
+                                    className="absolute inset-0 bg-[var(--accent-blue-bright)] shadow-[0_0_15px_rgba(0,191,255,0.3)] fluid-rounded"
+                                    initial={false}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                />
+                            )}
+                            <span className={cn("relative z-10", statusFilter === "open" ? "text-primary-custom" : "text-secondary-custom group-hover:text-primary-custom")}>
+                                Active
+                            </span>
                         </button>
                         <button
                             onClick={() => setStatusFilter("closed")}
-                            className={`px-6 py-2 text-xs font-mono font-bold uppercase tracking-widest fluid-rounded transition-all duration-300 ${statusFilter === "closed"
-                                ? "bg-[var(--accent-blue-bright)] text-primary-custom shadow-[0_0_15px_rgba(0,191,255,0.3)]"
-                                : "text-secondary-custom hover:text-primary-custom"
-                                }`}
+                            className="relative px-6 py-2 text-xs font-mono font-bold uppercase tracking-widest fluid-rounded transition-all duration-300 text-secondary-custom hover:text-primary-custom group"
                         >
-                            Closed
+                            {statusFilter === "closed" && (
+                                <motion.div
+                                    layoutId="activeStatusFilter"
+                                    className="absolute inset-0 bg-[var(--accent-blue-bright)] shadow-[0_0_15px_rgba(0,191,255,0.3)] fluid-rounded"
+                                    initial={false}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                />
+                            )}
+                            <span className={cn("relative z-10", statusFilter === "closed" ? "text-primary-custom" : "text-secondary-custom group-hover:text-primary-custom")}>
+                                Closed
+                            </span>
                         </button>
                     </div>
                 </div>

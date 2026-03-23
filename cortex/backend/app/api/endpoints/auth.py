@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from fastapi.security import OAuth2PasswordRequestForm
-from app.core.security import create_access_token, get_password_hash, verify_password, oauth2_scheme, decode_access_token
+from app.core.security import create_access_token, get_password_hash, verify_password, SessionUser, get_current_user
 from app.core.database import service_role_supabase as supabase
-from typing import Dict, Optional, Literal
+from typing import Optional, Literal
 from datetime import timedelta
 
 router = APIRouter()
@@ -16,12 +16,17 @@ class UserCreate(BaseModel):
     dept_id: Optional[str] = None
     role: Optional[Literal["senior", "team_member"]] = "team_member"
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    dept_id: Optional[str] = None
+
 class UserResponse(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
     emp_id: Optional[str] = None
     dept_id: Optional[str] = None
     role: Optional[str] = "team_member"
+    avatar_url: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
@@ -109,16 +114,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
-def read_users_me(token: str = Depends(oauth2_scheme)):
-    payload = decode_access_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    email = payload.get("sub")
+def read_users_me(session_user: SessionUser = Depends(get_current_user)):
+    email = session_user.email
     try:
         res = supabase.table("users").select("*").eq("email", email).execute()
         user = res.data[0] if res.data else None
@@ -137,5 +134,32 @@ def read_users_me(token: str = Depends(oauth2_scheme)):
         full_name=user.get("full_name"),
         emp_id=user.get("emp_id"),
         dept_id=user.get("dept_id"),
-        role=user.get("role")
+        role=user.get("role"),
+        avatar_url=user.get("avatar_url") if "avatar_url" in user else None
+    )
+
+@router.put("/profile", response_model=UserResponse)
+def update_profile(update_data: UserUpdate, session_user: SessionUser = Depends(get_current_user)):
+    email = session_user.email
+    update_dict = {k: v for k, v in update_data.dict(exclude_unset=True).items() if v is not None}
+    
+    if update_dict:
+        try:
+            supabase.table("users").update(update_dict).eq("email", email).execute()
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Update failed: {str(e)}")
+            
+    try:
+        res = supabase.table("users").select("*").eq("email", email).execute()
+        user = res.data[0]
+    except Exception:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+        
+    return UserResponse(
+        email=user["email"], 
+        full_name=user.get("full_name"),
+        emp_id=user.get("emp_id"),
+        dept_id=user.get("dept_id"),
+        role=user.get("role"),
+        avatar_url=user.get("avatar_url") if "avatar_url" in user else None
     )

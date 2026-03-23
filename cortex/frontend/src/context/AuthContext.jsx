@@ -9,16 +9,38 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem("cortex_token"));
     const [loading, setLoading] = useState(true);
 
+    const clearSession = () => {
+        localStorage.removeItem("cortex_token");
+        localStorage.removeItem("cortex_demo_mode");
+        setToken(null);
+        setUser(null);
+    };
+
     // Load user profile on mount if token exists
     useEffect(() => {
         const loadUser = async () => {
+            const isDemo = localStorage.getItem("cortex_demo_mode") === "true";
+            
+            if (isDemo) {
+                // Mock a Senior user for demo mode
+                setUser({
+                    emp_id: "DEMO-01",
+                    full_name: "Demo Presenter",
+                    role: "senior",
+                    dept_id: "D00",
+                    email: "demo@cortex.local"
+                });
+                setLoading(false);
+                return;
+            }
+
             if (token) {
                 try {
                     const userData = await api.getMe();
                     setUser(userData);
                 } catch (error) {
                     console.error("Failed to load user", error);
-                    logout(); // Invalid token
+                    clearSession(); // Invalid token
                 }
             }
             setLoading(false);
@@ -26,6 +48,27 @@ export const AuthProvider = ({ children }) => {
 
         loadUser();
     }, [token]);
+
+    useEffect(() => {
+        const handleSessionExpired = () => {
+            clearSession();
+            setLoading(false);
+        };
+
+        const handleStorageChange = (event) => {
+            if (event.key === "cortex_token" && !event.newValue) {
+                handleSessionExpired();
+            }
+        };
+
+        window.addEventListener("cortex:session-expired", handleSessionExpired);
+        window.addEventListener("storage", handleStorageChange);
+
+        return () => {
+            window.removeEventListener("cortex:session-expired", handleSessionExpired);
+            window.removeEventListener("storage", handleStorageChange);
+        };
+    }, []);
 
     const login = async (email, password) => {
         const data = await api.login(email, password);
@@ -43,13 +86,11 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem("cortex_token");
-        setToken(null);
-        setUser(null);
+        clearSession();
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser, isAuthenticated: !!user, login, signup, logout, loading }}>
             {loading ? (
                 <div className="min-h-screen bg-[var(--bg-root)] flex items-center justify-center">
                     <CortexLoader />

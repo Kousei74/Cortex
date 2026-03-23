@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { useAnalysisStore } from '@/store/analysisStore';
+import { api } from '@/lib/api';
 
 // Constants
 const POLL_INTERVAL_MS = 2000;
@@ -52,13 +53,7 @@ export function useReportPolling() {
             if (!useAnalysisStore.getState().jobId) return; // Guard if reset happened
 
             try {
-                const response = await fetch(`http://localhost:8000/reports/jobs/${newJobId}`);
-
-                if (!response.ok) {
-                    throw new Error(`Polling failed: ${response.status}`);
-                }
-
-                const data = await response.json();
+                const data = await api.getReportJob(newJobId);
 
                 // Update Store
                 updateStatus(data.status, data.progress);

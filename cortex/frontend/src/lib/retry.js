@@ -38,6 +38,26 @@ export const fetchWithRetry = async (url, options, retries = 3, backoff = 300) =
  */
 export const uploadWithRetry = (url, headers, file, onProgress, onStatus, retries = 3, initialBackoff = 500) => {
     return new Promise((resolve, reject) => {
+        const buildXhrError = (xhr, fallbackMessage) => {
+            let detail = fallbackMessage;
+            if (xhr.responseText) {
+                try {
+                    const parsed = JSON.parse(xhr.responseText);
+                    detail = parsed.detail || fallbackMessage;
+                } catch {
+                    detail = fallbackMessage;
+                }
+            }
+
+            if (typeof detail === "object") {
+                detail = JSON.stringify(detail);
+            }
+
+            const error = new Error(detail || fallbackMessage);
+            error.status = xhr.status;
+            return error;
+        };
+
         const attempt = (n) => {
             const xhr = new XMLHttpRequest();
             xhr.open("PUT", url);
@@ -66,10 +86,10 @@ export const uploadWithRetry = (url, headers, file, onProgress, onStatus, retrie
                 } else if (xhr.status >= 500 || xhr.status === 429 || xhr.status === 408) {
                     // SERVER ERROR -> Retry
                     if (n > 0) retry(n, `Server Error ${xhr.status}`);
-                    else reject(new Error(xhr.statusText || `Upload Exception ${xhr.status}`));
+                    else reject(buildXhrError(xhr, xhr.statusText || `Upload Exception ${xhr.status}`));
                 } else {
                     // Client Error (4xx) -> Fail immediately
-                    reject(new Error(xhr.statusText || "Upload failed"));
+                    reject(buildXhrError(xhr, xhr.statusText || "Upload failed"));
                 }
             };
 

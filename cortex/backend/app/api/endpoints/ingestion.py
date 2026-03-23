@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Depends
 from pydantic import BaseModel
 from typing import Optional, Dict
 import uuid
@@ -6,6 +6,7 @@ import asyncio
 import os
 # Import the OCR utility
 from app.core.ocr import extract_text_from_image
+from app.core.security import SessionUser, get_current_user
 
 router = APIRouter()
 
@@ -31,7 +32,10 @@ class IngestResponse(BaseModel):
     ocr_result: Optional[str] = None
 
 @router.post("/meta", response_model=MetaResponse, status_code=status.HTTP_201_CREATED)
-async def create_upload_session(meta: MetaRequest):
+async def create_upload_session(
+    meta: MetaRequest,
+    session_user: SessionUser = Depends(get_current_user),
+):
     """
     Step 1: Register metadata for a file upload.
     Returns an ID and a URL to upload the binary blob.
@@ -41,6 +45,7 @@ async def create_upload_session(meta: MetaRequest):
         "filename": meta.filename,
         "file_type": meta.file_type,
         "file_size": meta.file_size,
+        "owner_emp_id": session_user.emp_id,
         "status": "pending",
         "uploaded_at": None
     }
@@ -52,7 +57,11 @@ async def create_upload_session(meta: MetaRequest):
     )
 
 @router.put("/blob/{file_id}", response_model=IngestResponse)
-async def upload_file_blob(file_id: str, request: Request):
+async def upload_file_blob(
+    file_id: str,
+    request: Request,
+    session_user: SessionUser = Depends(get_current_user),
+):
     """
     Step 2: Stream the binary content for the registered file ID.
     Performs OCR if the file looks like an image.
@@ -62,6 +71,8 @@ async def upload_file_blob(file_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Upload session not found")
     
     session = upload_sessions[file_id]
+    if session.get("owner_emp_id") != session_user.emp_id:
+        raise HTTPException(status_code=403, detail="Upload session does not belong to you")
     
     try:
         # Read the raw binary body

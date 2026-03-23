@@ -5,10 +5,11 @@ from datetime import datetime
 from app.schemas.report import JobStatus, ReportPayload
 
 class Job:
-    def __init__(self, job_id: str, file_ids: List[str], project_id: str):
+    def __init__(self, job_id: str, file_ids: List[str], project_id: str, owner_emp_id: str):
         self.job_id = job_id
         self.file_ids = file_ids
         self.project_id = project_id
+        self.owner_emp_id = owner_emp_id
         self.status = JobStatus.PENDING
         self.progress = 0
         self.error: Optional[str] = None
@@ -30,20 +31,20 @@ idempotency_index: Dict[str, str] = {}
 
 class JobManager:
     @staticmethod
-    def _generate_idempotency_key(file_ids: List[str]) -> str:
+    def _generate_idempotency_key(file_ids: List[str], owner_emp_id: str) -> str:
         # Sort to ensure order doesn't matter
         sorted_ids = sorted(file_ids)
-        combined = "".join(sorted_ids)
+        combined = f"{owner_emp_id}:{''.join(sorted_ids)}"
         return hashlib.sha256(combined.encode()).hexdigest()
 
     @staticmethod
-    def create_job(file_ids: List[str], project_id: str) -> tuple[str, bool]:
+    def create_job(file_ids: List[str], project_id: str, owner_emp_id: str) -> tuple[str, bool]:
         """
         Creates a new job or returns existing one if duplicate (Idempotency).
         Returns: (job_id, is_existing)
         Invariant: Idempotency = same file_ids + same logic version -> same job.
         """
-        key = JobManager._generate_idempotency_key(file_ids)
+        key = JobManager._generate_idempotency_key(file_ids, owner_emp_id)
         
         # Check Idempotency
         if key in idempotency_index:
@@ -59,7 +60,7 @@ class JobManager:
         
         # Create New
         job_id = str(uuid.uuid4())
-        new_job = Job(job_id, file_ids, project_id)
+        new_job = Job(job_id, file_ids, project_id, owner_emp_id)
         
         jobs_db[job_id] = new_job
         idempotency_index[key] = job_id
@@ -114,6 +115,6 @@ class JobManager:
             if status == JobStatus.FAILED:
                  # Reconstruct key to remove from index? 
                  # We'd need to store key on Job or recompute. Recomputing is cheap.
-                 key = JobManager._generate_idempotency_key(job.file_ids)
+                 key = JobManager._generate_idempotency_key(job.file_ids, job.owner_emp_id)
                  if key in idempotency_index and idempotency_index[key] == job_id:
                      del idempotency_index[key]

@@ -2,10 +2,55 @@ import { uploadWithRetry as requestUploadWithRetry } from './retry';
 
 const API_BASE_URL = "http://localhost:8000";
 
+const isDemo = () => localStorage.getItem("cortex_demo_mode") === "true";
+
 // Helper to get token
 const getAuthHeaders = () => {
     const token = localStorage.getItem("cortex_token");
     return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const triggerSessionLock = () => {
+    localStorage.removeItem("cortex_token");
+    window.dispatchEvent(new Event("cortex:session-expired"));
+    if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+    }
+};
+
+const handleSessionFailure = async (response) => {
+    const errorData = await response.json().catch(() => ({ detail: "" }));
+    const detail = errorData.detail || "";
+    const isSessionFailure = response.status === 401 || (
+        response.status === 403 &&
+        typeof detail === "string" &&
+        (detail.toLowerCase().includes("session") || detail.toLowerCase().includes("invalid token"))
+    );
+    if (isSessionFailure) {
+        if (typeof detail === "string" && !detail.includes("Slack error")) {
+            triggerSessionLock();
+        }
+    }
+    return detail;
+};
+
+const getErrorDetail = async (response, fallbackMessage) => {
+    const errorData = await response.json().catch(() => ({ detail: fallbackMessage }));
+    let detail = errorData.detail || fallbackMessage;
+    if (typeof detail === "object") {
+        detail = JSON.stringify(detail);
+    }
+    return detail;
+};
+
+const throwApiError = async (response, fallbackMessage) => {
+    if (response.ok) {
+        return;
+    }
+
+    const sessionDetail = await handleSessionFailure(response.clone());
+    const detail = sessionDetail || await getErrorDetail(response, fallbackMessage);
+    throw new Error(detail || fallbackMessage);
 };
 
 export const api = {
@@ -65,12 +110,33 @@ export const api = {
         });
 
         if (!response.ok) {
-            throw new Error("Unauthorized");
+            await throwApiError(response, "Unauthorized");
+        }
+        return response.json();
+    },
+
+    updateProfile: async (fullName, deptId) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
+        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({
+                full_name: fullName,
+                dept_id: deptId
+            }),
+        });
+
+        if (!response.ok) {
+            await throwApiError(response, "Profile update failed");
         }
         return response.json();
     },
 
     uploadFile: async (file, onProgress, onStatus) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         try {
             // Step 1: Send Metadata
             const metaResponse = await fetch(`${API_BASE_URL}/ingest/meta`, {
@@ -87,7 +153,7 @@ export const api = {
             });
 
             if (!metaResponse.ok) {
-                throw new Error("Metadata registration failed");
+                await throwApiError(metaResponse, "Metadata registration failed");
             }
 
             const metaData = await metaResponse.json();
@@ -101,11 +167,20 @@ export const api = {
             return await requestUploadWithRetry(uploadUrl, headers, file, onProgress, onStatus);
 
         } catch (error) {
+            const detail = String(error?.message || "").toLowerCase();
+            const isSessionFailure = error?.status === 401 || (
+                error?.status === 403 &&
+                (detail.includes("session") || detail.includes("invalid token"))
+            );
+            if (isSessionFailure) {
+                triggerSessionLock();
+            }
             throw error;
         }
     },
 
     createReportJob: async (fileIds, projectId = "default") => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/reports/jobs`, {
             method: "POST",
             headers: {
@@ -119,13 +194,27 @@ export const api = {
         });
 
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ detail: "Job Creation Failed" }));
-            throw new Error(error.detail || "Job Creation Failed");
+            await throwApiError(response, "Job Creation Failed");
+        }
+        return response.json();
+    },
+
+    getReportJob: async (jobId) => {
+        if (isDemo()) return {};
+        const response = await fetch(`${API_BASE_URL}/reports/jobs/${jobId}`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const detail = await handleSessionFailure(response);
+            throw new Error(detail || "Job Poll Failed");
         }
         return response.json();
     },
 
     createIssue: async (payload) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const isChild = payload.type === "existing";
         const url = isChild
             ? `${API_BASE_URL}/service/issues/child`
@@ -141,15 +230,13 @@ export const api = {
         });
 
         if (!response.ok) {
-            const err = await response.json().catch(() => ({ detail: "Issue submission failed" }));
-            let msg = err.detail || "Issue submission failed";
-            if (typeof msg === "object") msg = JSON.stringify(msg);
-            throw new Error(msg);
+            await throwApiError(response, "Issue submission failed");
         }
         return response.json();
     },
 
     getIssues: async (status = "open", limit = 50, deptId = "", empId = "", role = "") => {
+        if (isDemo()) return [];
         const params = new URLSearchParams({
             status,
             limit: limit.toString(),
@@ -162,55 +249,37 @@ export const api = {
             headers: getAuthHeaders()
         });
         if (!response.ok) {
-            if (response.status === 401 || response.status === 500) {
-                const text = await response.clone().text().catch(() => "");
-                if (text.includes("JWT expired")) {
-                    localStorage.removeItem("cortex_token");
-                    window.location.href = "/login";
-                }
-            }
-            throw new Error("Failed to fetch issues");
+            await throwApiError(response, "Failed to fetch issues");
         }
         return response.json();
     },
 
     getIssueGraph: async (issueId) => {
+        if (isDemo()) return { nodes: [], edges: [] };
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/graph`, {
             method: "GET",
             headers: getAuthHeaders()
         });
         if (!response.ok) {
-            if (response.status === 401 || response.status === 500) {
-                const text = await response.clone().text().catch(() => "");
-                if (text.includes("JWT expired")) {
-                    localStorage.removeItem("cortex_token");
-                    window.location.href = "/login";
-                }
-            }
-            throw new Error("Failed to fetch issue graph");
+            await throwApiError(response, "Failed to fetch issue graph");
         }
         return response.json();
     },
 
     getIssue: async (issueId) => {
+        if (isDemo()) throw new Error("Issue not found in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}`, {
             method: "GET",
             headers: getAuthHeaders()
         });
         if (!response.ok) {
-            if (response.status === 401 || response.status === 500) {
-                const text = await response.clone().text().catch(() => "");
-                if (text.includes("JWT expired")) {
-                    localStorage.removeItem("cortex_token");
-                    window.location.href = "/login";
-                }
-            }
-            throw new Error("Failed to fetch issue details");
+            await throwApiError(response, "Failed to fetch issue details");
         }
         return response.json();
     },
 
     tagIssueNode: async (issueId, tag, options = {}, lastUpdatedAt = null) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/tag`, {
             method: "PATCH",
             headers: {
@@ -224,13 +293,13 @@ export const api = {
             })
         });
         if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || "Failed to tag node");
+            await throwApiError(response, "Failed to tag node");
         }
         return response.json();
     },
 
     connectNode: async (nodeId, connectedToId, empId) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/node/${nodeId}/connect`, {
             method: "PATCH",
             headers: {
@@ -240,13 +309,13 @@ export const api = {
             body: JSON.stringify({ connected_to_id: connectedToId, emp_id: empId })
         });
         if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || "Failed to connect node.");
+            await throwApiError(response, "Failed to connect node.");
         }
         return response.json();
     },
 
     updateNodePosition: async (nodeId, x, y) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/node/${nodeId}/position`, {
             method: "PATCH",
             headers: {
@@ -256,12 +325,13 @@ export const api = {
             body: JSON.stringify({ layout_x: x, layout_y: y })
         });
         if (!response.ok) {
-            throw new Error("Failed to save node position");
+            await throwApiError(response, "Failed to save node position");
         }
         return response.json();
     },
 
     updateNodeInfo: async (nodeId, payload, lastUpdatedAt = null) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/node/${nodeId}/info`, {
             method: "PATCH",
             headers: {
@@ -274,13 +344,13 @@ export const api = {
             })
         });
         if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || "Failed to update node info");
+            await throwApiError(response, "Failed to update node info");
         }
         return response.json();
     },
 
     mergeBlueBranch: async (targetParentId, branchNodes, metadataSummary, empId, deptId, documentation = {}) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/merge`, {
             method: "POST",
             headers: {
@@ -296,43 +366,83 @@ export const api = {
                 ...documentation
             })
         });
-        if (!response.ok) throw new Error("Failed to merge branch");
+        if (!response.ok) await throwApiError(response, "Failed to merge branch");
         return response.json();
     },
 
     deleteIssueNode: async (issueId) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}`, {
             method: "DELETE",
             headers: getAuthHeaders()
         });
         if (!response.ok) {
-            const err = await response.json().catch(() => ({ detail: "Failed to delete" }));
-            throw new Error(err.detail || "Failed to delete node");
-        }
-        return response.json();
-    },
-
-    restoreNode: async (nodeData) => {
-        const response = await fetch(`${API_BASE_URL}/service/issues/restore`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-            body: JSON.stringify(nodeData)
-        });
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({ detail: "Failed to restore" }));
-            throw new Error(err.detail || "Failed to restore node");
+            await throwApiError(response, "Failed to delete node");
         }
         return response.json();
     },
 
     closeIssue: async (issueId) => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/close`, {
             method: "POST",
             headers: getAuthHeaders()
         });
         if (!response.ok) {
-            const err = await response.json().catch(() => ({ detail: "Failed to close issue" }));
-            throw new Error(err.detail || "Failed to close issue");
+            await throwApiError(response, "Failed to close issue");
+        }
+        return response.json();
+    },
+
+    getSlackAuthorizeUrl: async () => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
+        const response = await fetch(`${API_BASE_URL}/service/slack/authorize`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            await throwApiError(response, "Failed to start Slack connection");
+        }
+        return response.json();
+    },
+
+    getSlackStatus: async () => {
+        if (isDemo()) return { is_connected: false };
+        const response = await fetch(`${API_BASE_URL}/service/slack/status`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            await throwApiError(response, "Failed to load Slack status");
+        }
+        return response.json();
+    },
+
+    disconnectSlack: async () => {
+        if (isDemo()) throw new Error("Action not allowed in Demo.");
+        const response = await fetch(`${API_BASE_URL}/service/slack/disconnect`, {
+            method: "POST",
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            await throwApiError(response, "Failed to disconnect Slack");
+        }
+        return response.json();
+    },
+
+    getSlackMessages: async (oldest = 0, limit = 10) => {
+        if (isDemo()) return [];
+        const params = new URLSearchParams({
+            oldest: String(oldest),
+            limit: String(limit)
+        });
+        const response = await fetch(`${API_BASE_URL}/service/slack/messages?${params.toString()}`, {
+            method: "GET",
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            await throwApiError(response, "Failed to fetch Slack messages");
         }
         return response.json();
     }
