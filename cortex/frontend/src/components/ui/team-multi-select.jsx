@@ -11,7 +11,7 @@ export const TEAM_OPTIONS = [
     { value: "D07", label: "Risk (D07)" },
 ]
 
-export function TeamMultiSelect({ selected = [], onChange }) {
+export function TeamMultiSelect({ selected = [], onChange, immutableValues = [], excludeValues = [] }) {
     const [open, setOpen] = useState(false)
     const ref = useRef()
 
@@ -22,6 +22,8 @@ export function TeamMultiSelect({ selected = [], onChange }) {
     }, [])
 
     const toggleTeam = (val) => {
+        if (immutableValues.includes(val)) return // Cannot toggle immutable values
+        
         if (selected.includes(val)) {
             onChange(selected.filter(t => t !== val))
         } else {
@@ -31,7 +33,8 @@ export function TeamMultiSelect({ selected = [], onChange }) {
 
     const unselectAll = (e) => {
         e.stopPropagation()
-        onChange([])
+        // Keep only immutable values
+        onChange(selected.filter(val => immutableValues.includes(val)))
     }
 
     // Render chips
@@ -41,22 +44,28 @@ export function TeamMultiSelect({ selected = [], onChange }) {
             <div className="flex flex-wrap gap-1.5">
                 {selected.map(val => {
                     const opt = TEAM_OPTIONS.find(o => o.value === val)
+                    const isImmutable = immutableValues.includes(val)
                     return (
                         <div key={val} className="flex items-center gap-1 bg-[var(--accent-blue-bright)]/10 border border-[var(--accent-blue-bright)]/20 px-2 py-0.5 rounded text-xs font-bold text-[var(--accent-blue-bright)]">
                             {opt ? opt.label.split(' ')[0] : val}
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); toggleTeam(val) }}
-                                className="hover:text-primary-custom ml-1 focus:outline-none"
-                            >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
+                            {!isImmutable && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); toggleTeam(val) }}
+                                    className="hover:text-primary-custom ml-1 focus:outline-none"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            )}
                         </div>
                     )
                 })}
             </div>
         )
     }
+
+    const canUnselect = selected.some(val => !immutableValues.includes(val))
+    const filteredOptions = TEAM_OPTIONS.filter(opt => !excludeValues.includes(opt.value))
 
     return (
         <div ref={ref} className="relative">
@@ -72,7 +81,7 @@ export function TeamMultiSelect({ selected = [], onChange }) {
                     {renderChips()}
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    {selected.length > 0 && (
+                    {canUnselect && (
                         <button type="button" onClick={unselectAll} className="text-secondary-custom/40 hover:text-[var(--semantic-error)] transition-colors focus:outline-none">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
@@ -96,25 +105,31 @@ export function TeamMultiSelect({ selected = [], onChange }) {
                         className="absolute top-[calc(100%+6px)] left-0 right-0 z-50
                             frosted-glass border border-subtle-custom fluid-rounded overflow-hidden soft-shadow-lg max-h-60 overflow-y-auto custom-scrollbar"
                     >
-                        {TEAM_OPTIONS.map(opt => {
-                            const isChecked = selected.includes(opt.value)
-                            return (
-                                <button
-                                    key={opt.value}
-                                    type="button"
-                                    onClick={() => toggleTeam(opt.value)}
-                                    className={`w-full px-4 py-2.5 flex items-center gap-3 font-mono text-sm
-                                        hover:bg-[var(--accent-blue-bright)]/10 transition-colors duration-150
-                                        ${isChecked ? "bg-[var(--accent-blue-bright)]/5" : ""}`}
-                                >
-                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors 
-                                        ${isChecked ? "bg-[var(--accent-blue-bright)] border-[var(--accent-blue-bright)]" : "border-subtle-custom bg-surface-custom"}`}>
-                                        {isChecked && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                    </div>
-                                    <span className={`tracking-wider ${isChecked ? "text-[var(--accent-blue-bright)]" : "text-primary-custom"}`}>{opt.label}</span>
-                                </button>
-                            )
-                        })}
+                        {filteredOptions.length > 0 ? (
+                            filteredOptions.map(opt => {
+                                const isChecked = selected.includes(opt.value)
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => toggleTeam(opt.value)}
+                                        className={`w-full px-4 py-2.5 flex items-center gap-3 font-mono text-sm
+                                            hover:bg-[var(--accent-blue-bright)]/10 transition-colors duration-150
+                                            ${isChecked ? "bg-[var(--accent-blue-bright)]/5" : ""}`}
+                                    >
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors 
+                                            ${isChecked ? "bg-[var(--accent-blue-bright)] border-[var(--accent-blue-bright)]" : "border-subtle-custom bg-surface-custom"}`}>
+                                            {isChecked && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                        <span className={`tracking-wider ${isChecked ? "text-[var(--accent-blue-bright)]" : "text-primary-custom"}`}>{opt.label}</span>
+                                    </button>
+                                )
+                            })
+                        ) : (
+                            <div className="px-4 py-3 text-xs font-mono text-secondary-custom/50 italic text-center uppercase tracking-widest">
+                                No additional teams available
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

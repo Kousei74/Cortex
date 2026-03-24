@@ -210,13 +210,22 @@ const Icons = {
 function NewIssueForm({ onSubmit, isLoading, user }) {
     const [form, setForm] = useState({
         issueHeader: "",
-        assignedTeams: [],
+        assignedTeams: user?.dept_id ? [user.dept_id] : [],
         priority: "",
         description: "",
         parentTicket: "",
         chainedTo: "",
         deadline: null,
     })
+
+    useEffect(() => {
+        if (user?.dept_id && !form.assignedTeams.includes(user.dept_id)) {
+            setForm(f => ({
+                ...f,
+                assignedTeams: Array.from(new Set([...f.assignedTeams, user.dept_id]))
+            }))
+        }
+    }, [user?.dept_id])
     const [error, setError] = useState(null)
 
     const set = (k) => (e) => setForm(f => ({ ...f, [k]: typeof e === "string" ? e : e.target.value }))
@@ -305,6 +314,8 @@ function NewIssueForm({ onSubmit, isLoading, user }) {
                 <TeamMultiSelect
                     selected={form.assignedTeams}
                     onChange={(val) => setForm(f => ({ ...f, assignedTeams: val }))}
+                    immutableValues={user?.dept_id ? [user.dept_id] : []}
+                    excludeValues={user?.dept_id ? [user.dept_id] : []}
                 />
             </div>
 
