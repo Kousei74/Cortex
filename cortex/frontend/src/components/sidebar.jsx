@@ -184,7 +184,15 @@ export default function Sidebar() {
         <div className="h-full bg-surface-custom border-r border-subtle-custom flex flex-col">
             {/* Header */}
             <div className="p-6 border-b border-subtle-custom">
-                <h1 className="text-3xl font-mono font-bold text-primary-custom tracking-wider">CORTEX</h1>
+                <h1 className="text-3xl font-bold text-primary-custom tracking-[0.15em] leading-none" style={{ fontFamily: "'League Spartan', sans-serif" }}>
+                    CORTEX{" "}
+                    <img
+                        src="/src/assets/Logo.svg"
+                        alt="Cortex Logo"
+                        className="inline-block w-7 h-7"
+                        style={{ filter: "brightness(0) invert(0.88)", verticalAlign: "text-bottom" }}
+                    />
+                </h1>
                 <p className="text-sm text-secondary-custom mt-1 font-mono">Customer Insights OS</p>
             </div>
 

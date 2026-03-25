@@ -156,7 +156,7 @@ export default function IssueTracker() {
                                 NO {statusFilter.toUpperCase()} ISSUES FOUND
                             </motion.div>
                         ) : (
-                            <motion.div key="grid" {...FADE_IN} className="max-w-6xl w-full mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 pb-8">
+                            <motion.div key={`grid-${statusFilter}`} {...FADE_IN} className="max-w-6xl w-full mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 pb-8">
                                 {issues.map((issue) => (
                                     <motion.button
                                         layout

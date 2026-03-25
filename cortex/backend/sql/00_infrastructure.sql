@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS departments (
     dept_name TEXT UNIQUE NOT NULL
 );
 
-ALTER TABLE departments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
 
 
 -- Seeding Departments handled in 06_seed_data.sql

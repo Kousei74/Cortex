@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { CortexLoader } from '@/components/cortex-loader';
+import { useAnalysisStore } from "@/store/analysisStore";
+import demoDashboard from "@/lib/mock_data/dashboard_payload.json";
 
 const AuthContext = createContext(null);
 
@@ -27,9 +29,16 @@ export const AuthProvider = ({ children }) => {
                     emp_id: "DEMO-01",
                     full_name: "Demo Presenter",
                     role: "senior",
-                    dept_id: "D00",
+                    dept_id: "D01",
                     email: "demo@cortex.local"
                 });
+
+                // Hydrate dashboard payload
+                if (demoDashboard && demoDashboard.payload) {
+                    useAnalysisStore.getState().setJobId(demoDashboard.job_id || "demo-job");
+                    useAnalysisStore.getState().setPayload(demoDashboard.payload);
+                }
+
                 setLoading(false);
                 return;
             }

@@ -631,15 +631,17 @@ export default function ServiceHub() {
                             Update Metadata
                         </TabsTrigger>
                     </TabsList>
-
-                    <TabsContent value="new" className="mt-0 focus-visible:ring-0 outline-none">
-                        <NewIssueForm onSubmit={handleCreate} isLoading={isLoading} user={user} />
-                    </TabsContent>
-
-                    <TabsContent value="update" className="mt-0 focus-visible:ring-0 outline-none">
-                        <UpdateIssueForm onSubmit={handleUpdate} isLoading={isLoading} user={user} />
-                    </TabsContent>
                 </Tabs>
+
+                <div className="mt-0">
+                    <AnimatePresence mode="wait">
+                        {activeTab === "new" ? (
+                            <NewIssueForm key="new" onSubmit={handleCreate} isLoading={isLoading} user={user} />
+                        ) : (
+                            <UpdateIssueForm key="update" onSubmit={handleUpdate} isLoading={isLoading} user={user} />
+                        )}
+                    </AnimatePresence>
+                </div>
             </motion.div>
         </div>
     )

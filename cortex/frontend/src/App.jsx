@@ -26,9 +26,19 @@ function AnimatedRoutes() {
     return (
         <AnimatePresence mode="wait">
             <Routes location={location}>
-                {/* Public Route */}
+                {/* Public Routes */}
                 <Route
                     path="/login"
+                    element={
+                        !isAuthenticated ? (
+                            <AuthFlow />
+                        ) : (
+                            <Navigate to="/" replace />
+                        )
+                    }
+                />
+                <Route
+                    path="/signup"
                     element={
                         !isAuthenticated ? (
                             <AuthFlow />

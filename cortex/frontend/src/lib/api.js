@@ -1,4 +1,11 @@
 import { uploadWithRetry as requestUploadWithRetry } from './retry';
+import demoDashboard from "./mock_data/dashboard_payload.json"
+import demoIssuesActive from "./mock_data/issues_active.json"
+import demoIssuesClosed from "./mock_data/issues_closed.json"
+import demoGraphActive from "./mock_data/graph_active.json"
+import demoGraphClosed from "./mock_data/graph_closed.json"
+
+
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -77,16 +84,49 @@ export const api = {
         return response.json();
     },
 
-    signup: async (email, password, fullName, deptId = null) => {
-        const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    requestAccess: async (fullName, email) => {
+        if (isDemo()) {
+            return { message: "Demo mode request received" };
+        }
+        const response = await fetch(`${API_BASE_URL}/auth/request-access`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                email,
-                password,
-                full_name: fullName,
-                dept_id: deptId
-            }),
+            body: JSON.stringify({ full_name: fullName, email }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: "Request failed" }));
+            let errorMessage = errorData.detail || "Request failed";
+            if (typeof errorMessage === 'object') {
+                errorMessage = JSON.stringify(errorMessage);
+            }
+            throw new Error(errorMessage);
+        }
+        return response.json();
+    },
+
+    verifyInvite: async (token) => {
+        if (isDemo()) {
+            return { email: "demo@cortex.local", dept_id: "demo-dept" };
+        }
+        const response = await fetch(`${API_BASE_URL}/auth/invite/verify?token=${encodeURIComponent(token)}`);
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: "Invalid token" }));
+            let errorMessage = errorData.detail || "Invalid token";
+            throw new Error(errorMessage);
+        }
+        return response.json();
+    },
+
+    completeInvite: async (token, fullName, password) => {
+        if (isDemo()) {
+            return { message: "Demo account created" };
+        }
+        const response = await fetch(`${API_BASE_URL}/auth/invite/complete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, full_name: fullName, password }),
         });
 
         if (!response.ok) {
@@ -200,7 +240,7 @@ export const api = {
     },
 
     getReportJob: async (jobId) => {
-        if (isDemo()) return {};
+        if (isDemo()) return demoDashboard;
         const response = await fetch(`${API_BASE_URL}/reports/jobs/${jobId}`, {
             method: "GET",
             headers: getAuthHeaders()
@@ -236,7 +276,11 @@ export const api = {
     },
 
     getIssues: async (status = "open", limit = 50, deptId = "", empId = "", role = "") => {
-        if (isDemo()) return [];
+        if (isDemo()) {
+            const data = status === "closed" ? demoIssuesClosed : demoIssuesActive;
+            console.log("[Demo] getIssues:", status, data);
+            return data;
+        }
         const params = new URLSearchParams({
             status,
             limit: limit.toString(),
@@ -255,7 +299,12 @@ export const api = {
     },
 
     getIssueGraph: async (issueId) => {
-        if (isDemo()) return { nodes: [], edges: [] };
+        if (isDemo()) {
+            const isAct = demoIssuesActive.some(iss => iss.issue_id === issueId);
+            const data = isAct ? demoGraphActive : demoGraphClosed;
+            console.log("[Demo] getIssueGraph:", issueId, data);
+            return data;
+        }
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}/graph`, {
             method: "GET",
             headers: getAuthHeaders()
@@ -267,7 +316,12 @@ export const api = {
     },
 
     getIssue: async (issueId) => {
-        if (isDemo()) throw new Error("Issue not found in Demo.");
+        if (isDemo()) {
+            const data = demoIssuesActive.find(iss => iss.issue_id === issueId) || 
+                         demoIssuesClosed.find(iss => iss.issue_id === issueId) || {};
+            console.log("[Demo] getIssue:", issueId, data);
+            return data;
+        }
         const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}`, {
             method: "GET",
             headers: getAuthHeaders()

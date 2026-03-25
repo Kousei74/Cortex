@@ -1,0 +1,35 @@
+[
+    {
+        "id": "ISS-99562F83",
+        "issue_id": "ISS-99562F83",
+        "type": "new",
+        "header": "Trial Active Issue",
+        "description": "Trial Active Issue",
+        "date": "2026-03-25",
+        "priority": "critical",
+        "status": "open",
+        "created_by": null,
+        "created_by_emp_id": "E004",
+        "emp_id": null,
+        "dept_id": "D02",
+        "assigned_dept_ids": [
+            "D02",
+            "D01"
+        ],
+        "parent_id": null,
+        "parent_ticket": null,
+        "parent_external_ticket": null,
+        "chained_issue_id": null,
+        "code_changes": null,
+        "code_language": null,
+        "deadline": null,
+        "metadata": {},
+        "created_at": "2026-03-25T16:43:13.447333+00:00",
+        "last_activity_at": "2026-03-25T16:48:03.697639+00:00",
+        "assigned_teams": [
+            "D02",
+            "D01"
+        ],
+        "last_activity": "2026-03-25T16:48:03.697639+00:00"
+    }
+]

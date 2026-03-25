@@ -1,1 +1,222 @@
-{}
+{
+    "job_id": "87f1401a-beb1-4923-b301-f78418fac0f1",
+    "status": "completed",
+    "progress": 100,
+    "error": null,
+    "payload": {
+        "layout_strategy": "SNAPSHOT_PIVOT",
+        "is_timestamp": false,
+        "meta": {
+            "kpis": {
+                "total_rows": 285913,
+                "total_items": 3396,
+                "mean_sentiment": 0.04601135275415948,
+                "avg_sentiment": 0.05,
+                "top_cluster": "Audio",
+                "top_class": "mixed positive"
+            }
+        },
+        "anchor_options": [
+            {
+                "id": "cluster_anchor",
+                "title": "",
+                "aspect_ratio": 2.0,
+                "type": "STACKED_BAR",
+                "categories": [
+                    "Audio",
+                    "Community",
+                    "Balance",
+                    "Gameplay",
+                    "Multiplayer",
+                    "Monetization",
+                    "Story",
+                    "Management",
+                    "Customer Support",
+                    "Platform",
+                    "DRM",
+                    "Replayability",
+                    "Performance",
+                    "Modding",
+                    "Graphics"
+                ],
+                "series": [
+                    {
+                        "name": "mixed negative",
+                        "data": [
+                            21958,
+                            3884,
+                            1892,
+                            2355,
+                            1869,
+                            467,
+                            392,
+                            507,
+                            257,
+                            42,
+                            45,
+                            0,
+                            15,
+                            22,
+                            0
+                        ],
+                        "color": "#ef4444"
+                    },
+                    {
+                        "name": "mixed positive",
+                        "data": [
+                            184177,
+                            36340,
+                            11052,
+                            8020,
+                            7171,
+                            1698,
+                            1339,
+                            1207,
+                            363,
+                            0,
+                            0,
+                            71,
+                            17,
+                            16,
+                            0
+                        ],
+                        "color": "#3b82f6"
+                    },
+                    {
+                        "name": "neutral",
+                        "data": [
+                            15,
+                            36,
+                            15,
+                            241,
+                            4,
+                            0,
+                            97,
+                            0,
+                            42,
+                            121,
+                            108,
+                            0,
+                            36,
+                            0,
+                            1
+                        ],
+                        "color": "#10b981"
+                    },
+                    {
+                        "name": "strongly negative",
+                        "data": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "color": "#f59e0b"
+                    },
+                    {
+                        "name": "strongly positive",
+                        "data": [
+                            10,
+                            0,
+                            1,
+                            3,
+                            6,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "color": "#6366f1"
+                    }
+                ]
+            }
+        ],
+        "default_option_index": 0,
+        "sub_anchor": {
+            "donut": {
+                "id": "sentiment_donut",
+                "title": "",
+                "aspect_ratio": 1.0,
+                "type": "DONUT",
+                "slices": [
+                    {
+                        "name": "mixed positive",
+                        "value": 251471,
+                        "percentage": 88.0
+                    },
+                    {
+                        "name": "mixed negative",
+                        "value": 33705,
+                        "percentage": 11.8
+                    },
+                    {
+                        "name": "neutral",
+                        "value": 716,
+                        "percentage": 0.3
+                    },
+                    {
+                        "name": "strongly positive",
+                        "value": 20,
+                        "percentage": 0.0
+                    },
+                    {
+                        "name": "strongly negative",
+                        "value": 1,
+                        "percentage": 0.0
+                    }
+                ]
+            },
+            "secondary_type": "TREEMAP",
+            "secondary": {
+                "id": "treemap",
+                "title": "",
+                "aspect_ratio": 1.5,
+                "type": "TREEMAP",
+                "nodes": [
+                    {
+                        "name": "Medal of Honor",
+                        "value": 79979
+                    },
+                    {
+                        "name": "FIFA",
+                        "value": 68148
+                    },
+                    {
+                        "name": "Mass Effect",
+                        "value": 55732
+                    },
+                    {
+                        "name": "Battle Field",
+                        "value": 42499
+                    },
+                    {
+                        "name": "The Sims",
+                        "value": 26881
+                    },
+                    {
+                        "name": "NBA",
+                        "value": 12674
+                    }
+                ]
+            }
+        }
+    },
+    "is_existing": false
+}
