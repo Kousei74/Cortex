@@ -1,0 +1,15 @@
+# Environment
+**/.env*
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
