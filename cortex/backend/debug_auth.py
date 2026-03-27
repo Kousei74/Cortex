@@ -1,9 +1,10 @@
 from app.core.database import supabase
 from app.core.security import verify_password
+import os
 
 def check_user():
     email = "trialdev11@gmail.com"
-    password = "password123"
+    password = os.getenv("CORTEX_DEBUG_PASSWORD")
     
     try:
         res = supabase.table("users").select("*").eq("email", email).execute()

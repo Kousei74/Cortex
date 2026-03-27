@@ -5,7 +5,7 @@ import os
 # Configuration
 BASE_URL = "http://localhost:8000"
 EMAIL = "verify_headless@test.com"
-PASSWORD = "password123"
+PASSWORD = os.getenv("CORTEX_DEBUG_PASSWORD")
 FILENAME = "test_ocr.txt"
 CONTENT = b"This is a test file for headless ingestion."
 

@@ -9,13 +9,15 @@ app = FastAPI(
 )
 
 # CORS Configuration
+from app.core.config import settings
+
 origins = [
-    "http://localhost:5173",  # Vite Dev Server
-    "http://localhost:5174",  # Vite Dev Server Alternate
-    "http://localhost:5175",  # Vite Dev Server Alternate 2
-    "http://localhost:5176",  # Vite Dev Server Alternate 3
+    "http://localhost:5173",
     "http://localhost:3000",
 ]
+
+if settings.FRONTEND_URL:
+    origins.append(settings.FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,

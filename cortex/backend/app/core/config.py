@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Cortex Engine"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-key-change-this")
+    SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
@@ -13,15 +13,15 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
     # Note: This MUST match the JWT Secret found in Supabase Dashboard -> Project Settings -> API
-    SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "cortex-shadow-engine-secret-key-change-me-to-supabase-jwt-secret")
+    SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET")
     # Required for auth endpoints to query the users table when RLS is enabled
     SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-
+    
     # Slack OAuth
     SLACK_CLIENT_ID:     str = os.getenv("SLACK_CLIENT_ID", "")
     SLACK_CLIENT_SECRET: str = os.getenv("SLACK_CLIENT_SECRET", "")
-    SLACK_REDIRECT_URI:  str = os.getenv("SLACK_REDIRECT_URI", "http://localhost:8000/service/slack/callback")
-    FRONTEND_URL:        str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    SLACK_REDIRECT_URI:  str = os.getenv("SLACK_REDIRECT_URI")
+    FRONTEND_URL:        str = os.getenv("FRONTEND_URL")
 
     # Visualization Constants (The Constitution)
     MAX_CLUSTERS: int = 50

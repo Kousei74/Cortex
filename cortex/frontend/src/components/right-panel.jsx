@@ -3,7 +3,7 @@ import { createPortal } from "react-dom"
 import { CortexLoader } from "./cortex-loader"
 import { Card } from "@/components/ui/card"
 import { ShieldCheck } from "lucide-react"
-import SlackIcon from "@/assets/slack.svg?react"
+import slackLogo from "@/assets/slack.svg"
 
 // ─── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_META = {
@@ -335,10 +335,7 @@ function SlackPanel() {
         <Card className="bg-primary-custom border-subtle-custom flex-1 flex flex-col overflow-hidden fluid-rounded-lg soft-shadow">
             <div className="px-4 py-3 border-b border-subtle-custom flex items-center justify-between">
                 <h3 className="text-lg font-mono font-bold text-primary-custom uppercase flex items-center gap-2">
-                    <SlackIcon
-                        className="text-secondary-custom"
-                        style={{ width: 16, height: 16, fill: "currentColor" }}
-                    />
+                    <SlackLogo size={20} className="text-secondary-custom" />
                     Slack
                 </h3>
                 {isConnected && (
@@ -358,10 +355,7 @@ function SlackPanel() {
                     <div className="w-16 h-16 frosted-glass border border-subtle-custom fluid-rounded-xl
                         flex items-center justify-center
                         shadow-[0_0_24px_rgba(0,191,255,0.08)]">
-                        <SlackIcon
-                            className="text-primary-custom"
-                            style={{ width: 28, height: 28, fill: "currentColor" }}
-                        />
+                        <SlackLogo size={48} className="text-primary-custom" />
                     </div>
 
                     <div className="text-center space-y-1">
@@ -383,10 +377,7 @@ function SlackPanel() {
                             hover:shadow-[0_0_12px_rgba(0,191,255,0.15)]
                             transition-all duration-300 disabled:opacity-50"
                     >
-                        <SlackIcon
-                            className="flex-shrink-0"
-                            style={{ width: 14, height: 14, fill: "currentColor" }}
-                        />
+                        <SlackLogo size={18} className="flex-shrink-0" />
                         {statusLoading ? "Checking…" : connecting ? "Connecting…" : "Sign in with Slack"}
                     </button>
                 </div>
@@ -426,42 +417,16 @@ function SlackPanel() {
     )
 }
 
-// ─── Slack SVG Logo — monochrome hashmark, matches site icon language ─────────
+// ─── Slack Animated Logo — Lottie-based ─────────
 function SlackLogo({ size = 20, className = "" }) {
-    // Slack's modern hashmark logo — two horizontal + two vertical rounded-pill arms
-    // Rendered as a single compound path, monochrome, inherits site text colour
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 127 127"
-            fill="currentColor"
+        <img 
+            src={slackLogo} 
+            alt="Slack" 
             className={className}
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            {/*
-                The Slack logo is 4 rounded rectangles (pills) arranged in a # grid.
-                Each arm is a rounded rect. The overlapping corners form the centre knot.
-                Based on Slack's official brand SVG, simplified to monochrome paths.
-            */}
-
-            {/* Vertical left arm — top nub + body */}
-            <path d="M27.2 80a13.6 13.6 0 1 1-27.2 0 13.6 13.6 0 0 1 27.2 0z" />
-            <path d="M13.6 52.8h40.8a13.6 13.6 0 0 1 0 27.2H13.6a13.6 13.6 0 0 1 0-27.2z" />
-
-            {/* Horizontal top arm — left nub + body */}
-            <path d="M47.2 13.6a13.6 13.6 0 1 1 0 27.2 13.6 13.6 0 0 1 0-27.2z" />
-            <path d="M47.2 27.2v40.8a13.6 13.6 0 0 1-27.2 0V27.2a13.6 13.6 0 0 1 27.2 0z" />
-
-            {/* Vertical right arm — bottom nub + body */}
-            <path d="M99.8 47.2A13.6 13.6 0 1 1 127 47.2a13.6 13.6 0 0 1-27.2 0z" />
-            <path d="M113.4 74.4H72.6a13.6 13.6 0 0 1 0-27.2h40.8a13.6 13.6 0 0 1 0 27.2z" />
-
-            {/* Horizontal bottom arm — right nub + body */}
-            <path d="M79.8 113.4a13.6 13.6 0 1 1 0-27.2 13.6 13.6 0 0 1 0 27.2z" />
-            <path d="M79.8 99.8V59a13.6 13.6 0 0 1 27.2 0v40.8a13.6 13.6 0 0 1-27.2 0z" />
-        </svg>
-    )
+            style={{ width: size, height: size, filter: "brightness(0) invert(1)" }}
+        />
+    );
 }
 
 // ─── Root Component ───────────────────────────────────────────────────────────
