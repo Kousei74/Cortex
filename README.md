@@ -6,14 +6,6 @@ CORTEX is a high-performance visualization and issue tracking platform built for
 
 ---
 
-## 🌟 Core Philosophy: 
-
-- User actions (upload, trigger analysis) happen *instantly* in the UI. The backend synchronizes asynchronously.
-- Heavy math runs server-side via FastAPI + background workers. Layouts use `Framer Motion` to prevent shifts.
-- Designed to run on zero-cost infrastructure (free-tier FastAPI + Supabase).
-
----
-
 ## 🏗 System Architecture
 
 ### 1. **Frontend:** (React + Vite)
