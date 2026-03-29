@@ -154,6 +154,41 @@ SUPABASE_KEY=your_service_role_key
 
 ---
 
+## 🧠 Issue Tracker & Resolution Engine
+
+CORTEX features a sophisticated issue management system designed for high-stakes data operations, combining structured governance with a visual resolution tree.
+
+### 1. **Service Hub (Governance)**
+Reserved for **Senior** roles, the Service Hub is the entry point for all project activities.
+- **Root Truth Definition**: Create high-level "ISS-" tickets to initialize resolution graphs.
+- **Metadata Management**: Update priorities, deadlines, and multi-team assignments.
+- **RBAC Enforcement**: Support Agents are restricted from this interface, ensuring centralized control over the project's root state.
+
+### 2. **Execution Ledger (Management)**
+The centralized command center for tracking ongoing and resolved activities across all departments.
+- **Status Filtering**: Toggle between `Active` and `Closed` issue pipelines.
+- **Visual Priority**: Real-time color-coding (Red, Orange, Yellow, Green) based on ticket urgency.
+- **Contextual Actions**: Right-click context menus for quick ID copying and navigation.
+
+### 3. **Resolution DAG (Visual Flow)**
+Powered by `React Flow`, this interactive Directed Acyclic Graph (DAG) manages the complex life-cycle of an issue resolution.
+- **Branching Logic**: Create sub-nodes from any point to explore parallel resolution tracks.
+- **Merge Validation**: "Blue" branches require mandatory documentation (code snippets + description) before merging back into the main trunk.
+- **30-Minute Security Lock**: 30-minute window for edits/deletions on new nodes to prevent historical data manipulation.
+- **Terminal State**: "Red" nodes represent terminal failure or termination, locking the entire graph from further modifications.
+
+### 🏷 Status Tag Logic
+
+| Tag | Color | Meaning |
+| :--- | :--- | :--- |
+| `pending` | ⚪ Gray | Initial state, awaiting agent action. |
+| `yellow` | 🟡 Yellow | Intermediate/Warning state, requires additional investigation. |
+| `blue` | 🔵 Blue | Validated branch; requires documentation/senior review for merge. |
+| `green` | 🟢 Green | Successful resolution path completed. |
+| `red` | 🔴 Red | Terminal failure/Termination state (Closes the entire issue). |
+
+---
+
 ## ✅ Feature Status
 
 | Feature | Status | Notes |
