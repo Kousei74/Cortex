@@ -38,6 +38,35 @@ class JobManager:
         return hashlib.sha256(combined.encode()).hexdigest()
 
     @staticmethod
+    def find_existing_job_id(file_ids: List[str], owner_emp_id: str) -> Optional[str]:
+        key = JobManager._generate_idempotency_key(file_ids, owner_emp_id)
+        existing_id = idempotency_index.get(key)
+        if not existing_id:
+            return None
+
+        existing_job = jobs_db.get(existing_id)
+        if not existing_job:
+            return None
+
+        if existing_job.status == JobStatus.FAILED:
+            del idempotency_index[key]
+            return None
+
+        return existing_id
+
+    @staticmethod
+    def count_active_jobs_for_owner(owner_emp_id: str) -> int:
+        return sum(
+            1
+            for job in jobs_db.values()
+            if job.owner_emp_id == owner_emp_id and job.status in {JobStatus.PENDING, JobStatus.PROCESSING}
+        )
+
+    @staticmethod
+    def count_pending_jobs() -> int:
+        return sum(1 for job in jobs_db.values() if job.status == JobStatus.PENDING)
+
+    @staticmethod
     def create_job(file_ids: List[str], project_id: str, owner_emp_id: str) -> tuple[str, bool]:
         """
         Creates a new job or returns existing one if duplicate (Idempotency).
@@ -45,18 +74,10 @@ class JobManager:
         Invariant: Idempotency = same file_ids + same logic version -> same job.
         """
         key = JobManager._generate_idempotency_key(file_ids, owner_emp_id)
-        
-        # Check Idempotency
-        if key in idempotency_index:
-            existing_id = idempotency_index[key]
-            # Verify it still exists in DB (could be expired/reaped)
-            if existing_id in jobs_db:
-                existing_job = jobs_db[existing_id]
-                if existing_job.status != JobStatus.FAILED:
-                     return existing_id, True
-                else:
-                    # It failed previously, remove old lock and let it run again
-                    del idempotency_index[key]
+
+        existing_id = JobManager.find_existing_job_id(file_ids, owner_emp_id)
+        if existing_id:
+            return existing_id, True
         
         # Create New
         job_id = str(uuid.uuid4())

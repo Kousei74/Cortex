@@ -1,10 +1,9 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { useAnalysisStore } from '@/store/analysisStore';
 import { api } from '@/lib/api';
+import { useTabLockStore } from '@/store/tabLockStore';
 
-// Constants
-const POLL_INTERVAL_MS = 2000;
-const TIMEOUT_MS = 45000;
+const REPORT_POLL_DELAYS_MS = [1000, 2000, 3000, 5000, 10000, 30000];
 
 /**
  * Hook for Zeno Polling Logic.
@@ -15,17 +14,12 @@ export function useReportPolling() {
         jobId, status, progress, payload, error,
         setJobId, updateStatus, setPayload, setError
     } = useAnalysisStore();
+    const isTabLocked = useTabLockStore(state => state.isLocked);
 
-    // Ref for timeout tracking to survive re-renders
-    const startTimeRef = useRef(null);
     const timeoutIdRef = useRef(null);
-    const pollIntervalIdRef = useRef(null);
+    const attemptRef = useRef(0);
 
     const stopPolling = useCallback(() => {
-        if (pollIntervalIdRef.current) {
-            clearInterval(pollIntervalIdRef.current);
-            pollIntervalIdRef.current = null;
-        }
         if (timeoutIdRef.current) {
             clearTimeout(timeoutIdRef.current);
             timeoutIdRef.current = null;
@@ -33,79 +27,62 @@ export function useReportPolling() {
     }, []);
 
     const startPolling = useCallback((newJobId) => {
-        if (!newJobId) return;
+        if (!newJobId || useTabLockStore.getState().isLocked) return;
 
-        // Reset State via Store
         setJobId(newJobId);
-        startTimeRef.current = Date.now();
-
-        // Clear any existing polling
         stopPolling();
+        attemptRef.current = 0;
 
-        // Timeout Safety
-        timeoutIdRef.current = setTimeout(() => {
-            stopPolling();
-            setError('Operation timed out. Please retry.');
-        }, TIMEOUT_MS);
-
-        // Polling Loop
         const poll = async () => {
-            if (!useAnalysisStore.getState().jobId) return; // Guard if reset happened
+            if (!useAnalysisStore.getState().jobId || useTabLockStore.getState().isLocked) return;
 
             try {
                 const data = await api.getReportJob(newJobId);
+                const normalizedStatus = (data.status || 'PENDING').toUpperCase();
 
-                // Update Store
-                updateStatus(data.status, data.progress);
+                updateStatus(normalizedStatus, data.progress);
 
-                // Terminal Checks
-                if (data.status === 'COMPLETED') {
+                if (normalizedStatus === 'COMPLETED') {
                     stopPolling();
                     setPayload(data.payload);
-                } else if (data.status === 'FAILED') {
-                    stopPolling();
-                    setError(data.error || 'Job Failed');
+                    return;
                 }
 
+                if (normalizedStatus === 'FAILED') {
+                    stopPolling();
+                    setError(data.error || 'Job Failed');
+                    return;
+                }
             } catch (err) {
                 console.error("Polling Error:", err);
+                if (String(err?.message || "").includes("Job not found")) {
+                    stopPolling();
+                    setError("Connection Lost: Job not found on server.");
+                    return;
+                }
             }
+
+            if (attemptRef.current >= REPORT_POLL_DELAYS_MS.length) {
+                return;
+            }
+
+            const nextDelay = REPORT_POLL_DELAYS_MS[attemptRef.current];
+            attemptRef.current += 1;
+            timeoutIdRef.current = setTimeout(poll, nextDelay);
         };
 
-        // Immediate first call
-        poll();
-        // Interval
-        pollIntervalIdRef.current = setInterval(poll, POLL_INTERVAL_MS);
+        const initialDelay = REPORT_POLL_DELAYS_MS[attemptRef.current];
+        attemptRef.current += 1;
+        timeoutIdRef.current = setTimeout(poll, initialDelay);
 
     }, [stopPolling, setJobId, updateStatus, setPayload, setError]);
 
-    // Cleanup on unmount (Optional: Do we want to stop polling if user leaves page? 
-    // YES, for V1. But if we move to global store, maybe we want it to continue?
-    // User wants "Dashboard" to show results. So if I navigate away, polling stops?
-    // FIX: Don't stop polling on unmount if we want background persistence.
-    // BUT we need a way to re-attach. 
-    // FOR NOW: Stick to existing logic, let's keep it simple. Dashboard will re-mount hook? 
-    // Actually, if Dashboard mounts the hook, it needs to know IF it should poll.
-    // Let's rely on the store state. If status is PENDING/PROCESSING, Dashboard should pick it up?
-    // We need a "Global Poller" or just let StagingArea start it.
-    // If I leave StagingArea, unmount kills polling.
-    // ACTION: Move Polling Logic to a transparent component or Context? 
-    // EASIER: Just let `run_cortex` architecture handle it? 
-    // Let's allow `startPolling` to be called, but `useEffect` cleanup should ONLY stop if component acts as "Controller".
-    // Actually, if we redirect to Dashboard, StagingArea unmounts -> Polling stops.
-    // WE NEED GLOBAL POLLING. 
-    // QUICK FIX: Don't cleanup on unmount. Let the interval run. (It's a React anti-pattern but works for single-page persistence if ref survives? No, ref dies with component).
-    // BETTER: Put polling inside `MainLayout` or `App`. 
-    // OR: Just navigate to Dashboard and let Dashboard START polling if ID exists?
-    // Let's Try: Dashboard simply READS from store. Who POLLS?
-    // I will trigger `startPolling` in StagingArea. 
-    // If StagingArea unmounts, polling DIES.
-    // SO: I must NOT redirect? OR I must move polling up.
-    // Let's move polling up to `MainLayout`. 
-    // WAIT. User wants "Upload -> Dashboard".
-    // I will make `useReportPolling` logic RESILIENT.
-    // Actually, I can just mount a <BackgroundPoller /> in App.jsx.
-    // Let's do that.
+    useEffect(() => {
+        if (isTabLocked) {
+            stopPolling();
+        }
+    }, [isTabLocked, stopPolling]);
+
     return {
         jobId,
         status,

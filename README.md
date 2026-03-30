@@ -1,212 +1,300 @@
 <h1 align="center">CORTEX</h1>
 
-> **Intelligence Dashboard & Data Ingestion Engine**
+> Closed-door analytics workspace for upload, visualization, collaboration, and issue governance.
 
-CORTEX is a high-performance visualization and issue tracking platform built for structured NLP pipeline outputs (classification, clustering, sentiment).
-
----
-
-## 🏗 System Architecture
-
-### 1. **Frontend:** (React + Vite)
-- **State**: `Zustand` — `analysisStore` (job/status/payload) + `workspaceStore` (view mode, cluster selection)
-- **Visuals**: `Framer Motion` for transitions, `Recharts` for all charts
-- **Loader**: Full-screen pulsing orb (`CortexLoader`) during processing — cyan for active, red on error
-- **Resilience**: Network status monitoring via `useNetworkStatus`
-
-### 2. **Backend:** (FastAPI + Python)
-- **Ingestion**: Files uploaded to `/ingest`, job enqueued immediately via PGMQ
-- **Processing**: `analysis.py` runs classification aggregation, sentiment, clustering, temporal detection
-- **Smart Layout**: Auto-detects whether to render **Temporal** (time-series) or **Snapshot** (pivot/stacked bar) based on data shape
-- **Validation**: IQR clamping, fragmentation fail-safes, degenerate visualization handling
+CORTEX is a FastAPI + React application for taking structured datasets, generating a dashboard payload, and coordinating follow-up work through a visual issue system. The current deployment target is a controlled internal rollout, not a horizontally scaled public SaaS.
 
 ---
 
-## 🛠 Tech Stack
+## What It Does
 
-### **Frontend**
+- **Data ingestion**: stage files in the frontend, register upload metadata, then stream the binary payload to the backend.
+- **Command center**: generate a report payload and render it in the dashboard once analysis completes.
+- **Service Hub**: create and update root issues, assign departments, and govern execution flow.
+- **Execution Ledger**: inspect active or closed issues and traverse the linked DAG for downstream work.
+- **Slack panel**: view-only notifications feed, bound to the main Cortex session.
+
+---
+
+## Current Deployment Profile
+
+This project is intentionally optimized for a **single backend instance**.
+
+- The report queue is in memory.
+- Upload sessions are in memory.
+- The background worker is started inside the FastAPI process.
+- The auth throttler is in memory.
+
+That means:
+
+- **Do deploy**: one FastAPI instance, one frontend, one background worker started by the app.
+- **Do not deploy yet**: multiple API replicas, multiple Uvicorn workers, load-balanced report processing, or distributed queueing.
+
+For the current department-scale rollout, that tradeoff is deliberate.
+
+---
+
+## Auth Model
+
+CORTEX now uses a **closed-door auth flow**:
+
+1. Public users can only **request access**.
+2. An admin approves the request manually.
+3. The admin sends a **one-time invite link**.
+4. The invite opens the existing signup route directly.
+5. The user completes signup and is redirected back to login.
+6. Normal login issues the Cortex JWT used across protected backend routes.
+
+Protected routes use the shared JWT/session dependency, so when the session expires the UI shell can still render, but backend-backed reads and writes are blocked until the user logs in again.
+
+---
+
+## Guardrails Added
+
+### Upload limits
+
+- Frontend file-size cap: **10 MB per file** by default
+- Backend hard limit: **10 MB per file** by default
+- Oversized uploads are rejected with `413`
+- Backend upload enforcement is done on:
+  - metadata registration
+  - `Content-Length`
+  - streamed byte counting during upload
+
+### Report queue controls
+
+- **Max active report jobs per user**: `1`
+- **Max global pending jobs**: `15`
+- Idempotent re-submission of the same file set returns the existing job instead of creating a duplicate
+
+### Polling behavior
+
+- Report polling backoff: `1s -> 2s -> 3s -> 5s -> 10s -> 30s -> stop`
+- Review Explorer polling: `15s`
+- Slack polling: `30s`
+- Locked tabs stop all report/review/slack polling
+
+### Single-tab session control
+
+- Only one active tab should control Cortex at a time
+- Locked tabs show the overlay and stop background polling
+- The user can explicitly reclaim the active tab with **Resume Here**
+
+---
+
+## Tech Stack
+
+### Frontend
+
 | Concern | Library |
 | :--- | :--- |
-| Framework | React 19, Vite |
-| Styling | TailwindCSS v4 |
-| Animation | Framer Motion |
-| Visualization | Recharts |
+| Framework | React + Vite |
 | State | Zustand |
-| Icons | Lucide React |
+| Styling | TailwindCSS |
+| Motion | Framer Motion |
+| Charts | Recharts |
 | UI Primitives | Radix UI |
 
-### **Backend**
+### Backend
+
 | Concern | Library |
 | :--- | :--- |
-| Framework | FastAPI (Python 3.12+) |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth (Google OAuth) |
-| Queue | PGMQ |
-| Processing | Pandas, scikit-learn |
+| Framework | FastAPI |
+| Auth | Custom JWT session layer |
+| Database | Supabase |
+| Processing | Pandas / scikit-learn pipeline in `analysis.py` |
+| Slack | Slack OAuth + server-side token storage |
 
 ---
 
-## 📂 Project Structure
+## Project Layout
 
 ```text
 cortex/
 ├── frontend/
 │   └── src/
 │       ├── components/
-│       │   ├── visualizers/
-│       │   │   ├── bar_chart.jsx       # Stacked bar
-│       │   │   ├── temporal-widget.jsx # Time-series line chart
-│       │   │   ├── donut-widget.jsx    # Donut with "Others" bucketing
-│       │   │   ├── treemap-widget.jsx  # Title treemap
-│       │   │   ├── scatter-widget.jsx  # Confidence scatter
-│       │   │   ├── kpi-card-widget.jsx # Single KPI card
-│       │   │   └── anchor-container.jsx# Shared chart wrapper (inset glow)
-│       │   ├── cortex-loader.jsx       # Pulsing orb loader
-│       │   ├── main-content.jsx        # Command Center layout + transitions
-│       │   ├── kpi-cards.jsx           # KPI card row
-│       │   ├── report-view.jsx         # Layout strategy router
-│       │   ├── sub-anchor-row.jsx      # Secondary chart row
-│       │   ├── staging-area.jsx        # File upload / data ingestion
-│       │   ├── sidebar.jsx             # Navigation
-│       │   ├── service-hub.jsx         # Issue creation (Seniors)
-│       │   ├── issue-tracker.jsx       # Execution ledger list/dag view
-│       │   ├── issue-flowchart.jsx     # Visual React Flow DAG resolution tree
-│       │   └── ui/                     # Shared UI primitives (team-multi-select, etc)
-│       ├── store/
-│       │   ├── analysisStore.js        # Job ID, status, payload
-│       │   └── workspace-store.js      # View mode, cluster selection
-│       └── hooks/
-│           ├── use-network-status.js
-│           └── use-resolution.js
-│
+│       │   ├── auth-flow.jsx
+│       │   ├── background-poller.jsx
+│       │   ├── service-hub.jsx
+│       │   ├── issue-tracker.jsx
+│       │   ├── single-instance-lock.jsx
+│       │   └── staging/
+│       ├── context/
+│       ├── hooks/
+│       ├── lib/
+│       └── store/
 └── backend/
     └── app/
-        ├── api/endpoints/              # ingest, reports, resolution
-        ├── services/analysis.py        # Core analysis engine
-        ├── schemas/report.py           # ReportPayload contract
-        └── core/config.py
+        ├── api/endpoints/
+        ├── core/
+        ├── schemas/
+        ├── services/
+        └── worker.py
 ```
 
 ---
 
-## 🚀 Getting Started
+## Local Setup
 
 ### Prerequisites
+
 - Node.js 20+
 - Python 3.12+
-- Supabase account (for auth + DB)
+- Supabase project
 
-### 1. Clone & Install
-```bash
-git clone https://github.com/Kousei74/Cortex.git
-cd Cortex
-```
+### Frontend
 
-### 2. Frontend Setup
 ```bash
 cd cortex/frontend
 npm install
 npm run dev
-# http://localhost:5173
 ```
 
-### 3. Backend Setup
+Frontend runs on `http://localhost:5173`.
+
+### Backend
+
 ```bash
 cd cortex/backend
 python -m venv venv
-# Windows: venv\Scripts\activate  |  Mac/Linux: source venv/bin/activate
+# Windows
+venv\Scripts\activate
+
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload --port 8000
-# Docs: http://localhost:8000/docs
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 4. Environment Variables
-Create `cortex/backend/.env`:
+Backend docs are available at `http://localhost:8000/docs`.
+
+---
+
+## Environment Variables
+
+Create `cortex/backend/.env` with the following values:
+
 ```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_service_role_key
+SUPABASE_URL=...
+SUPABASE_KEY=...
+SUPABASE_JWT_SECRET=...
+SUPABASE_SERVICE_ROLE_KEY=...
+
+SLACK_CLIENT_ID=...
+SLACK_CLIENT_SECRET=...
+SLACK_REDIRECT_URI=http://localhost:8000/service/slack/callback
+
+FRONTEND_URL=http://localhost:5173
+
+MAX_UPLOAD_SIZE_MB=10
+MAX_ACTIVE_JOBS_PER_USER=1
+MAX_PENDING_JOBS=15
+```
+
+Optional frontend envs in `cortex/frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000
+VITE_MAX_UPLOAD_SIZE_MB=10
 ```
 
 ---
 
-## 🔌 API Overview
+## Admin Invite Flow
 
-### Ingestion
-- `POST /ingest` — Upload CSV files, triggers async analysis job, returns `job_id`
+Pending access requests are approved manually.
 
-### Reports
-- `GET /reports/poll/{job_id}` — Poll job status (`PENDING` → `PROCESSING` → `COMPLETED` / `FAILED`). Returns full `ReportPayload` on completion.
+Current v1 workflow:
 
-### Resolution
-- `POST /resolution/resolve` — Apply bulk actions (merge, dismiss) to clusters
+1. User submits **Request Access**
+2. Admin reviews pending request
+3. Admin generates invite
+4. Admin sends invite URL manually
+5. User signs up through the invite page
 
----
+If you are using the helper approval script, run it from:
 
-## 📊 Dashboard Visualizations
-
-| Component | File | Description |
-| :--- | :--- | :--- |
-| Stacked Bar | `bar_chart.jsx` | 100% stacked bars per cluster/category with tube-effect rounding |
-| Time Series | `temporal-widget.jsx` | Confidence/sentiment over time |
-| Donut | `donut-widget.jsx` | Cluster distribution — slices ≤1% grouped into "Others" with breakdown tooltip |
-| Treemap | `treemap-widget.jsx` | Game/title hierarchy by volume |
-| KPI Cards | `kpi-cards.jsx` | Total reviews, top cluster, sentiment, avg polarity |
+```bash
+cd cortex/backend
+python admin_approve.py
+```
 
 ---
 
-## 🧠 Issue Tracker & Resolution Engine
+## API Overview
 
-CORTEX features a sophisticated issue management system designed for high-stakes data operations, combining structured governance with a visual resolution tree.
+### Public auth routes
 
-### 1. **Service Hub (Governance)**
-Reserved for **Senior** roles, the Service Hub is the entry point for all project activities.
-- **Root Truth Definition**: Create high-level "ISS-" tickets to initialize resolution graphs.
-- **Metadata Management**: Update priorities, deadlines, and multi-team assignments.
-- **RBAC Enforcement**: Support Agents are restricted from this interface, ensuring centralized control over the project's root state.
+- `POST /auth/request-access`
+- `GET /auth/invite/verify`
+- `POST /auth/invite/complete`
+- `POST /auth/login`
 
-### 2. **Execution Ledger (Management)**
-The centralized command center for tracking ongoing and resolved activities across all departments.
-- **Status Filtering**: Toggle between `Active` and `Closed` issue pipelines.
-- **Visual Priority**: Real-time color-coding (Red, Orange, Yellow, Green) based on ticket urgency.
-- **Contextual Actions**: Right-click context menus for quick ID copying and navigation.
+### Protected routes
 
-### 3. **Resolution DAG (Visual Flow)**
-Powered by `React Flow`, this interactive Directed Acyclic Graph (DAG) manages the complex life-cycle of an issue resolution.
-- **Branching Logic**: Create sub-nodes from any point to explore parallel resolution tracks.
-- **Merge Validation**: "Blue" branches require mandatory documentation (code snippets + description) before merging back into the main trunk.
-- **30-Minute Security Lock**: 30-minute window for edits/deletions on new nodes to prevent historical data manipulation.
-- **Terminal State**: "Red" nodes represent terminal failure or termination, locking the entire graph from further modifications.
+- `GET /auth/me`
+- `PUT /auth/profile`
+- `POST /ingest/meta`
+- `PUT /ingest/blob/{file_id}`
+- `POST /reports/jobs`
+- `GET /reports/jobs/{job_id}`
+- `/service/*`
+- `/resolution/*`
 
-### 🏷 Status Tag Logic
+### Upload + report flow
 
-| Tag | Color | Meaning |
-| :--- | :--- | :--- |
-| `pending` | ⚪ Gray | Initial state, awaiting agent action. |
-| `yellow` | 🟡 Yellow | Intermediate/Warning state, requires additional investigation. |
-| `blue` | 🔵 Blue | Validated branch; requires documentation/senior review for merge. |
-| `green` | 🟢 Green | Successful resolution path completed. |
-| `red` | 🔴 Red | Terminal failure/Termination state (Closes the entire issue). |
+1. `POST /ingest/meta`
+2. `PUT /ingest/blob/{file_id}`
+3. `POST /reports/jobs`
+4. `GET /reports/jobs/{job_id}` until complete
 
 ---
 
-## ✅ Feature Status
+## Service Hub + Execution Ledger
 
-| Feature | Status | Notes |
-| :--- | :---: | :--- |
-| Drag & Drop Ingestion | ✅ Done | Byte validation, multi-file |
-| Async Analysis Pipeline | ✅ Done | PGMQ-backed, status polling |
-| Smart Layout Detection | ✅ Done | Auto Temporal vs Snapshot pivot |
-| Orb Loader | ✅ Done | Full-screen pulsing orb, error state in red |
-| Command Center Dashboard | ✅ Done | KPI cards, charts, smooth fade-in transition |
-| Donut "Others" Bucketing | ✅ Done | Slices collapsed with hover breakdown |
-| Service Hub | ✅ Done | File new issues or link child issues |
-| Slack Integration | ✅ Done | Live channel notifications in sidebar |
-| Execution Ledger & Issue DAG | ✅ Done | Visual resolution tree, 🟢🔵🔴🟡 tag logic with React Flow |
-| Role-Based Governance | ✅ Done | Senior approvals via Service Hub, RLS array enforcement |
-| Phase 1 Resolution Logic | ✅ Done | Terminal enforcement, OCC, Yellow stacking, Context Menu ID copy |
-| Connection-Aware Tree Arch | ✅ Done | Backtracking-first logic for branching & gating |
-| Dashboard Aesthetics | ✅ Done | Fluid design system, premium hover effects, neon-dystopian theme |
-| Offline / Degraded Mode | 🚧 In Progress | Read-only IndexedDB fallback |
-| Canvas Fallback (>10k pts) | ⏳ Planned | VisX for large dataset rendering |
+### Service Hub
+
+- Senior-oriented governance surface
+- Creates root issues
+- Updates metadata like priority, deadline, and assigned departments
+- Uses server-side department ownership rules from the authenticated user
+
+### Execution Ledger
+
+- Lists active and closed issues
+- Shows a visual DAG for downstream branches
+- Enforces access rules from the current session JWT
+
+### Tag states
+
+| Tag | Meaning |
+| :--- | :--- |
+| `pending` | initial node state |
+| `yellow` | caution / intermediary state |
+| `blue` | validated branch pending merge |
+| `green` | accepted / merged path |
+| `red` | terminal branch |
+
+Undo/restore has been intentionally removed.
 
 ---
+
+## Known Constraints
+
+- Single-instance backend only
+- Report polling stops after the final backoff window; if a job is still running after that, revisit the dashboard to poll again
+- Locked tabs stop polling, but already in-flight network requests are not forcibly aborted
+- Invite approval is still a manual process in v1
+
+---
+
+## Status
+
+| Area | Status |
+| :--- | :--- |
+| Closed-door auth flow | ✅ |
+| JWT-gated backend routes | ✅ |
+| View-only Slack integration | ✅ |
+| Upload size enforcement | ✅ |
+| Report job caps | ✅ |
+| Tab lock polling shutdown | ✅ |
+| Multi-instance scaling | Not yet |

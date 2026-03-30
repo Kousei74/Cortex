@@ -10,7 +10,7 @@ from app.core.config import settings
 
 # SECRET KEY - In production, this should be in .env
 # We use the Supabase JWT Secret to ensure PostgREST accepts our tokens for RLS
-SECRET_KEY = settings.SUPABASE_JWT_SECRET
+SECRET_KEY = settings.SUPABASE_JWT_SECRET or settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 300
 

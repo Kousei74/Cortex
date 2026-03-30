@@ -1,43 +1,62 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTabLockStore } from '@/store/tabLockStore';
 
 const CHANNEL_NAME = 'cortex_session_lock';
-const MESSAGE_NEW_INSTANCE = 'NEW_INSTANCE';
 const MESSAGE_CLAIM_LOCK = 'CLAIM_LOCK';
+const ACTIVE_TAB_STORAGE_KEY = 'cortex_active_tab_id';
 
 export default function SingleInstanceLock() {
     const [isLocked, setIsLocked] = useState(false);
-    const [channel, setChannel] = useState(null);
+    const channelRef = useRef(null);
+    const tabIdRef = useRef(crypto.randomUUID());
+    const setGlobalLocked = useTabLockStore(state => state.setLocked);
+
+    const applyLockState = (locked) => {
+        setIsLocked(locked);
+        setGlobalLocked(locked);
+    };
+
+    const claimActiveTab = () => {
+        const tabId = tabIdRef.current;
+        localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tabId);
+        channelRef.current?.postMessage({ type: MESSAGE_CLAIM_LOCK, tabId });
+        applyLockState(false);
+    };
 
     useEffect(() => {
         const bc = new BroadcastChannel(CHANNEL_NAME);
-        setChannel(bc);
+        channelRef.current = bc;
 
-        // Listen for messages
         bc.onmessage = (event) => {
-            if (event.data === MESSAGE_NEW_INSTANCE) {
-                // A new instance has opened, lock this one
-                setIsLocked(true);
-            } else if (event.data === MESSAGE_CLAIM_LOCK) {
-                // Another instance claimed the lock, this one must lock
-                setIsLocked(true);
+            if (event.data?.type === MESSAGE_CLAIM_LOCK && event.data.tabId !== tabIdRef.current) {
+                applyLockState(true);
             }
         };
 
-        // Announce presence to lock other tabs
-        bc.postMessage(MESSAGE_NEW_INSTANCE);
+        const handleStorage = (event) => {
+            if (event.key !== ACTIVE_TAB_STORAGE_KEY || !event.newValue) {
+                return;
+            }
+
+            applyLockState(event.newValue !== tabIdRef.current);
+        };
+
+        window.addEventListener('storage', handleStorage);
+
+        claimActiveTab();
 
         return () => {
+            window.removeEventListener('storage', handleStorage);
+            if (localStorage.getItem(ACTIVE_TAB_STORAGE_KEY) === tabIdRef.current) {
+                localStorage.removeItem(ACTIVE_TAB_STORAGE_KEY);
+            }
             bc.close();
         };
     }, []);
 
     const handleResumeHere = () => {
-        if (channel) {
-            // Tell others to lock
-            channel.postMessage(MESSAGE_CLAIM_LOCK);
-            setIsLocked(false);
-        }
+        claimActiveTab();
     };
 
     return (

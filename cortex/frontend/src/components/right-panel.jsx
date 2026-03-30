@@ -29,11 +29,13 @@ import { useNavigate } from "react-router-dom"
 import { Copy } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import { useTabLockStore } from "@/store/tabLockStore"
 
 // ─── Review Explorer Card ─────────────────────────────────────────────────────
 function ReviewExplorer() {
     const { user } = useAuth()
     const navigate = useNavigate()
+    const isTabLocked = useTabLockStore(state => state.isLocked)
     const [issues, setIssues] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -60,7 +62,7 @@ function ReviewExplorer() {
     }, [])
 
     const fetchIssues = useCallback(async () => {
-        if (!user) return;
+        if (!user || isTabLocked) return;
         try {
             const data = await api.getIssues("open", 10, user.dept_id, user.emp_id, user.user_role || user.role);
             setIssues(data);
@@ -69,22 +71,30 @@ function ReviewExplorer() {
         } finally {
             setLoading(false)
         }
-    }, [user])
+    }, [isTabLocked, user])
 
-    // initial fetch + poll every 30s
+    // initial fetch + poll every 15s
     useEffect(() => {
+        if (!user || isTabLocked) {
+            return undefined
+        }
+
         fetchIssues()
-        const t = setInterval(fetchIssues, 30_000)
+        const t = setInterval(fetchIssues, 15_000)
         
         // Immediate fetch on tab focus for fast feedback
-        const handleFocus = () => fetchIssues()
+        const handleFocus = () => {
+            if (!isTabLocked) {
+                fetchIssues()
+            }
+        }
         window.addEventListener("focus", handleFocus)
 
         return () => {
             clearInterval(t)
             window.removeEventListener("focus", handleFocus)
         }
-    }, [fetchIssues])
+    }, [fetchIssues, isTabLocked, user])
 
     return (
         <Card className="bg-primary-custom border-subtle-custom flex-1 flex flex-col overflow-hidden fluid-rounded-lg soft-shadow">
@@ -217,6 +227,7 @@ const MAX_SLACK_MESSAGES = 10
 
 function SlackPanel() {
     const { user } = useAuth()
+    const isTabLocked = useTabLockStore(state => state.isLocked)
     const [isConnected, setIsConnected] = useState(false)
     const [messages, setMessages] = useState([])
     const [connecting, setConnecting] = useState(false)
@@ -305,10 +316,11 @@ function SlackPanel() {
 
     useEffect(() => {
         if (!isConnected) return
+        if (isTabLocked) return
         fetchMessages()
-        const intervalId = setInterval(fetchMessages, 15_000)
+        const intervalId = setInterval(fetchMessages, 30_000)
         return () => clearInterval(intervalId)
-    }, [isConnected, fetchMessages])
+    }, [fetchMessages, isConnected, isTabLocked])
 
     const handleSignIn = async () => {
         try {

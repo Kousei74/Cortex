@@ -3,6 +3,7 @@ from app.schemas.report import ReportRequest, ReportResponse, JobStatus
 from app.services.jobs import JobManager
 from app.core.queue import QueueService
 from app.core.security import SessionUser, get_current_user
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -15,6 +16,30 @@ async def create_report_job(
     Step 5: Job Handler
     Accepts file_ids, expects 202/201, returns job_id.
     """
+    existing_job_id = JobManager.find_existing_job_id(request.file_ids, session_user.emp_id)
+    if existing_job_id:
+        job = JobManager.get_job(existing_job_id)
+        return ReportResponse(
+            job_id=job.job_id,
+            status=job.status,
+            progress=job.progress,
+            error=job.error,
+            payload=job.payload,
+            is_existing=True
+        )
+
+    if JobManager.count_active_jobs_for_owner(session_user.emp_id) >= settings.MAX_ACTIVE_JOBS_PER_USER:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"You can only have {settings.MAX_ACTIVE_JOBS_PER_USER} active report job at a time."
+        )
+
+    if JobManager.count_pending_jobs() >= settings.MAX_PENDING_JOBS:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Report queue is full right now. Please try again in a moment."
+        )
+
     # 1. Create Job (Idempotent)
     job_id, is_existing = JobManager.create_job(request.file_ids, request.project_id, session_user.emp_id)
     

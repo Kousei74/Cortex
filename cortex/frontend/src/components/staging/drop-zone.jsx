@@ -11,13 +11,33 @@ import { toast } from 'sonner'
 import { useState } from 'react'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { validateMagicBytes } from '@/lib/magic-bytes'
+import { MAX_UPLOAD_SIZE_BYTES, getUploadLimitLabel } from '@/lib/upload-constraints'
 
 export function DropZone({ onUploadComplete }) {
     const { addFiles, files, removeFile, uploadBatch } = useStagingStore()
     const [showResetDialog, setShowResetDialog] = useState(false)
 
-    const onDrop = useCallback(acceptedFiles => {
-        addFiles(acceptedFiles);
+    const onDrop = useCallback(async (acceptedFiles) => {
+        const validFiles = []
+
+        for (const file of acceptedFiles) {
+            if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+                toast.error(`${file.name} exceeds the ${getUploadLimitLabel()} upload limit.`)
+                continue
+            }
+
+            const isValidFile = await validateMagicBytes(file)
+            if (!isValidFile) {
+                toast.error(`${file.name} failed file signature validation.`)
+                continue
+            }
+
+            validFiles.push(file)
+        }
+
+        if (validFiles.length > 0) {
+            addFiles(validFiles)
+        }
     }, [addFiles]);
 
     const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
@@ -48,7 +68,7 @@ export function DropZone({ onUploadComplete }) {
         } catch (error) {
             console.error("Upload Batch Failed:", error);
             // Show user-friendly toast
-            toast.error("Upload failed. Please reload the page.");
+            toast.error(error?.message || "Upload failed. Please reload the page.");
         }
     }
 
@@ -113,7 +133,7 @@ export function DropZone({ onUploadComplete }) {
                     </motion.div>
                     <h3 className="text-xl font-mono font-bold text-primary-custom mb-2">INITIATE NEURAL LINK</h3>
                     <p className="text-secondary-custom font-mono text-sm max-w-md">
-                        Drag and drop data fragments (CSV, JSON, LOG) to stage for ingestion.
+                        Drag and drop data fragments (CSV, JSON, LOG) to stage for ingestion. Maximum {getUploadLimitLabel()} per file.
                     </p>
                 </div>
             )}
