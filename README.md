@@ -2,7 +2,7 @@
 
 > Closed-door analytics workspace for upload, visualization, collaboration, and issue governance.
 
-CORTEX is a FastAPI + React application for taking structured datasets, generating a dashboard payload, and coordinating follow-up work through a visual issue system. The current deployment target is a controlled internal rollout, not a horizontally scaled public SaaS.
+CORTEX is a FastAPI + React application for taking structured datasets, generating a dashboard payload, and coordinating follow-up work through a visual issue tracking system. The current deployment target is a controlled internal rollout, not a horizontally scaled public SaaS.
 
 ---
 
