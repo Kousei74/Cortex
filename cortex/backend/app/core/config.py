@@ -21,6 +21,20 @@ class Settings(BaseSettings):
     SLACK_CLIENT_SECRET: str = ""
     SLACK_REDIRECT_URI: str = "http://localhost:8000/service/slack/callback"
     FRONTEND_URL: str = "http://localhost:5173"
+    INVITE_SIGNUP_URL: str = "http://localhost:5173/signup"
+
+    # Invite / Request Access Operations
+    INVITE_TOKEN_EXPIRE_MINUTES: int = 60
+    AUTH_PENDING_RETENTION_DAYS: int = 30
+    AUTH_REJECTED_RETENTION_DAYS: int = 30
+    AUTH_EXPIRED_RETENTION_DAYS: int = 7
+    AUTH_APPROVAL_PAGE_SIZE: int = 50
+    AUTH_ADMIN_EMP_ID: str = ""
+
+    # Resend
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = ""
+    RESEND_FROM_NAME: str = "Cortex"
 
     # Visualization Constants (The Constitution)
     MAX_CLUSTERS: int = 50

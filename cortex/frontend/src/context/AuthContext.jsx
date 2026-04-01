@@ -86,12 +86,8 @@ export const AuthProvider = ({ children }) => {
         // User will be fetched by the effect
     };
 
-    const signup = async (email, password, fullName) => {
-        await api.signup(email, password, fullName);
-        // Auto-login after signup? Or require explicit login. 
-        // Let's implement explicit login for security, but for flow fluidity we could auto-login.
-        // Standard flow: Signup -> Login automatically.
-        await login(email, password);
+    const signup = async () => {
+        throw new Error("Direct signup is disabled. Use the invite-based signup flow.");
     };
 
     const logout = () => {

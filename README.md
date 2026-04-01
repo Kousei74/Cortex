@@ -45,6 +45,8 @@ CORTEX now uses a **closed-door auth flow**:
 5. The user completes signup and is redirected back to login.
 6. Normal login issues the Cortex JWT used across protected backend routes.
 
+Auth approvals are intentionally managed through a **local admin script**, not an in-app admin dashboard, to keep the approval surface off the public app.
+
 Protected routes use the shared JWT/session dependency, so when the session expires the UI shell can still render, but backend-backed reads and writes are blocked until the user logs in again.
 
 ---
@@ -139,7 +141,7 @@ cortex/
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22 recommended (`^20.19.0 || >=22.12.0` supported for the frontend toolchain)
 - Python 3.12+
 - Supabase project
 
@@ -152,6 +154,10 @@ npm run dev
 ```
 
 Frontend runs on `http://localhost:5173`.
+
+Notes:
+- The frontend is built with **Vite 8**
+- Run frontend package management commands from `cortex/frontend`, not the repo root
 
 ### Backend
 
@@ -184,6 +190,11 @@ SLACK_CLIENT_SECRET=...
 SLACK_REDIRECT_URI=http://localhost:8000/service/slack/callback
 
 FRONTEND_URL=http://localhost:5173
+INVITE_SIGNUP_URL=http://localhost:5173/signup
+
+RESEND_API_KEY=...
+RESEND_FROM_EMAIL=...
+RESEND_FROM_NAME=Cortex
 
 MAX_UPLOAD_SIZE_MB=10
 MAX_ACTIVE_JOBS_PER_USER=1
@@ -206,10 +217,11 @@ Pending access requests are approved manually.
 Current v1 workflow:
 
 1. User submits **Request Access**
-2. Admin reviews pending request
-3. Admin generates invite
-4. Admin sends invite URL manually
+2. Admin runs the local approval script
+3. Admin reviews a paginated pending queue, optionally searches by name/email, and selects a reviewed batch
+4. The script sends invite emails through Resend and auto-rejects the shown but unselected requests from that reviewed batch
 5. User signs up through the invite page
+6. Successful signup deletes the invite row and the request row immediately
 
 If you are using the helper approval script, run it from:
 
@@ -217,6 +229,13 @@ If you are using the helper approval script, run it from:
 cd cortex/backend
 python admin_approve.py
 ```
+
+The script exposes two menu actions:
+
+- `Approval`
+- `Cleanup`
+
+Cleanup also runs automatically before auth/admin operations so expired invite state is corrected continuously.
 
 ---
 
@@ -284,6 +303,7 @@ Undo/restore has been intentionally removed.
 - Report polling stops after the final backoff window; if a job is still running after that, revisit the dashboard to poll again
 - Locked tabs stop polling, but already in-flight network requests are not forcibly aborted
 - Invite approval is still a manual process in v1
+- Invite sending is handled by the local admin script via Resend
 
 ---
 

@@ -3,7 +3,15 @@ from pydantic import BaseModel, EmailStr
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.security import create_access_token, get_password_hash, verify_password, SessionUser, get_current_user
 from app.core.database import service_role_supabase as supabase
-from typing import Optional, Literal
+from app.services.auth_ops import (
+    get_invite_by_token,
+    get_request_by_email,
+    get_user_by_email,
+    normalize_email,
+    normalize_name,
+    run_auth_cleanup,
+)
+from typing import Optional
 from datetime import timedelta, datetime, timezone
 import time
 
@@ -42,6 +50,7 @@ class InviteCompleteSubmit(BaseModel):
 
 class InviteVerifyResponse(BaseModel):
     email: EmailStr
+    full_name: str
     dept_id: str
 
 class UserUpdate(BaseModel):
@@ -64,19 +73,29 @@ class Token(BaseModel):
 
 @router.post("/request-access")
 def request_access(data: AccessRequestSubmit, request: Request, _ = Depends(rate_limit_auth)):
+    run_auth_cleanup()
+
+    email = normalize_email(data.email)
+    full_name = normalize_name(data.full_name)
+    if not full_name:
+        raise HTTPException(status_code=400, detail="Full name is required")
+
     try:
-        # Check if already pending or approved
-        res = supabase.table("access_requests").select("status").eq("email", data.email).execute()
-        if res.data and res.data[0]["status"] in ["pending", "approved"]:
+        if get_user_by_email(email):
             return {"message": "Request received"}
-            
+
+        existing_request = get_request_by_email(email)
+        if existing_request and existing_request.get("status") in ["pending", "approved"]:
+            return {"message": "Request received"}
+
         new_req = {
-            "email": data.email,
-            "full_name": data.full_name,
-            "status": "pending"
+            "email": email,
+            "full_name": full_name,
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "reviewed_at": None,
+            "reviewed_by": None,
         }
-        # Upsert just in case it was rejected previously to let them request again
-        # Note: assuming email is unique index on access_requests
         supabase.table("access_requests").upsert(new_req, on_conflict="email").execute()
     except Exception as e:
         if isinstance(e, HTTPException):
@@ -86,61 +105,62 @@ def request_access(data: AccessRequestSubmit, request: Request, _ = Depends(rate
     return {"message": "Request received"}
 
 @router.get("/invite/verify", response_model=InviteVerifyResponse)
-def verify_invite(token: str):
-    try:
-        res = supabase.table("invite_tokens").select("*").eq("token_hash", token).execute()
-        invite = res.data[0] if res.data else None
-    except Exception:
-        raise HTTPException(status_code=500, detail="Database error")
-        
+def verify_invite(token: str, request: Request, _ = Depends(rate_limit_auth)):
+    run_auth_cleanup()
+    invite = get_invite_by_token(token)
     if not invite:
         raise HTTPException(status_code=400, detail="Invalid token")
-        
-    expires_at = datetime.fromisoformat(invite["expires_at"].replace('Z', '+00:00'))
-    if datetime.now(timezone.utc) > expires_at:
-        raise HTTPException(status_code=400, detail="Token expired")
-        
+
+    try:
+        req_res = supabase.table("access_requests").select("full_name").eq("id", invite["request_id"]).execute()
+        request_row = req_res.data[0] if req_res.data else None
+    except Exception:
+        raise HTTPException(status_code=500, detail="Database error")
+
+    if not request_row:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
     return InviteVerifyResponse(
         email=invite["email"],
-        dept_id=invite["dept_id"]
+        full_name=request_row.get("full_name") or "",
+        dept_id=invite["approved_dept_id"]
     )
 
 @router.post("/invite/complete")
-def complete_invite(data: InviteCompleteSubmit):
-    try:
-        res = supabase.table("invite_tokens").select("*").eq("token_hash", data.token).execute()
-        invite = res.data[0] if res.data else None
-    except Exception:
-        raise HTTPException(status_code=500, detail="Database error")
-        
+def complete_invite(data: InviteCompleteSubmit, request: Request, _ = Depends(rate_limit_auth)):
+    run_auth_cleanup()
+    invite = get_invite_by_token(data.token)
     if not invite:
         raise HTTPException(status_code=400, detail="Invalid token")
-        
-    expires_at = datetime.fromisoformat(invite["expires_at"].replace('Z', '+00:00'))
-    if datetime.now(timezone.utc) > expires_at:
-        raise HTTPException(status_code=400, detail="Token expired")
 
-    res_user = supabase.table("users").select("email").eq("email", invite["email"]).execute()
+    submitted_name = normalize_name(data.full_name)
+    if not submitted_name:
+        raise HTTPException(status_code=400, detail="Full name is required")
+
+    request_res = supabase.table("access_requests").select("*").eq("id", invite["request_id"]).execute()
+    request_row = request_res.data[0] if request_res.data else None
+    if not request_row:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+    res_user = supabase.table("users").select("email").eq("email", normalize_email(invite["email"])).execute()
     if res_user.data:
         raise HTTPException(status_code=400, detail="User already registered")
 
     hashed_pw = get_password_hash(data.password)
     new_user = {
-        "email": invite["email"],
+        "email": normalize_email(invite["email"]),
         "hashed_password": hashed_pw,
-        "full_name": data.full_name,
-        "dept_id": invite["dept_id"],
-        "role": invite["role"],
+        "full_name": submitted_name or request_row.get("full_name"),
+        "dept_id": invite["approved_dept_id"],
+        "role": "team_member",
         "is_approved": True
     }
     
     try:
         supabase.table("users").insert(new_user).execute()
-        # Mark request as completed if request_id exists
-        if invite.get("request_id"):
-            supabase.table("access_requests").update({"status": "completed"}).eq("id", invite["request_id"]).execute()
-        # Delete invite 
-        supabase.table("invite_tokens").delete().eq("token_hash", data.token).execute()
+        if invite.get("id"):
+            supabase.table("invite_tokens").delete().eq("id", invite["id"]).execute()
+        supabase.table("access_requests").delete().eq("id", request_row["id"]).execute()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Signup failed: {str(e)}")
         
@@ -151,7 +171,8 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), _ 
     # OAuth2PasswordRequestForm expects 'username' and 'password'
     # We map 'username' to 'email'
     try:
-        res = supabase.table("users").select("*").eq("email", form_data.username).execute()
+        email = normalize_email(form_data.username)
+        res = supabase.table("users").select("*").eq("email", email).execute()
         user = res.data[0] if res.data else None
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

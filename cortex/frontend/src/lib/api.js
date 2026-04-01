@@ -107,7 +107,7 @@ export const api = {
 
     verifyInvite: async (token) => {
         if (isDemo()) {
-            return { email: "demo@cortex.local", dept_id: "demo-dept" };
+            return { email: "demo@cortex.local", full_name: "Demo User", dept_id: "demo-dept" };
         }
         const response = await fetch(`${API_BASE_URL}/auth/invite/verify?token=${encodeURIComponent(token)}`);
         

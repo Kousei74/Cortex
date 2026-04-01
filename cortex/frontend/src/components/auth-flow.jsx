@@ -49,6 +49,7 @@ export default function AuthFlow() {
                 try {
                     const data = await api.verifyInvite(tokenFromUrl)
                     setEmail(data.email)
+                    setFullName(data.full_name || "")
                     setDeptId(data.dept_id)
                 } catch (err) {
                     setInviteError(err.message || "Invalid or expired invite token.")
@@ -101,6 +102,8 @@ export default function AuthFlow() {
                 setFullName("");
                 setEmail("");
                 setActiveTab("login");
+                setStep("initial");
+                navigate("/login", { replace: true });
             }, 10000);
         } catch (err) {
             setError(err.message);
