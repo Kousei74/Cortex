@@ -90,7 +90,7 @@ Protected routes use the shared JWT/session dependency, so when the session expi
 
 | Concern | Library |
 | :--- | :--- |
-| Framework | React + Vite |
+| Framework | React + Vite v8.0 |
 | State | Zustand |
 | Styling | TailwindCSS |
 | Motion | Framer Motion |
