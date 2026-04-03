@@ -11,17 +11,29 @@ app = FastAPI(
 # CORS Configuration
 from app.core.config import settings
 
-origins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
+def _build_allowed_origins() -> list[str]:
+    origins = {
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+    }
 
-if settings.FRONTEND_URL:
-    origins.append(settings.FRONTEND_URL)
+    for raw_value in [settings.FRONTEND_URL, settings.ALLOWED_ORIGINS]:
+        if not raw_value:
+            continue
+        for origin in str(raw_value).split(","):
+            normalized = origin.strip()
+            if normalized:
+                origins.add(normalized)
+
+    return sorted(origins)
+
+origins = _build_allowed_origins()
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,9 +53,10 @@ def root():
 
 # Startup Event: Run Worker
 import asyncio
-from app.worker import worker_loop
+from app.worker import worker_loop, reaper_loop
 
 @app.on_event("startup")
 async def startup_event():
     print("Initializing Background Worker...")
     asyncio.create_task(worker_loop())
+    asyncio.create_task(reaper_loop())

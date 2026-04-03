@@ -18,7 +18,7 @@ export function ReportView({ payload, status, error, onRetry, onSelect }) {
     // 1. Terminal Failure (Execution Error)
     if (status === 'FAILED' || status === 'TIMEOUT') {
         return (
-            <div className="flex flex-col items-center justify-center h-64 border border-red-200 bg-red-50 rounded-lg p-6 text-center">
+            <div className="w-full min-h-[60vh] flex flex-col items-center justify-center border border-red-200 bg-red-50 rounded-lg p-6 text-center">
                 <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
                 <h3 className="text-xl font-bold text-red-700 mb-2">Analysis Failed</h3>
                 <p className="text-red-600 mb-6">{error || "An unexpected error occurred."}</p>

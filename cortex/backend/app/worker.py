@@ -1,12 +1,27 @@
 import asyncio
-import time
 from app.services.analysis import generate_report_payload
 from app.services.jobs import JobManager
 from app.core.queue import QueueService
+from app.core.config import settings
 from app.schemas.report import JobStatus
 
 # Config
 POLL_INTERVAL_SECONDS = 1
+REAPER_INTERVAL_SECONDS = settings.WORKER_REAPER_INTERVAL_SECONDS
+JOB_TIMEOUT_SECONDS = settings.WORKER_JOB_TIMEOUT_SECONDS
+
+
+async def reaper_loop():
+    print("Reaper started. Monitoring in-flight jobs...")
+    while True:
+        try:
+            reaped_count = await QueueService.reap_stale_jobs(timeout_seconds=JOB_TIMEOUT_SECONDS)
+            if reaped_count:
+                print(f"Reaper marked {reaped_count} stuck job(s) as failed.")
+        except Exception as e:
+            print(f"Reaper Loop Error: {e}")
+
+        await asyncio.sleep(REAPER_INTERVAL_SECONDS)
 
 async def worker_loop():
     print("Worker started. Listening for jobs...")
@@ -40,7 +55,10 @@ async def worker_loop():
                 # We'll just update roughly.
                 JobManager.update_job_status(job_id, JobStatus.PROCESSING, progress=10)
                 
-                payload = await loop.run_in_executor(None, generate_report_payload, job.file_ids, job_id)
+                payload = await asyncio.wait_for(
+                    loop.run_in_executor(None, generate_report_payload, job.file_ids, job_id),
+                    timeout=JOB_TIMEOUT_SECONDS,
+                )
                 
                 # 5. Success
                 JobManager.update_job_status(
@@ -51,6 +69,9 @@ async def worker_loop():
                 )
                 print(f"Job {job_id} Completed.")
                 
+            except asyncio.TimeoutError:
+                print(f"Job {job_id} Timed out after {JOB_TIMEOUT_SECONDS}s.")
+                JobManager.mark_timed_out(job_id)
             except Exception as e:
                 print(f"Job {job_id} Failed: {e}")
                 JobManager.update_job_status(

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     SLACK_CLIENT_SECRET: str = ""
     SLACK_REDIRECT_URI: str = "http://localhost:8000/service/slack/callback"
     FRONTEND_URL: str = "http://localhost:5173"
+    ALLOWED_ORIGINS: str = ""
     INVITE_SIGNUP_URL: str = "http://localhost:5173/signup"
 
     # Invite / Request Access Operations
@@ -44,6 +45,8 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 10
     MAX_ACTIVE_JOBS_PER_USER: int = 1
     MAX_PENDING_JOBS: int = 15
+    WORKER_JOB_TIMEOUT_SECONDS: int = 120
+    WORKER_REAPER_INTERVAL_SECONDS: int = 5
 
     model_config = SettingsConfigDict(
         case_sensitive=True,

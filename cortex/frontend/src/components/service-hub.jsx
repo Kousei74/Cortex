@@ -523,27 +523,14 @@ function UpdateIssueForm({ onSubmit, isLoading, user }) {
 export default function ServiceHub() {
     const { user } = useAuth()
     const isSenior = user?.role === "senior"
-    const [activeTab, setActiveTab] = useState("new")
+    const [activeTab, setActiveTab] = useState(isSenior ? "new" : "update")
     const [isLoading, setIsLoading] = useState(false)
 
-    // Option 3 is exclusively for Seniors.
-    if (!isSenior) {
-        return (
-            <div className="flex items-center justify-center w-full h-full p-8 text-center bg-[var(--bg-card)]">
-                <div className="space-y-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--semantic-error)]/10 text-[var(--semantic-error)] mb-4">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <h2 className="text-2xl font-mono font-bold text-[var(--semantic-error)] tracking-widest uppercase">Access Restricted</h2>
-                    <p className="font-mono text-sm text-secondary-custom max-w-sm mx-auto">
-                        Option 3 Governance interface is strictly reserved for Senior roles. Standard members must propose branches through Option 4 (Execution Ledger).
-                    </p>
-                </div>
-            </div>
-        )
-    }
+    useEffect(() => {
+        if (!isSenior && activeTab !== "update") {
+            setActiveTab("update")
+        }
+    }, [activeTab, isSenior])
 
     const handleCreate = async (payload) => {
         setIsLoading(true)
@@ -581,7 +568,9 @@ export default function ServiceHub() {
                 >
                     <h1 className="text-3xl font-mono font-bold text-primary-custom tracking-wider uppercase text-left">SERVICE HUB</h1>
                     <p className="text-secondary-custom text-sm font-mono mt-2 text-left">
-                        Define root truth and govern issue assignments.
+                        {isSenior
+                            ? "Define root truth and govern issue assignments."
+                            : "Review and edit metadata for existing root issues."}
                     </p>
                 </motion.div>
             </div>
@@ -599,38 +588,52 @@ export default function ServiceHub() {
                     onValueChange={setActiveTab}
                     className="w-full"
                 >
-                    <TabsList className="flex w-full bg-transparent p-0 mb-8 border-b border-subtle-custom/20 gap-8 h-auto">
-                        <TabsTrigger
-                            value="new"
-                            className="
-                                    flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
-                                    font-mono text-base font-bold uppercase tracking-widest
-                                    text-secondary-custom transition-all duration-300
-                                    data-[state=active]:bg-transparent data-[state=active]:shadow-none
-                                    data-[state=active]:text-[var(--accent-blue-bright)]
-                                    data-[state=active]:border-[var(--accent-blue-bright)]
-                                    data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
-                                    hover:text-primary-custom
-                                "
-                        >
-                            Create Issue
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="update"
-                            className="
-                                    flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
-                                    font-mono text-base font-bold uppercase tracking-widest
-                                    text-secondary-custom transition-all duration-300
-                                    data-[state=active]:bg-transparent data-[state=active]:shadow-none
-                                    data-[state=active]:text-[var(--accent-blue-bright)]
-                                    data-[state=active]:border-[var(--accent-blue-bright)]
-                                    data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
-                                    hover:text-primary-custom
-                                "
-                        >
-                            Update Metadata
-                        </TabsTrigger>
-                    </TabsList>
+                    {isSenior ? (
+                        <TabsList className="flex w-full bg-transparent p-0 mb-8 border-b border-subtle-custom/20 gap-8 h-auto">
+                            <TabsTrigger
+                                value="new"
+                                className="
+                                        flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
+                                        font-mono text-base font-bold uppercase tracking-widest
+                                        text-secondary-custom transition-all duration-300
+                                        data-[state=active]:bg-transparent data-[state=active]:shadow-none
+                                        data-[state=active]:text-[var(--accent-blue-bright)]
+                                        data-[state=active]:border-[var(--accent-blue-bright)]
+                                        data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
+                                        hover:text-primary-custom
+                                    "
+                            >
+                                Create Issue
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="update"
+                                className="
+                                        flex-1 pb-4 rounded-none bg-transparent shadow-none border-b-2 border-transparent
+                                        font-mono text-base font-bold uppercase tracking-widest
+                                        text-secondary-custom transition-all duration-300
+                                        data-[state=active]:bg-transparent data-[state=active]:shadow-none
+                                        data-[state=active]:text-[var(--accent-blue-bright)]
+                                        data-[state=active]:border-[var(--accent-blue-bright)]
+                                        data-[state=active]:[text-shadow:0_0_10px_rgba(0,191,255,0.5)]
+                                        hover:text-primary-custom
+                                    "
+                            >
+                                Update Metadata
+                            </TabsTrigger>
+                        </TabsList>
+                    ) : (
+                        <div className="mb-8 pb-4">
+                            <div className="w-full text-center font-mono text-base font-bold uppercase tracking-widest text-[var(--accent-blue-bright)] [text-shadow:0_0_10px_rgba(0,191,255,0.5)]">
+                                Update Metadata
+                            </div>
+                            <div
+                                className="mt-4 h-[2px] w-full"
+                                style={{
+                                    background: "linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(0,191,255,0.42) 18%, rgba(0,191,255,0.92) 50%, rgba(0,191,255,0.42) 82%, rgba(255,255,255,0.06) 100%)"
+                                }}
+                            />
+                        </div>
+                    )}
                 </Tabs>
 
                 <div className="mt-0">

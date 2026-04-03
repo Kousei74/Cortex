@@ -424,9 +424,16 @@ export const api = {
         return response.json();
     },
 
-    deleteIssueNode: async (issueId) => {
+    deleteIssueNode: async (issueId, lastUpdatedAt = null) => {
         if (isDemo()) throw new Error("Action not allowed in Demo.");
-        const response = await fetch(`${API_BASE_URL}/service/issues/${issueId}`, {
+        const params = new URLSearchParams();
+        if (lastUpdatedAt) {
+            params.set("last_updated_at", lastUpdatedAt);
+        }
+        const url = params.toString()
+            ? `${API_BASE_URL}/service/issues/${issueId}?${params.toString()}`
+            : `${API_BASE_URL}/service/issues/${issueId}`;
+        const response = await fetch(url, {
             method: "DELETE",
             headers: getAuthHeaders()
         });

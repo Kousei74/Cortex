@@ -1,16 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTabLockStore } from '@/store/tabLockStore';
+import { useAuth } from '@/context/AuthContext';
 
 const CHANNEL_NAME = 'cortex_session_lock';
 const MESSAGE_CLAIM_LOCK = 'CLAIM_LOCK';
-const ACTIVE_TAB_STORAGE_KEY = 'cortex_active_tab_id';
+const ACTIVE_TAB_STORAGE_KEY_PREFIX = 'cortex_active_tab_id';
 
 export default function SingleInstanceLock() {
     const [isLocked, setIsLocked] = useState(false);
     const channelRef = useRef(null);
     const tabIdRef = useRef(crypto.randomUUID());
     const setGlobalLocked = useTabLockStore(state => state.setLocked);
+    const { user, isAuthenticated } = useAuth();
+
+    const userLockScope = user?.emp_id || user?.email || null;
+    const activeTabStorageKey = userLockScope ? `${ACTIVE_TAB_STORAGE_KEY_PREFIX}:${userLockScope}` : null;
 
     const applyLockState = (locked) => {
         setIsLocked(locked);
@@ -18,24 +23,42 @@ export default function SingleInstanceLock() {
     };
 
     const claimActiveTab = () => {
+        if (!activeTabStorageKey) {
+            applyLockState(false);
+            return;
+        }
         const tabId = tabIdRef.current;
-        localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tabId);
-        channelRef.current?.postMessage({ type: MESSAGE_CLAIM_LOCK, tabId });
+        localStorage.setItem(activeTabStorageKey, tabId);
+        channelRef.current?.postMessage({ type: MESSAGE_CLAIM_LOCK, tabId, scope: activeTabStorageKey });
         applyLockState(false);
     };
 
     useEffect(() => {
+        if (!isAuthenticated || !activeTabStorageKey) {
+            applyLockState(false);
+            return undefined;
+        }
+
         const bc = new BroadcastChannel(CHANNEL_NAME);
         channelRef.current = bc;
 
         bc.onmessage = (event) => {
-            if (event.data?.type === MESSAGE_CLAIM_LOCK && event.data.tabId !== tabIdRef.current) {
+            if (
+                event.data?.type === MESSAGE_CLAIM_LOCK &&
+                event.data?.scope === activeTabStorageKey &&
+                event.data.tabId !== tabIdRef.current
+            ) {
                 applyLockState(true);
             }
         };
 
         const handleStorage = (event) => {
-            if (event.key !== ACTIVE_TAB_STORAGE_KEY || !event.newValue) {
+            if (event.key !== activeTabStorageKey) {
+                return;
+            }
+
+            if (!event.newValue) {
+                applyLockState(false);
                 return;
             }
 
@@ -48,12 +71,12 @@ export default function SingleInstanceLock() {
 
         return () => {
             window.removeEventListener('storage', handleStorage);
-            if (localStorage.getItem(ACTIVE_TAB_STORAGE_KEY) === tabIdRef.current) {
-                localStorage.removeItem(ACTIVE_TAB_STORAGE_KEY);
+            if (localStorage.getItem(activeTabStorageKey) === tabIdRef.current) {
+                localStorage.removeItem(activeTabStorageKey);
             }
             bc.close();
         };
-    }, []);
+    }, [activeTabStorageKey, isAuthenticated]);
 
     const handleResumeHere = () => {
         claimActiveTab();
@@ -76,7 +99,7 @@ export default function SingleInstanceLock() {
                         <div className="space-y-2">
                             <h2 className="text-2xl font-bold tracking-tight text-foreground">Cortex Active Elsewhere</h2>
                             <p className="text-muted-foreground">
-                                To prevent data corruption, Cortex allows only one active tab at a time.
+                                This account is already active in another tab. Resume here only if you want this session to take over.
                             </p>
                         </div>
 

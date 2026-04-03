@@ -2,14 +2,18 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAnalysisStore } from "@/store/analysisStore"
 import { useWorkspaceStore } from "@/store/workspace-store"
+import { useStagingStore } from "@/store/stagingStore"
 import { CortexLoader } from "./cortex-loader"
 import { ReportView } from "./report-view"
 import { KpiCardsRow } from "./kpi-cards"
 import { Card } from "@/components/ui/card"
+import { useNavigate } from "react-router-dom"
 
 export default function MainContent() {
-    const { jobId, status, progress, payload, error } = useAnalysisStore()
+    const { jobId, status, progress, payload, error, reset: resetAnalysis } = useAnalysisStore()
     const { setResolutionStats, viewMode, setSelectedCluster } = useWorkspaceStore()
+    const clearBatch = useStagingStore(state => state.clearBatch)
+    const navigate = useNavigate()
 
     // Sync Stats when Payload Arrives
     useEffect(() => {
@@ -29,6 +33,13 @@ export default function MainContent() {
 
     const isLoading = status === 'PROCESSING' || status === 'PENDING';
     const isError = status === 'FAILED' || status === 'TIMEOUT';
+
+    const handleRetry = async () => {
+        await clearBatch()
+        setSelectedCluster(null)
+        resetAnalysis()
+        navigate("/")
+    }
 
     // ── ACTIVE ANALYSIS MODE ────────────────────────────────────────────────
     if (jobId) {
@@ -94,7 +105,7 @@ export default function MainContent() {
                                         payload={payload}
                                         status={status}
                                         error={error}
-                                        onRetry={() => { }}
+                                        onRetry={handleRetry}
                                         onSelect={handleSelect}
                                     />
                                 </div>

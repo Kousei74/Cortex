@@ -5,6 +5,7 @@ from typing import Optional, Literal, List, Dict, Any
 from datetime import date, datetime, timedelta
 import httpx
 import uuid
+from datetime import timezone
 from urllib.parse import urlencode, quote_plus
 from jose import jwt, JWTError
 
@@ -33,6 +34,14 @@ def _require_user_department(session_user: SessionUser) -> str:
             detail="Your profile is missing a department assignment. Please update your profile before using Service Hub.",
         )
     return dept_id
+
+
+def _require_senior_user(session_user: SessionUser) -> None:
+    if not session_user.is_senior:
+        raise HTTPException(
+            status_code=403,
+            detail="Senior access required for this action.",
+        )
 
 
 def _normalize_assigned_departments(primary_dept_id: Optional[str], extra_dept_ids: Optional[List[str]]) -> List[str]:
@@ -296,6 +305,7 @@ async def create_issue(
     supabase: Client = Depends(get_supabase),
     session_user: SessionUser = Depends(get_current_user)
 ):
+    _require_senior_user(session_user)
     issue_id = f"ISS-{str(uuid.uuid4())[:8].upper()}"
     emp_id = session_user.emp_id
     creator_dept_id = _require_user_department(session_user)
@@ -479,12 +489,12 @@ async def update_issue_node_info(
 ):
     if node_id.startswith("ISS-"):
         # For root issues
-        res = supabase.table("issues").select("created_by_emp_id, dept_id").eq("id", node_id).execute()
+        res = supabase.table("issues").select("*").eq("id", node_id).execute()
         if not res.data:
             raise HTTPException(status_code=404, detail="Issue not found.")
         
         issue = res.data[0]
-        NodePermissions.can_edit_root_issue(issue, session_user)
+        _require_issue_access(issue, session_user)
             
         update_data = {}
         if request.issue_header is not None: update_data["header"] = request.issue_header
@@ -558,6 +568,8 @@ async def connect_issue_node(
     target_root_id = request.connected_to_id if p_res.data else n_res.data[0]["root_issue_id"]
     if target_root_id != node.get("root_issue_id"):
         raise HTTPException(status_code=400, detail="Nodes can only be connected within the same root issue.")
+
+    TreeLogicService.validate_node_connection(supabase, node_id, request.connected_to_id)
         
     supabase.table("issue_nodes").update({"connected_to_id": request.connected_to_id}).eq("id", node_id).execute()
     return {"message": f"Node {node_id} successfully connected to {request.connected_to_id}."}
@@ -679,6 +691,21 @@ async def delete_issue_node(
         
     NodePermissions.can_edit_node(node, session_user)
 
+    created_at_raw = node.get("created_at")
+    if not session_user.is_senior and created_at_raw:
+        try:
+            created_at = datetime.fromisoformat(created_at_raw.replace("Z", "+00:00"))
+            now = datetime.now(timezone.utc)
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            if (now - created_at).total_seconds() > 30 * 60:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Delete window expired. Team members can only delete pending nodes within 30 minutes of creation.",
+                )
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Node timestamp is invalid; deletion window cannot be verified.")
+
     # ─── Optimistic Concurrency Control (OCC) Check ───
     if last_updated_at:
         db_updated_at = node.get("updated_at")
@@ -708,12 +735,11 @@ async def close_issue(
     supabase: Client = Depends(get_supabase),
     session_user: SessionUser = Depends(get_current_user),
 ):
+    _require_senior_user(session_user)
     res = supabase.table("issues").select("*").eq("id", issue_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Root issue not found.")
     issue = res.data[0]
-
-    NodePermissions.can_edit_root_issue(issue, session_user)
         
     # Check if any active blue branches exist under this issue
     blue_res = supabase.table("issue_nodes").select("id").eq("root_issue_id", issue_id).eq("tag", "blue").execute()

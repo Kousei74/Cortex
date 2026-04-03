@@ -4,6 +4,73 @@ from typing import Optional, Dict, Any, List
 
 class TreeLogicService:
     @staticmethod
+    def _parent_ref(node: Dict[str, Any]) -> Optional[str]:
+        return node.get("parent_node_id") or node.get("root_issue_id")
+
+    @staticmethod
+    def _collect_ancestors(start_id: str, node_map: Dict[str, Dict[str, Any]], root_issue_id: str) -> set[str]:
+        ancestors = set()
+        current_id = start_id
+
+        while current_id:
+            ancestors.add(current_id)
+            if current_id == root_issue_id:
+                break
+
+            current_node = node_map.get(current_id)
+            if not current_node:
+                break
+
+            current_id = TreeLogicService._parent_ref(current_node)
+
+        return ancestors
+
+    @staticmethod
+    def _find_common_blue_ancestor(node_id_1: str, node_id_2: str, node_map: Dict[str, Dict[str, Any]], root_issue_id: str) -> Optional[Dict[str, Any]]:
+        target_ancestors = TreeLogicService._collect_ancestors(node_id_2, node_map, root_issue_id)
+        trail: List[str] = []
+        encountered_blue_before_match = False
+        current_id = node_id_1
+
+        while current_id:
+            current_node = node_map.get(current_id)
+            if current_node and current_node.get("tag") == "blue":
+                if current_id in target_ancestors:
+                    return {
+                        "gatekeeper_id": current_id,
+                        "trail": trail,
+                        "has_unmerged_sub_branches": encountered_blue_before_match,
+                    }
+                encountered_blue_before_match = True
+
+            if current_id == root_issue_id:
+                break
+
+            if not current_node:
+                break
+
+            trail.append(current_id)
+            current_id = TreeLogicService._parent_ref(current_node)
+
+        return None
+
+    @staticmethod
+    def _is_descendant(candidate_id: str, ancestor_id: str, children_map: Dict[str, List[str]]) -> bool:
+        queue = list(children_map.get(ancestor_id, []))
+        seen = set()
+
+        while queue:
+            current_id = queue.pop(0)
+            if current_id in seen:
+                continue
+            if current_id == candidate_id:
+                return True
+            seen.add(current_id)
+            queue.extend(children_map.get(current_id, []))
+
+        return False
+
+    @staticmethod
     def validate_node_creation(supabase: Client, parent_id: str, connection_type: str) -> None:
         """
         Terminal Enforcement: Child cannot be added if parent is 'pending' or 'yellow'.
@@ -153,3 +220,55 @@ class TreeLogicService:
             if node_data and node_data.get("tag") == "blue":
                 raise HTTPException(status_code=400, detail="Merge blocked: Branch contains unresolved Blue nodes.")
             queue.extend(adj.get(curr, []))
+
+    @staticmethod
+    def validate_node_connection(supabase: Client, source_node_id: str, target_id: str) -> None:
+        source_res = supabase.table("issue_nodes").select("id, root_issue_id, connected_to_id").eq("id", source_node_id).execute()
+        if not source_res.data:
+            raise HTTPException(status_code=404, detail="Source node not found.")
+
+        source_node = source_res.data[0]
+        root_issue_id = source_node["root_issue_id"]
+
+        root_res = supabase.table("issues").select("id, status").eq("id", root_issue_id).execute()
+        if not root_res.data:
+            raise HTTPException(status_code=404, detail="Root issue not found.")
+        if root_res.data[0].get("status") == "closed":
+            raise HTTPException(status_code=400, detail="Cannot connect nodes inside a closed issue.")
+
+        if source_node_id == target_id:
+            raise HTTPException(status_code=400, detail="A node cannot connect to itself.")
+
+        existing_target = source_node.get("connected_to_id")
+        if existing_target:
+            if existing_target == target_id:
+                raise HTTPException(status_code=400, detail="Node is already connected to this target.")
+            raise HTTPException(status_code=400, detail="Node already has a merge connection. Remove it before reconnecting.")
+
+        all_nodes_res = supabase.table("issue_nodes").select(
+            "id, parent_node_id, root_issue_id, tag"
+        ).eq("root_issue_id", root_issue_id).execute()
+        all_nodes = all_nodes_res.data or []
+        node_map = {node["id"]: node for node in all_nodes}
+
+        if target_id != root_issue_id and target_id not in node_map:
+            raise HTTPException(status_code=404, detail="Connection target not found.")
+
+        children_map: Dict[str, List[str]] = {}
+        for node in all_nodes:
+            parent_id = node.get("parent_node_id") or root_issue_id
+            children_map.setdefault(parent_id, []).append(node["id"])
+
+        if TreeLogicService._is_descendant(target_id, source_node_id, children_map):
+            raise HTTPException(status_code=400, detail="Cannot connect a node to one of its descendants.")
+
+        active_trace = (
+            TreeLogicService._find_common_blue_ancestor(source_node_id, target_id, node_map, root_issue_id)
+            or TreeLogicService._find_common_blue_ancestor(target_id, source_node_id, node_map, root_issue_id)
+        )
+
+        if active_trace and active_trace["has_unmerged_sub_branches"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Merge blocked: This branch contains unresolved nested blue nodes. Resolve the nested branches before connecting.",
+            )

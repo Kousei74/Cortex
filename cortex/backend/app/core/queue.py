@@ -75,20 +75,12 @@ class QueueService:
         # In SQL: UPDATE jobs SET status='FAILED' WHERE status='PROCESSING' AND created_at < NOW() - INTERVAL '60s'
         for job in jobs_db.values():
             if job.status == JobStatus.PROCESSING:
-                # Calculate duration
-                # Note: job.created_at is start time. Ideally we track processing_started_at.
-                # But for V1, created_at is close enough proxy if queue valid.
-                # Or better, we assume processing started reasonably soon.
-                # Let's use created_at for simple reaper.
-                duration = (now - job.created_at).total_seconds()
+                started_at = job.processing_started_at or job.created_at
+                duration = (now - started_at).total_seconds()
                 
                 if duration > timeout_seconds:
                     print(f"Reaping stuck job {job.job_id} (Duration: {duration}s)")
-                    JobManager.update_job_status(
-                        job.job_id,
-                        JobStatus.FAILED,
-                        error="TIMEOUT_EXCEEDED"
-                    )
+                    JobManager.mark_timed_out(job.job_id)
                     reaped_count += 1
                     
         return reaped_count

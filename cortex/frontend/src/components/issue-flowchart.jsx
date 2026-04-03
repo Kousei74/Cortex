@@ -85,7 +85,7 @@ const getNodePermissions = (nodeData, user, isGraphClosed = false) => {
         isWithinWindow,
         canEdit: isSenior || (isAuthor && isPending && isWithinWindow),
         canTag: isSenior,
-        canDelete: isSenior || (isAuthor && isWithinWindow),
+        canDelete: isSenior || (isAuthor && isPending && isWithinWindow),
         // Terminal limit: Nobody can add child to pending or yellow nodes
         canAddNode: !isPending && !isYellow
     }
@@ -520,7 +520,11 @@ function IssueFlowchartInner({ issueId }) {
                     return
                 }
 
-                setDeleteConfirm({ nodeId: node.id, label: nodeData?.label })
+                setDeleteConfirm({
+                    nodeId: node.id,
+                    label: nodeData?.label,
+                    lastUpdatedAt: nodeData?.updated_at || null,
+                })
             } catch (err) {
                 toast.error("Failed to initiate deletion", { description: err.message })
                 setRefreshKey(prev => prev + 1)
@@ -744,7 +748,7 @@ function IssueFlowchartInner({ issueId }) {
             setIsLoading(true)
             const nodeId = deleteConfirm.nodeId
 
-            await api.deleteIssueNode(nodeId)
+            await api.deleteIssueNode(nodeId, deleteConfirm.lastUpdatedAt)
 
             // Immediately update local state
             setNodes(nds => nds.filter(n => n.id !== nodeId))

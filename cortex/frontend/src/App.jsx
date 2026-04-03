@@ -11,7 +11,7 @@ import SingleInstanceLock from "@/components/single-instance-lock"
 import ServiceHub from "@/components/service-hub"
 import IssueTracker from "@/components/issue-tracker"
 
-// Placeholder components for other routes (moved from Dashboard.jsx)
+// Placeholder components for routes that do not have a dedicated view yet
 const PlaceholderPage = ({ title }) => (
     <div className="p-6">
         <h1 className="text-3xl font-mono font-bold text-primary-custom tracking-wider mb-4">{title}</h1>

@@ -15,6 +15,7 @@ class Job:
         self.error: Optional[str] = None
         self.payload: Optional[ReportPayload] = None
         self.created_at = datetime.utcnow()
+        self.processing_started_at: Optional[datetime] = None
 
 # In-Memory Stores
 # WARNING: This is a DEVELOPMENT STUB.
@@ -126,6 +127,10 @@ class JobManager:
 
             job.status = status
             job.progress = progress
+            if status == JobStatus.PROCESSING:
+                job.processing_started_at = datetime.utcnow()
+            elif status in {JobStatus.COMPLETED, JobStatus.FAILED}:
+                job.processing_started_at = None
             if error:
                 job.error = error
             if payload:
@@ -139,3 +144,15 @@ class JobManager:
                  key = JobManager._generate_idempotency_key(job.file_ids, job.owner_emp_id)
                  if key in idempotency_index and idempotency_index[key] == job_id:
                      del idempotency_index[key]
+
+    @staticmethod
+    def mark_timed_out(job_id: str, error: str = "TIMEOUT_EXCEEDED") -> None:
+        job = jobs_db.get(job_id)
+        if not job or job.status == JobStatus.FAILED:
+            return
+        JobManager.update_job_status(
+            job_id,
+            JobStatus.FAILED,
+            progress=job.progress,
+            error=error,
+        )
