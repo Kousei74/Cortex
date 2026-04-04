@@ -103,7 +103,7 @@ Frontend configuration should provide:
 
 ## Deployment Notes
 
-CORTEX is designed for controlled team environments where operational governance, authenticated access, and internal workflow discipline are required. Production configuration should be managed through environment-based secret injection and standard service separation between frontend, backend, and database layers.
+Designed for controlled team environments where operational governance, authenticated access, and internal workflow discipline are required. Production configuration should be managed through environment-based secret injection and standard service separation between frontend, backend, and database layers.
 
 ## Access and Governance
 
@@ -114,4 +114,4 @@ CORTEX is designed for controlled team environments where operational governance
 
 ## Project Positioning
 
-CORTEX is structured as an internal operations platform rather than a generic dashboard application. The product surface combines analytics delivery, controlled collaboration, and execution governance into a unified enterprise workflow.
+Structured as an internal operations platform rather than a generic dashboard application, the product surface combines analytics delivery, controlled collaboration, and execution governance into a unified workflow.
