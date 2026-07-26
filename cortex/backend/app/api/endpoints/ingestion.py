@@ -103,7 +103,7 @@ async def upload_file_blob(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid Content-Length header.")
 
-    upload_dir = os.path.join(os.getcwd(), "uploads")
+    upload_dir = settings.UPLOAD_DIR
     os.makedirs(upload_dir, exist_ok=True)
 
     original_filename = os.path.basename(session["filename"])

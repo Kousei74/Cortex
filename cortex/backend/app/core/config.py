@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = ""
     SMTP_FROM_NAME: str = "Cortex"
+    UPLOAD_DIR: str = "/tmp/cortex-uploads"
 
     # Visualization Constants (The Constitution)
     MAX_CLUSTERS: int = 50

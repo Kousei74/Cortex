@@ -773,8 +773,9 @@ def generate_report_payload(file_ids: List[str], job_id: str = None) -> ReportPa
                  res_cols.append('ID')
              
              res_data = df[res_cols].fillna("").to_dict(orient='records')
-             os.makedirs("uploads", exist_ok=True)
-             with open(f"uploads/{job_id}_resolution.json", 'w') as f:
+             os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+             resolution_path = os.path.join(settings.UPLOAD_DIR, f"{job_id}_resolution.json")
+             with open(resolution_path, 'w') as f:
                  json.dump(res_data, f)
         except Exception as e:
             logger.error(f"Resolution Save Failed: {e}")
