@@ -1,6 +1,10 @@
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # Add backend directory to sys.path to allow imports from app
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

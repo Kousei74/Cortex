@@ -1,6 +1,7 @@
 import asyncio
 
 from app.services.jobs import JobManager
+from app.services.analysis import generate_report_payload
 from app.core.queue import QueueService
 from app.core.config import settings
 from app.core.observability import configure_logging, get_logger, instrument_module_functions, log_step
@@ -49,45 +50,15 @@ async def worker_loop():
             # 3. Mark Processing
             JobManager.update_job_status(job_id, JobStatus.PROCESSING, progress=0)
             
-            # 4. Execute Analysis (CPU Bound, Isolated Subprocess)
+            # 4. Execute Analysis directly in-process
             try:
-                # Mock progress update
                 JobManager.update_job_status(job_id, JobStatus.PROCESSING, progress=10)
-                
-                process = await asyncio.create_subprocess_exec(
-                    "python", "-m", "app.run_job", job_id, *job.file_paths,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
-                log_step(logger, "worker.subprocess.started", job_id=job_id, file_count=len(job.file_paths))
-                
-                try:
-                    stdout, stderr = await asyncio.wait_for(
-                        process.communicate(),
-                        timeout=JOB_TIMEOUT_SECONDS,
-                    )
-                except asyncio.TimeoutError:
-                    process.kill()
-                    raise
-                
-                if process.returncode != 0:
-                    err_msg = stderr.decode('utf-8', errors='ignore').strip()
-                    raise Exception(f"Subprocess failed: {err_msg}")
-                    
-                stdout_str = stdout.decode('utf-8', errors='ignore')
-                if "___PAYLOAD_START___" not in stdout_str or "___PAYLOAD_END___" not in stdout_str:
-                    raise Exception("Payload markers not found in subprocess output.")
-                    
-                json_str = stdout_str.split("___PAYLOAD_START___")[1].split("___PAYLOAD_END___")[0].strip()
-                from pydantic import TypeAdapter
-                from app.schemas.report import ReportPayload
-                payload = TypeAdapter(ReportPayload).validate_json(json_str)
-                
-                # 5. Success
+                payload = generate_report_payload(job.file_paths, job_id)
+
                 JobManager.update_job_status(
-                    job_id, 
-                    JobStatus.COMPLETED, 
-                    progress=100, 
+                    job_id,
+                    JobStatus.COMPLETED,
+                    progress=100,
                     payload=payload
                 )
                 log_step(logger, "worker.job.completed", job_id=job_id)
