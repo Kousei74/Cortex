@@ -1,0 +1,113 @@
+# CONTRACT: ReportPayload
+# VERSION: v1
+# STATUS: FROZEN
+# SCOPE: Strategy-level report response only
+# DO NOT MODIFY WITHOUT VERSION BUMP
+#Any new top-level field added to a ReportPayload variant requires:
+#-Explicit justification
+#-Update to the contract file
+#-A version bump if semantics change
+
+# API Response Contract: ReportPayload
+# Type: Discriminated Union
+# Discriminator: layout_strategy
+
+definitions:
+  WidgetObject:
+    type: object
+    description: "Placeholder for strict widget identity. Concrete definition deferred."
+    additionalProperties: true
+
+ReportPayload:
+  oneOf:
+    - $ref: "#/definitions/TemporalSupremePayload"
+    - $ref: "#/definitions/SnapshotPivotPayload"
+    - $ref: "#/definitions/UnsupportedDatasetPayload"
+  discriminator:
+    propertyName: layout_strategy
+
+# ---------------------------------------------------------
+# Payload 1: TEMPORAL_SUPREME
+# ---------------------------------------------------------
+TemporalSupremePayload:
+  type: object
+  required:
+    - layout_strategy
+    - anchor_visual
+    - meta
+  properties:
+    layout_strategy:
+      type: string
+      const: "TEMPORAL_SUPREME"
+      description: "Discriminator field. First field in JSON."
+    
+    meta:
+      type: object
+      description: "Observational metadata only. Flexible structure. NO layout hints allowed."
+      
+    anchor_visual:
+      $ref: "#/definitions/WidgetObject"
+      description: "The authoritative visualization object."
+
+# ---------------------------------------------------------
+# Payload 2: SNAPSHOT_PIVOT
+# ---------------------------------------------------------
+SnapshotPivotPayload:
+  type: object
+  required:
+    - layout_strategy
+    - anchor_options
+    - default_option_index
+    - meta
+  properties:
+    layout_strategy:
+      type: string
+      const: "SNAPSHOT_PIVOT"
+      description: "Discriminator field. First field in JSON."
+      
+    meta:
+      type: object
+      description: "Observational metadata only. Flexible structure. NO layout hints allowed."
+      
+    anchor_options:
+      type: array
+      minItems: 1
+      description: "List of pre-calculated visualization candidates."
+      items:
+        $ref: "#/definitions/WidgetObject"
+        
+    default_option_index:
+      type: integer
+      minimum: 0
+      description: "Must be a valid index into anchor_options. Backend guarantees this invariant."
+
+# ---------------------------------------------------------
+# Payload 3: UNSUPPORTED_DATASET
+# ---------------------------------------------------------
+UnsupportedDatasetPayload:
+  type: object
+  required:
+    - layout_strategy
+    - reason_code
+    - user_message
+    - missing_requirements
+  properties:
+    layout_strategy:
+      type: string
+      const: "UNSUPPORTED_DATASET"
+      description: "Discriminator field. First field in JSON."
+      
+    reason_code:
+      type: string
+      enum: ["NO_DIMENSIONS", "INSUFFICIENT_ROWS", "DATA_QUALITY_CRITICAL"]
+      description: "Machine-readable error code."
+      
+    user_message:
+      type: string
+      description: "Human-readable explanation."
+      
+    missing_requirements:
+      type: array
+      items:
+        type: string
+      description: "Explicit list of unmet requirements."

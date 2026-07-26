@@ -1,0 +1,44 @@
+# Markdown
+*.md
+**/*.md
+
+# Environment
+.env
+.env.*
+**/.env*
+.venv/
+venv/
+
+# Dependencies
+node_modules/
+**/node_modules/
+__pycache__/
+*.pyc
+
+# IDE/OS
+.idea/
+.vscode/
+.DS_Store
+
+# Build/Output
+dist/
+build/
+*.log
+coverage/
+temp/
+
+# Project Specific
+_bmad/
+_legacy_next/
+_bmad-output/
+.agent/
+.claude/
+cortex/backend/uploads/
+cortex/backend/deps.txt
+cortex/backend/debug_auth.py
+cortex/backend/verify_headless.py
+cortex/backend/verify_phase1.py
+cortex/test_data/
+tests/
+verify_api.py
+verify_internal.py

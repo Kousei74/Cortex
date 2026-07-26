@@ -1,0 +1,115 @@
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
+from pydantic import BaseModel, Field
+from typing import List, Literal, Optional, Dict, Any
+from datetime import datetime
+import os
+import json
+from app.core.security import SessionUser, get_current_user
+from app.services.jobs import JobManager
+from app.core.observability import get_logger, instrument_fastapi_router, instrument_module_functions, log_step
+
+router = APIRouter()
+logger = get_logger(__name__)
+
+# --- Schemas ---
+
+class ResolutionAction(BaseModel):
+    item_ids: List[str] = Field(..., min_items=1, description="List of IDs to resolve")
+    action_type: Literal["KEEP", "DELETE", "MERGE", "IGNORE"]
+    target_cluster: Optional[str] = None # For merge operations
+    reason: Optional[str] = None
+
+class ResolutionResponse(BaseModel):
+    job_id: str
+    status: Literal["processing", "completed", "failed"]
+    affected_count: int
+    message: str
+
+class ResolutionRow(BaseModel):
+    ID: str
+    Title: str
+    Cluster: str
+    Sentiment: Optional[float] = None
+    Confidence: Optional[float] = None
+    
+# --- Logic ---
+
+@router.post("/bulk", response_model=ResolutionResponse)
+async def bulk_resolve(
+    payload: ResolutionAction,
+    background_tasks: BackgroundTasks,
+    session_user: SessionUser = Depends(get_current_user),
+):
+    """
+    Apply a resolution action to a set of items.
+    This is an ATOMIC operation (simulated for V1).
+    """
+    
+    log_step(
+        logger,
+        "resolution.bulk.begin",
+        action_type=payload.action_type,
+        item_count=len(payload.item_ids),
+        owner_emp_id=session_user.emp_id,
+    )
+    # 1. Validation (Simulated)
+    if payload.action_type == "MERGE" and not payload.target_cluster:
+        raise HTTPException(status_code=400, detail="Target cluster required for MERGE action")
+
+    # 2. Logic (Mock for V1 - will be connected to DB later)
+    # in V2 this would update the 'status' column in DB
+    
+    # 3. Background Task: Invalidate Cache or Update Index
+    background_tasks.add_task(process_resolution_background, payload)
+    log_step(logger, "resolution.bulk.queued", action_type=payload.action_type, item_count=len(payload.item_ids))
+
+    return ResolutionResponse(
+        job_id=f"res_{datetime.now().timestamp()}",
+        status="processing",
+        affected_count=len(payload.item_ids),
+        message=f"Queued {payload.action_type} for {len(payload.item_ids)} items"
+    )
+
+@router.get("/rows/{job_id}", response_model=List[Dict[str, Any]])
+async def get_resolution_rows(
+    job_id: str,
+    session_user: SessionUser = Depends(get_current_user),
+):
+    """
+    Fetch the raw rows for the resolution table.
+    Reads from the JSON artifact generated during analysis.
+    """
+    log_step(logger, "resolution.rows.begin", job_id=job_id, owner_emp_id=session_user.emp_id)
+    job = JobManager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Resolution data not found for this job")
+    if job.owner_emp_id != session_user.emp_id:
+        raise HTTPException(status_code=403, detail="You do not have access to this resolution data")
+
+    # Sanitize job_id to prevent traversal
+    safe_job_id = os.path.basename(job_id)
+    file_path = f"uploads/{safe_job_id}_resolution.json"
+    
+    if not os.path.exists(file_path):
+        # Mock data if file doesn't exist (for development/testing)
+        # return []
+        raise HTTPException(status_code=404, detail="Resolution data not found for this job")
+        
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            # Limit to 1000 for V1 safety
+            log_step(logger, "resolution.rows.loaded", job_id=job_id, row_count=min(len(data), 1000))
+            return data[:1000]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load resolution data: {str(e)}")
+
+async def process_resolution_background(payload: ResolutionAction):
+    # Simulate work
+    import asyncio
+    await asyncio.sleep(0.5)
+    log_step(logger, "resolution.worker.processed", action_type=payload.action_type, item_count=len(payload.item_ids))
+
+
+instrument_module_functions(globals(), logger, exclude_names={"instrument_module_functions", "instrument_fastapi_router"})
+instrument_fastapi_router(router, logger)

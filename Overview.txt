@@ -1,0 +1,126 @@
+CORTEX: THE DEFINITIVE BLUEPRINT (The "Hole-Less" Standard)
+========================================================================================
+
+# 🛑 THE PRIME DIRECTIVE: THE ILLUSION OF INSTANT 🛑
+**Philosophy**: The user lives in a "Locally Optimistic Reality". The Server is merely a synchronization detail. 
+**The Rule of 300ms**: Any action taking > 300ms MUST have a specialized, context-aware mask (Animation/Transition). Generic spinners are BANNED.
+**The "Anti-Stutter" Mandate**: The UI frame rate (FPS) must NEVER drop below 60. Heavy math (Data Parsing) moves to Web Workers. Heavy Network moves to Service Workers.
+
+---
+
+1. THE "HOLE-LESS" USER JOURNEY (Atomic Step Analysis)
+------------------------------------------------------
+
+### Phase 1: The "Intention" (Upload & Input)
+*   **The Drag Event**:
+    *   *Micro-Interaction*: When file hovers, the drop zone expands *magnetically* (Framer Motion spring). Background dims.
+    *   *Validation*: Client-side check (Magic Bytes) happens *instantly*. Invalid files bounce off with a "Shake" animation (Haptic feedback).
+*   **The "Ghost" Card (Immediate Feedback)**:
+    *   *Zero Latency*: The moment the mouse releases, a "Ghost Card" appears in the list.
+    *   *State*: It has a temporary ID (`temp_xyz`). It is interactable (can rename/tag) *before* the upload even starts.
+    *   *Gap Coverage*: If upload is pending connection, the card pulses gently (Yellow). It does NOT say "Waiting".
+
+### Phase 2: The "tunnel" (Upload & Processing)
+*   **Zeno's Progress Bar**:
+    *   *Problem*: Real progress bars stall. Stalls = Anxiety.
+    *   *Solution*: The bar *always* moves. It creates an asymptote at 90% until the server confirms.
+    *   *Text*: "Encrypting..." -> "Handshaking..." -> "Aligning Vectors..." (Loops through technical verbs to imply hard work, not broken work).
+*   **The "Invisible" Retry**:
+    *   *Scenario*: 503 Service Unavailable.
+    *   *Cover Up*: UI shows "Optimizing Upload Route...". System retries with exponential backoff. User sees *zero* error.
+*   **Concurrency Mask**:
+    *   *Scenario*: User acts on a file that is still processing.
+    *   *Cover Up*: allow the action! (e.g., "Add Tag"). Queue it locally. Replay it when server is ready. To the user, it's done.
+
+### Phase 3: The "Revelation" (Dashboard & Reports)
+*   **Fluid Layouts (Framer LayoutGroup)**:
+    *   *Scenario*: A chart fails to load or data is missing.
+    *   *Cover Up*: The layout `layoutId` transitions. Neighboring cards *slide* to fill the gap. No whitespace holes.
+*   **Skeleton Identity**:
+    *   *Requirement*: Skeletons must match the *exact* height of the final content to prevent "Cumulative Layout Shift" (CLS).
+    *   *Detail*: Text blocks use "Blinking Text" opacity, Charts use simple SVG wireframes as placeholders.
+*   **Navigation Transitions**:
+    *   *Technique*: **View Transitions API**. The Header/Sidebar stays fixed (GPU Layer). Only the Content pane cross-fades.
+    *   *Prefetching*: Hovering a Sidebar link `onMouseEnter` trigger a route prefetch. Click feels instant.
+
+---
+
+2. SYSTEM ARCHITECTURE: THE "ZERO-FRICTION" ENGINE
+--------------------------------------------------
+
+### 2.1 The "Shadow" Backend
+*   **Headless Ingestion**: The API accepts the header/metadata *first* (Separate Request) to generate the ID instantly. The file binary streams in *parallel*.
+*   **Predictive caching**:
+    *   If user generates "Cluster Map", the backend *anticipates* they will want "Sentiment Graph" next and pre-calculates it into Redis/Postgres Cache.
+
+### 2.2 The "Indestructible" Queue
+*   **The "Zombie" Killer**: If a job hangs for > 30s (Worker crash), PGMQ `visibility_timeout` expires. Another worker grabs it immediately.
+*   **The "Dead Man's Switch"**: If the entire Supabase instance goes unreachable, the Frontend switches to `IndexedDB Mode` (Read-Only Archive) automatically. "Offline Mode" badge appears.
+
+---
+
+3. AGENT DIVISIONS: THE 6 GUARDIANS (Expanded)
+----------------------------------------------
+
+### DIVISION 1: THE ENGINE ARCHITECT (Backend)
+**Motto**: "Accept First, Process Later."
+*   **Task 1.1**: Build `POST /ingest/meta` (Headers only) -> Returns ID in 10ms.
+*   **Task 1.2**: Build `PUT /ingest/blob/{id}` (Stream) -> Handles the heavy binary.
+*   **Task 1.3**: Implement **PGMQ Upsert**: If User re-uploads the same file, update the existing Job, don't create a duplicate.
+*   **Task 1.4**: **OCR Fallback**: Integrate `tesseract` logic for image-only PDFs (The "Empty PDF" hole).
+
+### DIVISION 2: THE STATE ENGINEER (Frontend Logic)
+**Motto**: "The Client is the Truth."
+*   **Task 2.1**: **The Optimistic Queue**: A persistent `Zustand` store that holds Actions.
+    *   *Hole*: User edits a tag, closes tab.
+    *   *Fix*: `persist` middleware saves queue to `localStorage`. Replays on boot.
+*   **Task 2.2**: **Tab Synchronization**: Use `BroadcastChannel`. If user opens 2 tabs, an upload in Tab A shows progress in Tab B. (No "Why isn't it showing?" hole).
+
+### DIVISION 3: THE ILLUSIONIST (Motion & UX)
+**Motto**: "60 FPS or Die."
+*   **Task 3.1**: **Micro-Interactions Library**:
+    *   `Button`: Scale down 0.95 on press. Ripple effect.
+    *   `Card`: Hover lift (y: -2px). Shadow bloom.
+*   **Task 3.2**: **The "Zeno" Bar**: Implement the asymptotic progress hook.
+*   **Task 3.3**: **Context-Aware Loading Text**: Write a dictionary of 50+ "Techy" status messages so the user never sees the same one twice in a row.
+
+### DIVISION 4: THE SAFETY NET (Reliability)
+**Motto**: "Errors are Opportunities."
+*   **Task 4.1**: **Silent Healing**: Intercept `5xx` errors. Retry 3 times with 500ms jitter. Only show UI error on 4th fail.
+*   **Task 4.2**: **The "Quota" Watchdog**: Monitor User's LocalStorage usage. If full, prompt "Clear Cache?" nicely.
+*   **Task 4.3**: **Browser Compat**: Polyfill `ResizeObserver` and `ViewTransitions` for older browsers.
+
+### DIVISION 5: THE VISUAL STORYTELLER (Reports)
+**Motto**: "Data adapted to the Context."
+*   **Task 5.1**: **Smart Scrapping**:
+    *   If `timestamp` missing -> Convert "Time Series" to "Distribution Bar". (Don't just hide, *Adapt*).
+    *   If `sentiment` missing -> Use "Keyword Frequency" as proxy for mood.
+*   **Task 5.2**: **Canvas fallback**: If data points > 10,000, switch Recharts (SVG) to `visx` (Canvas) to avoid DOM lag.
+
+### DIVISION 6: THE ZERO-COST OPTIMIZER (Infra)
+**Motto**: "Champagne Taste, Tap Water Budget."
+*   **Task 6.1**: **Edge Caching**: Configure Vercel headers to cache static dashboards for 60s.
+*   **Task 6.2**: **Database Pruning**: Script to delete `raw_ingest` blobs after 24h (keep only `processed` JSON) to save Supabase Storage.
+*   **Task 6.3**: **Image Optimization**: Auto-convert uploaded PNGs to AVIF on the client (Web Worker) *before* upload to save bandwidth.
+
+---
+
+4. EDGE CASE DEEP DIVE (The "Black Swan" List)
+-----------------------------------------------
+
+1.  **The "Flight Mode" Toggle**:
+    *   *Scenario*: User toggles Wi-Fi off and on rapidly.
+    *   *Hole*: Socket disconnects and never reconnects.
+    *   *Cover Up*: `window.addEventListener('online', reconnect)`. Show "Syncing changes..." toast instantly on reconnect.
+2.  **The "Huge Text" PDF**:
+    *   *Scenario*: PDF text extraction results in 5MB string.
+    *   *Hole*: Sending 5MB string in JSON body crashes the UI thread.
+    *   *Cover Up*: **Chunked Parsing**. Backend returns "Summary" first, then streams full text. UI shows Summary immediately with "Loading full text..." footnote.
+3.  **The "Forever Pending"**:
+    *   *Scenario*: Backend worker dies mid-job without updating status.
+    *   *Cover Up*: Frontend "Politeness" check. If `status === 'processing'` for > 2 mins, Frontend triggers `POST /job/poke` to wake up the backend worker to check the job.
+
+---
+
+This is THE DEFINITIVE, 100% DEFINED SPEC.
+No Stutters. No Holes. Pure Flow.

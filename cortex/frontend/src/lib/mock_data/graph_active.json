@@ -1,0 +1,154 @@
+{
+    "nodes": [
+        {
+            "id": "ISS-99562F83",
+            "data": {
+                "label": "Trial Active Issue",
+                "tag": "green",
+                "author": "E004",
+                "description": "Trial Active Issue",
+                "code_changes": null,
+                "code_language": null,
+                "created_at": "2026-03-25T16:43:13.447333+00:00",
+                "type": "new",
+                "layout_x": 0.0,
+                "layout_y": 0.0,
+                "priority": "critical",
+                "severity": null,
+                "primary_tag": null,
+                "deadline": null,
+                "assigned_dept_ids": [
+                    "D02",
+                    "D01"
+                ]
+            }
+        },
+        {
+            "id": "NODE-B2CADB7B",
+            "data": {
+                "label": "Rejected check",
+                "tag": "yellow",
+                "author": "E004",
+                "description": "Auto-generated flowchart node",
+                "code_changes": null,
+                "code_language": null,
+                "created_at": "2026-03-25T16:48:03.649121+00:00",
+                "updated_at": "2026-03-25T11:18:03.281922+00:00",
+                "type": "update",
+                "layout_x": -322.4839497566612,
+                "layout_y": 355.6032798454769,
+                "connection_type": "MAIN",
+                "layout_locked": true,
+                "senior_comment": null
+            }
+        },
+        {
+            "id": "NODE-3734D335",
+            "data": {
+                "label": "Green B1",
+                "tag": "green",
+                "author": "E001",
+                "description": "Auto-generated flowchart node",
+                "code_changes": null,
+                "code_language": null,
+                "created_at": "2026-03-25T16:44:23.103019+00:00",
+                "updated_at": "2026-03-25T11:14:22.740185+00:00",
+                "type": "update",
+                "layout_x": -320.0,
+                "layout_y": 205.53907887212168,
+                "connection_type": "LEFT",
+                "layout_locked": true,
+                "senior_comment": null
+            }
+        },
+        {
+            "id": "NODE-C86EB6EC",
+            "data": {
+                "label": "Issue Branch head",
+                "tag": "blue",
+                "author": "E004",
+                "description": "Auto-generated flowchart node",
+                "code_changes": null,
+                "code_language": null,
+                "created_at": "2026-03-25T16:43:24.892932+00:00",
+                "updated_at": "2026-03-25T11:13:24.52524+00:00",
+                "type": "update",
+                "layout_x": -10.763782278865136,
+                "layout_y": 150.06420097335527,
+                "connection_type": "MAIN",
+                "layout_locked": true,
+                "senior_comment": "Needs branch"
+            }
+        },
+        {
+            "id": "NODE-DCE94624",
+            "data": {
+                "label": "Green",
+                "tag": "green",
+                "author": "E001",
+                "description": "Auto-generated flowchart node",
+                "code_changes": null,
+                "code_language": null,
+                "created_at": "2026-03-25T16:44:50.695434+00:00",
+                "updated_at": "2026-03-25T11:14:50.333231+00:00",
+                "type": "update",
+                "layout_x": 15.838683414446251,
+                "layout_y": 353.3119330088816,
+                "connection_type": "MAIN",
+                "layout_locked": true,
+                "senior_comment": null
+            }
+        },
+        {
+            "id": "NODE-46BBE07A",
+            "data": {
+                "label": "Blue 2",
+                "tag": "blue",
+                "author": "E002",
+                "description": "Auto-generated flowchart node",
+                "code_changes": null,
+                "code_language": null,
+                "created_at": "2026-03-25T16:47:14.607186+00:00",
+                "updated_at": "2026-03-25T11:17:14.243373+00:00",
+                "type": "update",
+                "layout_x": -22.776477095806584,
+                "layout_y": 501.5150037230256,
+                "connection_type": "MAIN",
+                "layout_locked": true,
+                "senior_comment": "Needs Branch"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "e-NODE-3734D335-NODE-B2CADB7B",
+            "source": "NODE-3734D335",
+            "target": "NODE-B2CADB7B",
+            "connection_type": "MAIN"
+        },
+        {
+            "id": "e-NODE-C86EB6EC-NODE-3734D335",
+            "source": "NODE-C86EB6EC",
+            "target": "NODE-3734D335",
+            "connection_type": "LEFT"
+        },
+        {
+            "id": "e-ISS-99562F83-NODE-C86EB6EC",
+            "source": "ISS-99562F83",
+            "target": "NODE-C86EB6EC",
+            "connection_type": "MAIN"
+        },
+        {
+            "id": "e-NODE-C86EB6EC-NODE-DCE94624",
+            "source": "NODE-C86EB6EC",
+            "target": "NODE-DCE94624",
+            "connection_type": "MAIN"
+        },
+        {
+            "id": "e-NODE-DCE94624-NODE-46BBE07A",
+            "source": "NODE-DCE94624",
+            "target": "NODE-46BBE07A",
+            "connection_type": "MAIN"
+        }
+    ]
+}

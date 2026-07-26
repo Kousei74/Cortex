@@ -1,0 +1,19 @@
+# Markdown
+*.md
+**/*.md
+
+# Environment
+.env
+.env.*
+**/.env*
+
+# Dependencies
+node_modules/
+**/node_modules/
+__pycache__/
+*.pyc
+
+# Logs & Temp
+*.log
+uploads/
+backend/uploads/
