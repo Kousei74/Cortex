@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.report import ReportRequest, ReportResponse, JobStatus
 from app.services.jobs import JobManager
@@ -5,6 +7,7 @@ from app.core.queue import QueueService
 from app.core.security import SessionUser, get_current_user
 from app.core.config import settings
 from app.core.observability import get_logger, instrument_fastapi_router, instrument_module_functions, log_step
+from app.api.endpoints.ingestion import upload_sessions
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -52,8 +55,25 @@ async def create_report_job(
             detail="Report queue is full right now. Please try again in a moment."
         )
 
+    file_paths = []
+    missing_file_ids = []
+    for file_id in request.file_ids:
+        session = upload_sessions.get(file_id)
+        file_path = session.get("file_path") if session else None
+        if not session or session.get("owner_emp_id") != session_user.emp_id or session.get("status") != "completed" or not file_path or not os.path.exists(file_path):
+            missing_file_ids.append(file_id)
+            continue
+        file_paths.append(file_path)
+
+    if missing_file_ids:
+        log_step(logger, "reports.create.rejected_missing_uploads", owner_emp_id=session_user.emp_id, missing_count=len(missing_file_ids))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="One or more uploaded files are no longer available. Please re-upload and try again."
+        )
+
     # 1. Create Job (Idempotent)
-    job_id, is_existing = JobManager.create_job(request.file_ids, request.project_id, session_user.emp_id)
+    job_id, is_existing = JobManager.create_job(request.file_ids, file_paths, request.project_id, session_user.emp_id)
     
     # 2. Check if new or existing
     job = JobManager.get_job(job_id)

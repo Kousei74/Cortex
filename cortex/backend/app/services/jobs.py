@@ -8,9 +8,10 @@ from app.core.observability import get_logger, instrument_class_methods, log_ste
 logger = get_logger(__name__)
 
 class Job:
-    def __init__(self, job_id: str, file_ids: List[str], project_id: str, owner_emp_id: str):
+    def __init__(self, job_id: str, file_ids: List[str], file_paths: List[str], project_id: str, owner_emp_id: str):
         self.job_id = job_id
         self.file_ids = file_ids
+        self.file_paths = file_paths
         self.project_id = project_id
         self.owner_emp_id = owner_emp_id
         self.status = JobStatus.PENDING
@@ -71,7 +72,7 @@ class JobManager:
         return sum(1 for job in jobs_db.values() if job.status == JobStatus.PENDING)
 
     @staticmethod
-    def create_job(file_ids: List[str], project_id: str, owner_emp_id: str) -> tuple[str, bool]:
+    def create_job(file_ids: List[str], file_paths: List[str], project_id: str, owner_emp_id: str) -> tuple[str, bool]:
         """
         Creates a new job or returns existing one if duplicate (Idempotency).
         Returns: (job_id, is_existing)
@@ -86,7 +87,7 @@ class JobManager:
         
         # Create New
         job_id = str(uuid.uuid4())
-        new_job = Job(job_id, file_ids, project_id, owner_emp_id)
+        new_job = Job(job_id, file_ids, file_paths, project_id, owner_emp_id)
         
         jobs_db[job_id] = new_job
         idempotency_index[key] = job_id

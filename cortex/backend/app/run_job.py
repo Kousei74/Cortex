@@ -8,18 +8,18 @@ logger = get_logger(__name__)
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: run_job.py <job_id> <file_id_1> [file_id_2 ...]", file=sys.stderr)
+        print("Usage: run_job.py <job_id> <file_path_1> [file_path_2 ...]", file=sys.stderr)
         sys.exit(1)
         
     job_id = sys.argv[1]
-    file_ids = sys.argv[2:]
-    log_step(logger, "run_job.begin", job_id=job_id, file_count=len(file_ids))
+    file_paths = sys.argv[2:]
+    log_step(logger, "run_job.begin", job_id=job_id, file_count=len(file_paths))
     
     try:
         from app.services.analysis import generate_report_payload
 
         # Run the heavy CPU-bound analysis
-        payload = generate_report_payload(file_ids, job_id)
+        payload = generate_report_payload(file_paths, job_id)
         log_step(logger, "run_job.payload_ready", job_id=job_id)
         
         # Output payload strictly as JSON between marker lines

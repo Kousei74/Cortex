@@ -662,20 +662,17 @@ def _build_title_treemap(df: pd.DataFrame) -> TreemapWidget:
 
 # --- PUBLIC API ---
 
-def generate_report_payload(file_ids: List[str], job_id: str = None) -> ReportPayload:
+def generate_report_payload(file_paths: List[str], job_id: str = None) -> ReportPayload:
     import pandas as pd
     import numpy as np
     # 1. Load & Merge
     dfs = []
-    from app.api.endpoints.ingestion import upload_sessions
-    for fid in file_ids:
-        if fid in upload_sessions:
-            path = upload_sessions[fid].get('file_path')
-            if path and os.path.exists(path):
-                try:
-                    dfs.append(load_dataset(path))
-                except Exception as e:
-                    logger.error(f"Failed to load {fid}: {e}")
+    for path in file_paths:
+        if path and os.path.exists(path):
+            try:
+                dfs.append(load_dataset(path))
+            except Exception as e:
+                logger.error(f"Failed to load {path}: {e}")
     
     if not dfs:
         return UnsupportedPayload(

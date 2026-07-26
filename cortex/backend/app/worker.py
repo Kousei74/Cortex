@@ -55,11 +55,11 @@ async def worker_loop():
                 JobManager.update_job_status(job_id, JobStatus.PROCESSING, progress=10)
                 
                 process = await asyncio.create_subprocess_exec(
-                    "python", "-m", "app.run_job", job_id, *job.file_ids,
+                    "python", "-m", "app.run_job", job_id, *job.file_paths,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
-                log_step(logger, "worker.subprocess.started", job_id=job_id, file_count=len(job.file_ids))
+                log_step(logger, "worker.subprocess.started", job_id=job_id, file_count=len(job.file_paths))
                 
                 try:
                     stdout, stderr = await asyncio.wait_for(
