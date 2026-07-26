@@ -7,7 +7,12 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from email.utils import formataddr
 from typing import Any, Dict, Iterable, List, Optional
+from pathlib import Path
 import ssl
+
+# Absolute path to the backend root directory (cortex/backend/)
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
+_FALLBACK_LOG_PATH = _BACKEND_ROOT / "invites_fallback.log"
 
 from app.core.config import settings
 from app.core.database import service_role_supabase as supabase
@@ -400,7 +405,7 @@ def send_invite_email(email: str, full_name: str, invite_token: str, approved_de
         logger.warning(fallback_msg)
         print(f"\n{fallback_msg}\n")
         try:
-            with open("invites_fallback.log", "a", encoding="utf-8") as f:
+            with open(_FALLBACK_LOG_PATH, "a", encoding="utf-8") as f:
                 f.write(f"{utc_now().isoformat()} - {fallback_msg}\n")
         except Exception:
             pass
