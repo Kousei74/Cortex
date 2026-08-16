@@ -46,6 +46,18 @@ const NODE_COLORS = {
     red: { bg: "rgba(255, 59, 48, 0.15)", border: "#ff3b30", text: "#ff3b30" },
 }
 
+const safeText = (value) => {
+    if (value === null || value === undefined) return ""
+    if (typeof value === "object") {
+        try {
+            return JSON.stringify(value)
+        } catch {
+            return String(value)
+        }
+    }
+    return String(value)
+}
+
 /**
  * Centralized RBAC logic for nodes.
  * @returns { canEdit: bool, canTag: bool, canDelete: bool, canAddNode: bool }
@@ -181,7 +193,7 @@ const CustomNode = ({ data, id }) => {
                 <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-center min-h-[24px]">
                         <div className="text-xs font-mono font-bold uppercase tracking-widest leading-snug break-words pr-2 text-primary-custom" style={{ wordBreak: 'break-word' }}>
-                            {displayLabel}
+                            {safeText(displayLabel)}
                         </div>
                         <button
                             onClick={(e) => {
@@ -205,7 +217,7 @@ const CustomNode = ({ data, id }) => {
 
                     <div className="flex justify-between items-center text-[10px] font-mono border-t border-subtle-custom pt-2 mt-1">
                         <span className="text-secondary-custom/60 uppercase tracking-widest">{date || "UNKNOWN DATE"}</span>
-                        <span className="text-primary-custom/80 uppercase tracking-widest truncate max-w-[100px] text-right">{author}</span>
+                        <span className="text-primary-custom/80 uppercase tracking-widest truncate max-w-[100px] text-right">{safeText(author)}</span>
                     </div>
                 </div>
             </div>
@@ -1347,7 +1359,7 @@ function IssueFlowchartInner({ issueId }) {
                                             <div className="flex justify-between items-start">
                                                 <div className="w-full">
                                                     <h2 className="text-xl font-mono font-bold text-white uppercase tracking-widest break-words pr-8">
-                                                        {activeNodeModal.nodeParams.data.label}
+                                                        {safeText(activeNodeModal.nodeParams.data.label)}
                                                     </h2>
                                                     {activeNodeModal.nodeParams.id.startsWith("ISS-") ? (
                                                         <div className="flex justify-between items-center w-full mt-2 border-l-2 border-subtle-custom pl-2 pr-4">
@@ -1362,13 +1374,13 @@ function IssueFlowchartInner({ issueId }) {
                                                         </div>
                                                     ) : (
                                                         <p className="text-xs font-mono text-secondary-custom mt-2 border-l-2 border-subtle-custom pl-2 uppercase tracking-widest">
-                                                            AUTHOR: <span className="text-primary-custom ml-1">{activeNodeModal.nodeParams.data.author}</span>
+                                                            AUTHOR: <span className="text-primary-custom ml-1">{safeText(activeNodeModal.nodeParams.data.author)}</span>
                                                         </p>
                                                     )}
                                                 </div>
                                                 {!activeNodeModal.nodeParams.id.startsWith("ISS-") && (
                                                     <div className="text-[10px] uppercase font-mono font-bold px-2 py-1 rounded bg-black/40 border border-subtle-custom text-secondary-custom flex-shrink-0">
-                                                        {activeNodeModal.nodeParams.data.tag}
+                                                        {safeText(activeNodeModal.nodeParams.data.tag)}
                                                     </div>
                                                 )}
                                             </div>
@@ -1377,7 +1389,7 @@ function IssueFlowchartInner({ issueId }) {
                                                 <div className="bg-black/20 p-4 rounded-lg border border-subtle-custom/50">
                                                     <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest mb-2 font-bold">Description</div>
                                                     <p className="text-sm text-primary-custom whitespace-pre-wrap font-mono leading-relaxed">
-                                                        {activeNodeModal.nodeParams.data.description}
+                                                        {safeText(activeNodeModal.nodeParams.data.description)}
                                                     </p>
                                                 </div>
                                             )}
@@ -1392,7 +1404,7 @@ function IssueFlowchartInner({ issueId }) {
                                                                 <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Priority</div>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: pC, boxShadow: `0 0 6px ${pC}` }} />
-                                                                    <span className="text-xs text-primary-custom font-mono truncate font-bold uppercase">{activeNodeModal.nodeParams.data.priority}</span>
+                                                                    <span className="text-xs text-primary-custom font-mono truncate font-bold uppercase">{safeText(activeNodeModal.nodeParams.data.priority)}</span>
                                                                 </div>
                                                             </div>
                                                         );
@@ -1403,20 +1415,20 @@ function IssueFlowchartInner({ issueId }) {
                                                             {activeNodeModal.nodeParams.data.assigned_dept_ids
                                                                 ? (Array.isArray(activeNodeModal.nodeParams.data.assigned_dept_ids)
                                                                     ? activeNodeModal.nodeParams.data.assigned_dept_ids.join(", ")
-                                                                    : activeNodeModal.nodeParams.data.assigned_dept_ids)
+                                                                    : safeText(activeNodeModal.nodeParams.data.assigned_dept_ids))
                                                                 : "UNASSIGNED"}
                                                         </div>
                                                     </div>
                                                     {activeNodeModal.nodeParams.data.severity && (
                                                         <div className="bg-black/20 p-3 rounded-lg border border-subtle-custom/50 flex flex-col gap-1">
                                                             <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Severity</div>
-                                                            <div className="text-xs text-primary-custom font-mono truncate uppercase">{activeNodeModal.nodeParams.data.severity}</div>
+                                                            <div className="text-xs text-primary-custom font-mono truncate uppercase">{safeText(activeNodeModal.nodeParams.data.severity)}</div>
                                                         </div>
                                                     )}
                                                     {activeNodeModal.nodeParams.data.primary_tag && (
                                                         <div className="bg-black/20 p-3 rounded-lg border border-subtle-custom/50 flex flex-col gap-1">
                                                             <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Tags</div>
-                                                            <div className="text-xs text-[var(--accent-blue-bright)] font-mono truncate uppercase">{activeNodeModal.nodeParams.data.primary_tag}</div>
+                                                            <div className="text-xs text-[var(--accent-blue-bright)] font-mono truncate uppercase">{safeText(activeNodeModal.nodeParams.data.primary_tag)}</div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -1426,7 +1438,7 @@ function IssueFlowchartInner({ issueId }) {
                                                 <div className="bg-accent-blue-bright/10 p-4 rounded-lg border border-accent-blue-bright/30">
                                                     <div className="text-[10px] text-accent-blue-bright font-mono uppercase tracking-widest mb-2 font-bold">Senior Note</div>
                                                     <p className="text-sm text-primary-custom font-mono leading-tight">
-                                                        "{activeNodeModal.nodeParams.data.senior_comment}"
+                                                        "{safeText(activeNodeModal.nodeParams.data.senior_comment)}"
                                                     </p>
                                                 </div>
                                             )}
@@ -1436,14 +1448,14 @@ function IssueFlowchartInner({ issueId }) {
                                                     <div className="flex justify-between items-center bg-surface-custom px-4 py-2 border-b border-subtle-custom/50">
                                                         <div className="text-[10px] text-secondary-custom font-mono uppercase tracking-widest font-bold">Codebase Changes</div>
                                                         <div className="text-[10px] text-accent-blue-bright font-mono uppercase tracking-widest font-bold bg-accent-blue-bright/10 px-2 py-0.5 rounded">
-                                                            {activeNodeModal.nodeParams.data.code_language || "TEXT"}
+                                                            {safeText(activeNodeModal.nodeParams.data.code_language) || "TEXT"}
                                                         </div>
                                                     </div>
                                                     <div className="relative text-sm custom-scrollbar max-h-64 overflow-auto bg-[#141414]">
                                                         <Editor
                                                             value={activeNodeModal.nodeParams.data.code_changes}
                                                             onValueChange={() => { }} // Read-only
-                                                            highlight={code => Prism.highlight(code, getPrismLanguage(activeNodeModal.nodeParams.data.code_language), activeNodeModal.nodeParams.data.code_language?.toLowerCase() || 'javascript')}
+                                                            highlight={code => Prism.highlight(code, getPrismLanguage(activeNodeModal.nodeParams.data.code_language), safeText(activeNodeModal.nodeParams.data.code_language).toLowerCase() || 'javascript')}
                                                             padding={16}
                                                             className="font-mono text-xs leading-relaxed"
                                                             textareaClassName="focus:outline-none"

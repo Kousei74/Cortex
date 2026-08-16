@@ -54,6 +54,8 @@ app.add_middleware(
 
 # Include Routers
 app.include_router(health_router, prefix="/health", tags=["health"])
+# Also expose the same health endpoints under /api/health for external monitors
+app.include_router(health_router, prefix="/api/health", tags=["health"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(ingestion_router, prefix="/ingest", tags=["ingestion"])
 app.include_router(reports_router, prefix="/reports", tags=["reports"])

@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
+
 from app.core.observability import get_logger, instrument_fastapi_router, instrument_module_functions, log_step
 
 router = APIRouter()
@@ -6,11 +8,21 @@ logger = get_logger(__name__)
 
 @router.get("/")
 def health_check():
-    """
-    Simple health check to verify backend connectivity.
+    """Tiny health endpoint used by external monitors (UptimeRobot).
+
+    Returns 200 with a minimal payload when healthy. If a lightweight
+    Supabase HTTP probe fails, returns 503 so monitors can alert.
     """
     log_step(logger, "health.check")
-    return {"status": "ok", "service": "cortex-engine"}
+
+    # Minimal JSON payload (keep tiny for uptime probes)
+    healthy_payload = {"status": "online", "service": "cortex-engine"}
+
+    # Keep this endpoint extremely lightweight and always return 200.
+    # Uptime monitors hitting this path will keep the Render web process
+    # awake. We do NOT probe Supabase here to avoid introducing latency
+    # or false positives during cold starts.
+    return JSONResponse(content=healthy_payload, status_code=200)
 
 
 @router.get("/debug-config")
